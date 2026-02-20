@@ -26,10 +26,10 @@ function maskCard(card: string | null): string {
   return `**** **** **** ${digits.slice(-4)}`;
 }
 
-const MIN_WITHDRAWAL = 50000;
+const MIN_WITHDRAWAL = 20000;
 
 function coinsToSom(coins: number): string {
-  const som = Math.floor(coins / 10);
+  const som = Math.floor(coins / 4);
   return som.toLocaleString();
 }
 
