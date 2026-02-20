@@ -5,6 +5,15 @@ import { useState, useEffect } from "react";
 
 const FEED_COOLDOWN_MS = 15 * 60 * 1000;
 
+// Big animated emoji per animal type
+const ANIMAL_ANIMATIONS: Record<string, { emoji: string; color: string }> = {
+  cow:     { emoji: "🐄", color: "hsl(38 60% 88%)" },
+  sheep:   { emoji: "🐑", color: "hsl(200 30% 90%)" },
+  goat:    { emoji: "🐐", color: "hsl(80 30% 88%)" },
+  chicken: { emoji: "🐔", color: "hsl(42 80% 90%)" },
+  turkey:  { emoji: "🦃", color: "hsl(20 50% 88%)" },
+};
+
 interface AnimalCardProps {
   animal: OwnedAnimal;
   onFeed: () => void;
@@ -23,6 +32,8 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
   }, []);
 
   if (!type) return null;
+
+  const animalAnim = ANIMAL_ANIMATIONS[animal.typeId] || { emoji: type.emoji, color: "hsl(var(--muted))" };
 
   const isGrown = animal.growthPercent >= 100;
   const isEggType = type.productType === "egg";
@@ -78,40 +89,59 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
       animate={{ opacity: 1, scale: 1 }}
       className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
     >
-      {/* Header */}
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-3xl shrink-0">
-          {type.emoji}
+      {/* Big Animal Illustration */}
+      <div
+        className="relative flex items-center justify-center pt-5 pb-3"
+        style={{ background: animalAnim.color }}
+      >
+        {/* Status badge */}
+        <div className="absolute top-2 right-3">
+          {isGrown ? (
+            <span className="text-[10px] font-bold text-primary bg-card rounded-full px-2 py-0.5 shadow-sm">
+              ✓ Tayyor
+            </span>
+          ) : (
+            <span className="text-[10px] font-bold text-muted-foreground bg-card rounded-full px-2 py-0.5 shadow-sm">
+              🌱 O'smoqda
+            </span>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-black text-foreground text-base leading-tight">{type.name}</h3>
-            {isGrown && (
-              <span className="text-[10px] font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5">
-                ✓ Tayyor
-              </span>
-            )}
-          </div>
-          <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1 mt-0.5">
-            <span className={`inline-block h-2 w-2 rounded-full shrink-0 ${isHungry ? 'bg-destructive' : 'bg-primary'}`} />
-            {isHungry ? "Och" : "To'q"}
-          </p>
+        {/* Hunger dot */}
+        <div className="absolute top-2 left-3 flex items-center gap-1">
+          <span className={`inline-block h-2 w-2 rounded-full ${isHungry ? 'bg-destructive' : 'bg-primary'}`} />
+          <span className="text-[10px] font-semibold text-muted-foreground">{isHungry ? "Och" : "To'q"}</span>
         </div>
+
+        {/* Animated animal emoji */}
+        <motion.div
+          animate={{ y: [0, -6, 0] }}
+          transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+          className="text-7xl select-none drop-shadow-lg"
+        >
+          {animalAnim.emoji}
+        </motion.div>
+
+        {/* Feed cost */}
         {!isGrown && (
-          <span className="text-[10px] font-bold text-muted-foreground bg-muted rounded-lg px-2 py-1 shrink-0">
-            🪙 {type.feedCost}
-          </span>
+          <div className="absolute bottom-2 right-3">
+            <span className="text-[10px] font-bold text-muted-foreground bg-card/80 rounded-lg px-2 py-0.5">
+              🪙 {type.feedCost}
+            </span>
+          </div>
         )}
       </div>
 
-      <div className="px-4 pb-4 space-y-3">
+      <div className="px-4 pt-3 pb-4 space-y-3">
+        {/* Name */}
+        <h3 className="font-black text-foreground text-base leading-tight">{type.name}</h3>
+
         {/* Growth bar */}
         <div>
-          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground mb-1.5">
+          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground mb-1">
             <span>🌱 O'sish</span>
             <span className="font-bold text-foreground">{Math.round(animal.growthPercent)}%</span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
             <motion.div
               className="h-full rounded-full bg-primary"
               initial={{ width: 0 }}
@@ -123,18 +153,16 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
 
         {/* Hunger bar */}
         <div>
-          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground mb-1.5">
+          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground mb-1">
             <span>🍽️ To'qlik</span>
             <span className="font-bold text-foreground">{hungerDisplay}%</span>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${hungerDisplay}%`,
-                background: isHungry
-                  ? 'hsl(var(--destructive))'
-                  : 'hsl(42 90% 55%)'
+                background: isHungry ? 'hsl(var(--destructive))' : 'hsl(42 90% 55%)',
               }}
             />
           </div>
@@ -142,9 +170,9 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
 
         {/* Egg info */}
         {isEggReady && (
-          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
             <span className="text-sm font-bold text-foreground">
-              🥚 Yig'ilgan: <span className="text-primary">{accumulatedEggs} ta</span>
+              🥚 <span className="text-primary">{accumulatedEggs} ta</span>
             </span>
             <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -155,9 +183,9 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
 
         {/* Milk info */}
         {isMilkReady && (
-          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2.5">
+          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
             <span className="text-sm font-bold text-foreground">
-              🥛 Sut: <span className="text-primary">{accumulatedMilk} l</span>
+              🥛 <span className="text-primary">{accumulatedMilk} l</span>
             </span>
             <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -166,58 +194,75 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="flex gap-2">
+        {/* Action buttons — always in a column so they never wrap */}
+        <div className="flex flex-col gap-2">
+          {/* Feed button row */}
           {!isGrown && (
             canFeed ? (
               <button
                 onClick={onFeed}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
               >
                 <Utensils className="h-4 w-4" />
                 Boqish
               </button>
             ) : feedCooldownRemaining > 0 ? (
-              <div className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 py-3 text-sm font-bold text-muted-foreground">
+              <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 py-3 text-sm font-bold text-muted-foreground">
                 <Clock className="h-4 w-4" />
                 {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, "0")}
               </div>
             ) : null
           )}
-          {isEggReady && accumulatedEggs > 0 && (
-            <button
-              onClick={onCollect}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary"
-            >
-              <Egg className="h-4 w-4" />
-              Yig'ish ({accumulatedEggs} 🥚)
-            </button>
+
+          {/* Collect + Slaughter row for egg producers */}
+          {isEggReady && (
+            <div className="flex gap-2">
+              <button
+                onClick={onCollect}
+                disabled={accumulatedEggs === 0}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary disabled:opacity-50"
+              >
+                <Egg className="h-4 w-4" />
+                Yig'ish ({accumulatedEggs} 🥚)
+              </button>
+              <button
+                onClick={onSlaughter}
+                className="flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold text-destructive border border-destructive/30 bg-destructive/5 active:scale-95 transition-transform"
+              >
+                <Scissors className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
-          {isMilkReady && accumulatedMilk > 0 && (
-            <button
-              onClick={onCollectMilk}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
-              style={{ background: 'hsl(210 70% 55%)' }}
-            >
-              <Droplets className="h-4 w-4" />
-              Sut ({accumulatedMilk}l)
-            </button>
+
+          {/* Collect + Slaughter row for milk producers */}
+          {isMilkReady && (
+            <div className="flex gap-2">
+              <button
+                onClick={onCollectMilk}
+                disabled={accumulatedMilk === 0}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
+                style={{ background: 'hsl(210 70% 55%)' }}
+              >
+                <Droplets className="h-4 w-4" />
+                Sut ({accumulatedMilk} l)
+              </button>
+              <button
+                onClick={onSlaughter}
+                className="flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold text-destructive border border-destructive/30 bg-destructive/5 active:scale-95 transition-transform"
+              >
+                <Scissors className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
+
+          {/* Full slaughter button for meat animals */}
           {canSlaughter && !isEggType && !isMilkType && (
             <button
               onClick={onSlaughter}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-destructive-foreground active:scale-95 transition-transform bg-destructive"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-destructive-foreground active:scale-95 transition-transform bg-destructive"
             >
               <Scissors className="h-4 w-4" />
               So'yish
-            </button>
-          )}
-          {canSlaughter && (isEggType || isMilkType) && (
-            <button
-              onClick={onSlaughter}
-              className="flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold text-destructive border border-destructive/30 bg-destructive/5 active:scale-95 transition-transform"
-            >
-              <Scissors className="h-3.5 w-3.5" />
             </button>
           )}
         </div>
