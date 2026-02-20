@@ -396,9 +396,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const miniAppButton = miniAppStartParam
-        ? { text: "🎮 O'yinni ochish", url: `https://t.me/${BOT_USERNAME}?startapp=${miniAppStartParam}` }
-        : { text: "🎮 O'yinni ochish", web_app: { url: MINI_APP_URL } };
+      const miniAppButton = { text: "🎮 O'yinni ochish", url: "https://c294.coresuz.ru" };
 
       await sendMessage(chatId,
         `🌾 <b>Farm Empire</b>ga xush kelibsiz!\n\n🐔 Hayvonlar sotib oling\n🥚 Mahsulot yig'ing\n💰 Pul ishlang\n\nO'yinni boshlash uchun quyidagi tugmani bosing 👇`,
