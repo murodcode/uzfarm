@@ -14,48 +14,60 @@ import { ANIMAL_TYPES } from "@/lib/gameData";
 export default function Home() {
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
   const navigate = useNavigate();
-  const { withAd } = useRewardedAd();
+  const { showAd } = useRewardedAd();
 
-  const handleFeed = (id: string) => {
-    withAd(async () => {
-      const success = await feedAnimal(id);
-      if (success) {
-        gainExp(EXP_SOURCES.feed_animal);
-        toast.success("Hayvon boqildi! 🌾");
-      } else {
-        toast.error("Boqib bo'lmadi (mablag' yetarli emas yoki kutish vaqti)");
-      }
-    });
+  const handleFeed = async (id: string) => {
+    try {
+      await showAd();
+    } catch {
+      return; // Ad failed silently
+    }
+    const success = await feedAnimal(id);
+    if (success) {
+      gainExp(EXP_SOURCES.feed_animal);
+      toast.success("Hayvon boqildi! 🌾");
+    } else {
+      toast.error("Boqib bo'lmadi (mablag' yetarli emas yoki kutish vaqti)");
+    }
   };
 
-  const handleCollect = (id: string) => {
-    withAd(async () => {
-      const eggs = await collectEggs(id);
-      if (eggs > 0) {
-        gainExp(EXP_SOURCES.collect_eggs);
-        toast.success(`${eggs} ta tuxum yig'ildi! 🥚`);
-      } else {
-        toast.info("Hali tuxum yig'ilmagan");
-      }
-    });
+  const handleCollect = async (id: string) => {
+    try {
+      await showAd();
+    } catch {
+      return;
+    }
+    const eggs = await collectEggs(id);
+    if (eggs > 0) {
+      gainExp(EXP_SOURCES.collect_eggs);
+      toast.success(`${eggs} ta tuxum yig'ildi! 🥚`);
+    } else {
+      toast.info("Hali tuxum yig'ilmagan");
+    }
   };
 
-  const handleCollectMilk = (id: string) => {
-    withAd(async () => {
-      const milk = await collectMilk(id);
-      if (milk > 0) {
-        toast.success(`${milk} litr sut yig'ildi! 🥛`);
-      } else {
-        toast.info("Hali sut yig'ilmagan");
-      }
-    });
+  const handleCollectMilk = async (id: string) => {
+    try {
+      await showAd();
+    } catch {
+      return;
+    }
+    const milk = await collectMilk(id);
+    if (milk > 0) {
+      toast.success(`${milk} litr sut yig'ildi! 🥛`);
+    } else {
+      toast.info("Hali sut yig'ilmagan");
+    }
   };
 
-  const handleSlaughter = (id: string) => {
-    withAd(() => {
-      slaughterAnimal(id);
-      toast.success("Go'sht inventarga qo'shildi! 🥩");
-    });
+  const handleSlaughter = async (id: string) => {
+    try {
+      await showAd();
+    } catch {
+      return;
+    }
+    slaughterAnimal(id);
+    toast.success("Go'sht inventarga qo'shildi! 🥩");
   };
 
   const required = expRequired(state.level);
