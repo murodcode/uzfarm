@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { GameStateProvider } from "@/contexts/GameStateContext";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
@@ -18,8 +18,37 @@ import Leaderboard from "./pages/Leaderboard";
 import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
+import LoadingScreen from "./components/LoadingScreen";
 
 const queryClient = new QueryClient();
+
+function AppRoutes() {
+  const { loading } = useAuth();
+
+  if (loading) return <LoadingScreen />;
+
+  return (
+    <GameStateProvider>
+      <div className="mx-auto max-w-lg min-h-screen">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/market" element={<Market />} />
+          <Route path="/tasks" element={<Tasks />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/exchange" element={<Exchange />} />
+          <Route path="/withdraw" element={<Withdraw />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/referral" element={<Referral />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <BottomNav />
+      </div>
+    </GameStateProvider>
+  );
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -28,25 +57,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <GameStateProvider>
-            <div className="mx-auto max-w-lg min-h-screen">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/market" element={<Market />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/exchange" element={<Exchange />} />
-                <Route path="/withdraw" element={<Withdraw />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/referral" element={<Referral />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              <BottomNav />
-            </div>
-          </GameStateProvider>
+          <AppRoutes />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
