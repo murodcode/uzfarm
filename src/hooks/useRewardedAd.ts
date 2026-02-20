@@ -37,6 +37,8 @@ async function recordAdView() {
   }
 }
 
+const MIN_WATCH_SECONDS = 10;
+
 export function useRewardedAd() {
   const showingRef = useRef(false);
 
@@ -44,10 +46,16 @@ export function useRewardedAd() {
     if (showingRef.current) return Promise.reject(new Error("Ad already showing"));
     showingRef.current = true;
 
+    const startTime = Date.now();
     const handler = getAdHandler();
+
     return handler()
       .then(() => {
         showingRef.current = false;
+        const watchedSeconds = (Date.now() - startTime) / 1000;
+        if (watchedSeconds < MIN_WATCH_SECONDS) {
+          throw new Error("AD_NOT_WATCHED");
+        }
         recordAdView();
       })
       .catch((err: unknown) => {

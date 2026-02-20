@@ -16,25 +16,38 @@ export default function Home() {
   const navigate = useNavigate();
   const { showAd } = useRewardedAd();
 
+  const handleAdError = (err: unknown) => {
+    if (err instanceof Error && err.message === "AD_NOT_WATCHED") {
+      toast.warning("Reklamani kamida 10 soniya ko'ring! ⚠️", {
+        description: "Iltimos reklamani to'liq tomosha qilib, keyin qayta urinib ko'ring.",
+        duration: 4000,
+      });
+      return true; // was ad-not-watched error
+    }
+    return false; // other error, fail silently
+  };
+
   const handleFeed = async (id: string) => {
     try {
       await showAd();
-    } catch {
-      return; // Ad failed silently
+    } catch (err) {
+      handleAdError(err);
+      return;
     }
     const success = await feedAnimal(id);
     if (success) {
       gainExp(EXP_SOURCES.feed_animal);
       toast.success("Hayvon boqildi! 🌾");
     } else {
-      toast.error("Boqib bo'lmadi (mablag' yetarli emas yoki kutish vaqti)");
+      toast.error("Kutish vaqti tugamagan yoki mablag' yetarli emas");
     }
   };
 
   const handleCollect = async (id: string) => {
     try {
       await showAd();
-    } catch {
+    } catch (err) {
+      handleAdError(err);
       return;
     }
     const eggs = await collectEggs(id);
@@ -49,7 +62,8 @@ export default function Home() {
   const handleCollectMilk = async (id: string) => {
     try {
       await showAd();
-    } catch {
+    } catch (err) {
+      handleAdError(err);
       return;
     }
     const milk = await collectMilk(id);
@@ -63,7 +77,8 @@ export default function Home() {
   const handleSlaughter = async (id: string) => {
     try {
       await showAd();
-    } catch {
+    } catch (err) {
+      handleAdError(err);
       return;
     }
     slaughterAnimal(id);
