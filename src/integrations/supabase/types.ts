@@ -192,6 +192,7 @@ export type Database = {
           is_blocked: boolean
           level: number
           meat: number
+          milk: number
           photo_url: string | null
           referral_count: number
           referral_earnings: number
@@ -213,6 +214,7 @@ export type Database = {
           is_blocked?: boolean
           level?: number
           meat?: number
+          milk?: number
           photo_url?: string | null
           referral_count?: number
           referral_earnings?: number
@@ -234,6 +236,7 @@ export type Database = {
           is_blocked?: boolean
           level?: number
           meat?: number
+          milk?: number
           photo_url?: string | null
           referral_count?: number
           referral_earnings?: number
