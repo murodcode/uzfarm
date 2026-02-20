@@ -11,7 +11,7 @@ const SERVICE_ROLE_KEY = () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const ADMIN_CHAT_ID = 6854856230;
 const BOT_USERNAME = "Farm_Market_bot";
-const MINI_APP_URL = "https://farm-joy-telegram.lovable.app";
+const MINI_APP_URL = "https://id-preview--f0cb7cbd-43c8-4da1-a499-5c0a0e2cab2b.lovable.app";
 const PAYMENT_CHANNEL = "@farm_market_pay";
 
 async function sendMessage(chatId: number | string, text: string, replyMarkup?: any) {
