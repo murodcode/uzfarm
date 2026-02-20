@@ -9,17 +9,22 @@ import { useNavigate } from "react-router-dom";
 import { useRewardedAd } from "@/hooks/useRewardedAd";
 import { expRequired } from "@/lib/levelSystem";
 import { EXP_SOURCES } from "@/lib/levelSystem";
+import { ANIMAL_TYPES } from "@/lib/gameData";
 
 export default function Home() {
-  const { state, feedAnimal, collectEggs, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
+  const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
   const navigate = useNavigate();
   const { withAd } = useRewardedAd();
 
   const handleFeed = (id: string) => {
-    withAd(() => {
-      feedAnimal(id);
-      gainExp(EXP_SOURCES.feed_animal);
-      toast.success("Hayvon boqildi! 🌾");
+    withAd(async () => {
+      const success = await feedAnimal(id);
+      if (success) {
+        gainExp(EXP_SOURCES.feed_animal);
+        toast.success("Hayvon boqildi! 🌾");
+      } else {
+        toast.error("Boqib bo'lmadi (mablag' yetarli emas yoki kutish vaqti)");
+      }
     });
   };
 
@@ -35,6 +40,17 @@ export default function Home() {
     });
   };
 
+  const handleCollectMilk = (id: string) => {
+    withAd(async () => {
+      const milk = await collectMilk(id);
+      if (milk > 0) {
+        toast.success(`${milk} litr sut yig'ildi! 🥛`);
+      } else {
+        toast.info("Hali sut yig'ilmagan");
+      }
+    });
+  };
+
   const handleSlaughter = (id: string) => {
     withAd(() => {
       slaughterAnimal(id);
@@ -45,6 +61,14 @@ export default function Home() {
   const required = expRequired(state.level);
   const levelProgress = Math.min(100, Math.round((state.exp / required) * 100));
 
+  // Group animals by type
+  const groupedAnimals = ANIMAL_TYPES
+    .map(type => ({
+      type,
+      animals: state.animals.filter(a => a.typeId === type.id),
+    }))
+    .filter(group => group.animals.length > 0);
+
   return (
     <>
       <FarmBackground />
@@ -53,23 +77,18 @@ export default function Home() {
       <div className="relative z-10 min-h-screen safe-bottom">
         {/* Header area */}
         <div className="relative px-4 pt-6 pb-2">
-          {/* Wooden sign header */}
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
             className={`wood-sign px-5 py-4 mt-2 mb-2 text-center relative ${levelUpEvent ? 'level-glow' : ''}`}
           >
-            {/* Chick on the sign */}
             <span className="absolute -top-5 right-6 text-2xl animate-bounce" style={{ animationDuration: '2s' }}>
               🐤
             </span>
-
             <h1 className="text-xl font-black text-primary-foreground drop-shadow-md">
               🌾 Mening Fermam
             </h1>
-
-            {/* Level progress */}
             <div className="mt-2.5">
               <div className="flex items-center justify-between text-[10px] font-bold text-primary-foreground/80 mb-1">
                 <span>⭐ Daraja {state.level}</span>
@@ -120,26 +139,37 @@ export default function Home() {
               </div>
             </div>
             <div className="resource-card flex-1 flex items-center gap-2">
+              <span className="text-xl">🥛</span>
+              <div>
+                <p className="text-[10px] font-semibold text-muted-foreground">Sut</p>
+                <p className="text-sm font-black text-foreground">{state.milk ?? 0} l</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Coins & Cash */}
+        <div className="px-4 mb-3">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex gap-2"
+          >
+            <div className="resource-card flex-1 flex items-center gap-2">
               <span className="text-xl">🪙</span>
               <div>
                 <p className="text-[10px] font-semibold text-muted-foreground">Tangalar</p>
                 <p className="text-sm font-black text-foreground">{state.coins.toLocaleString()}</p>
               </div>
             </div>
-          </motion.div>
-        </div>
-
-        {/* Cash display */}
-        <div className="px-4 mb-3">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="resource-card flex items-center justify-center gap-2"
-          >
-            <span className="text-lg">💵</span>
-            <p className="text-xs font-bold text-muted-foreground">Balans:</p>
-            <p className="text-sm font-black text-foreground">{state.cash.toLocaleString()} so'm</p>
+            <div className="resource-card flex-1 flex items-center gap-2">
+              <span className="text-xl">💵</span>
+              <div>
+                <p className="text-[10px] font-semibold text-muted-foreground">Balans</p>
+                <p className="text-sm font-black text-foreground">{state.cash.toLocaleString()}</p>
+              </div>
+            </div>
           </motion.div>
         </div>
 
@@ -149,7 +179,7 @@ export default function Home() {
         </div>
 
         {/* Animals section */}
-        <div className="px-4 space-y-3 pb-4">
+        <div className="px-4 space-y-4 pb-4">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -182,27 +212,55 @@ export default function Home() {
               <p className="text-sm text-muted-foreground mb-4">
                 Do'kondan hayvon sotib oling va fermangizni boshlang!
               </p>
-              <button
-                onClick={() => navigate("/shop")}
-                className="btn-farm"
-              >
+              <button onClick={() => navigate("/shop")} className="btn-farm">
                 🛒 Do'konga o'tish
               </button>
             </motion.div>
           ) : (
-            state.animals.map((animal, i) => (
+            groupedAnimals.map((group, gi) => (
               <motion.div
-                key={animal.id}
+                key={group.type.id}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + i * 0.05 }}
+                transition={{ delay: 0.3 + gi * 0.07 }}
               >
-                <AnimalCard
-                  animal={animal}
-                  onFeed={() => handleFeed(animal.id)}
-                  onCollect={() => handleCollect(animal.id)}
-                  onSlaughter={() => handleSlaughter(animal.id)}
-                />
+                {/* Group header */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-lg">{group.type.emoji}</span>
+                  <h3 className="text-sm font-black text-foreground">{group.type.name}</h3>
+                  <span className="text-xs font-bold bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                    {group.animals.length} ta
+                  </span>
+                </div>
+
+                {/* Horizontal scroll if multiple */}
+                {group.animals.length === 1 ? (
+                  <AnimalCard
+                    animal={group.animals[0]}
+                    onFeed={() => handleFeed(group.animals[0].id)}
+                    onCollect={() => handleCollect(group.animals[0].id)}
+                    onCollectMilk={() => handleCollectMilk(group.animals[0].id)}
+                    onSlaughter={() => handleSlaughter(group.animals[0].id)}
+                  />
+                ) : (
+                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollSnapType: 'x mandatory' }}>
+                    {group.animals.map((animal) => (
+                      <div
+                        key={animal.id}
+                        className="flex-shrink-0 w-[85vw] max-w-[320px]"
+                        style={{ scrollSnapAlign: 'start' }}
+                      >
+                        <AnimalCard
+                          animal={animal}
+                          onFeed={() => handleFeed(animal.id)}
+                          onCollect={() => handleCollect(animal.id)}
+                          onCollectMilk={() => handleCollectMilk(animal.id)}
+                          onSlaughter={() => handleSlaughter(animal.id)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             ))
           )}

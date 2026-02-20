@@ -26,24 +26,37 @@ function maskCard(card: string | null): string {
   return `**** **** **** ${digits.slice(-4)}`;
 }
 
-const MIN_WITHDRAWAL = 20000;
-
-function coinsToSom(coins: number): string {
-  const som = Math.floor(coins / 4);
-  return som.toLocaleString();
-}
-
 export default function Withdraw() {
   const { profile, refreshProfile } = useAuth();
   const [amount, setAmount] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [requests, setRequests] = useState<WithdrawalRequest[]>([]);
+  const [minWithdrawal, setMinWithdrawal] = useState(20000);
+  const [coinsPerSom, setCoinsPerSom] = useState(4);
 
   const cash = profile?.cash ?? 0;
   const numAmount = parseInt(amount) || 0;
   const cardDigits = cardNumber.replace(/\D/g, "");
-  const isValid = numAmount >= MIN_WITHDRAWAL && numAmount <= cash && cardDigits.length === 16;
+  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16;
+
+  const coinsToSom = (coins: number) => Math.floor(coins / coinsPerSom).toLocaleString();
+
+  // Load settings from DB
+  useEffect(() => {
+    supabase
+      .from("app_settings")
+      .select("key, value")
+      .eq("key", "withdrawal")
+      .single()
+      .then(({ data }) => {
+        if (data?.value && typeof data.value === "object") {
+          const v = data.value as any;
+          if (v.min_amount) setMinWithdrawal(v.min_amount);
+          if (v.coins_per_som) setCoinsPerSom(v.coins_per_som);
+        }
+      });
+  }, []);
 
   useEffect(() => {
     if (!profile) return;
@@ -74,17 +87,14 @@ export default function Withdraw() {
       return;
     }
 
-    // Update balance in DB
     const newCash = cash - numAmount;
     await supabase.from("profiles").update({ cash: newCash }).eq("id", profile.id);
 
-    // Process referral bonus for the referrer (backend)
     if (insertData?.id) {
       supabase.functions.invoke("process-referral-bonus", {
         body: { withdrawal_id: insertData.id },
       }).catch(console.error);
 
-      // Notify admin via bot
       supabase.functions.invoke("admin-data", {
         body: {
           action: "notify_withdrawal_bot",
@@ -102,7 +112,6 @@ export default function Withdraw() {
     setCardNumber("");
     setLoading(false);
 
-    // Refresh requests list
     const { data } = await supabase
       .from("withdrawal_requests")
       .select("id, amount, status, requested_at, card_number")
@@ -139,7 +148,7 @@ export default function Withdraw() {
         {/* Info banner */}
         <div className="farm-card bg-primary/5 border-primary/20">
           <p className="text-xs font-semibold text-foreground text-center">
-            💰 Minimal chiqarish: <span className="text-primary">{MIN_WITHDRAWAL.toLocaleString()} tanga</span> = <span className="text-primary">{coinsToSom(MIN_WITHDRAWAL)} so'm</span>
+            💰 Minimal chiqarish: <span className="text-primary">{minWithdrawal.toLocaleString()} tanga</span> = <span className="text-primary">{coinsToSom(minWithdrawal)} so'm</span>
           </p>
         </div>
 
@@ -149,12 +158,12 @@ export default function Withdraw() {
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            placeholder={`Kamida ${MIN_WITHDRAWAL.toLocaleString()}`}
+            placeholder={`Kamida ${minWithdrawal.toLocaleString()}`}
             className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <div className="flex justify-between mt-1 mb-3">
             <p className="text-xs text-muted-foreground">
-              {numAmount > 0 ? `≈ ${coinsToSom(numAmount)} so'm` : `Minimum: ${MIN_WITHDRAWAL.toLocaleString()}`}
+              {numAmount > 0 ? `≈ ${coinsToSom(numAmount)} so'm` : `Minimum: ${minWithdrawal.toLocaleString()}`}
             </p>
             <button onClick={() => setAmount(String(cash))} className="text-xs font-bold text-primary">
               Hammasi

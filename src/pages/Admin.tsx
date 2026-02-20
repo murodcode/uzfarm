@@ -553,15 +553,73 @@ export default function Admin() {
                   <h3 className="text-sm font-bold text-foreground mb-3">💰 Bozor narxlari</h3>
                   <div className="space-y-2.5">
                     <div>
-                      <label className="text-[10px] text-muted-foreground font-bold">Tuxum narxi ($)</label>
+                      <label className="text-[10px] text-muted-foreground font-bold">Tuxum narxi (tanga)</label>
                       <Input
                         type="number"
-                        value={appSettings.market_prices?.egg_price ?? 5}
+                        value={appSettings.market_prices?.egg_price ?? 50}
                         onChange={(e) => {
                           const updated = { ...appSettings.market_prices, egg_price: parseInt(e.target.value) || 0 };
                           setAppSettings(prev => ({ ...prev, market_prices: updated }));
                         }}
                         onBlur={() => callAdmin({ action: "update_settings", key: "market_prices", value: appSettings.market_prices }).then(() => toast.success("Saqlandi"))}
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Sut narxi (tanga/litr)</label>
+                      <Input
+                        type="number"
+                        value={appSettings.market_prices?.milk_price ?? 150}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.market_prices, milk_price: parseInt(e.target.value) || 0 };
+                          setAppSettings(prev => ({ ...prev, market_prices: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "market_prices", value: appSettings.market_prices }).then(() => toast.success("Saqlandi"))}
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Go'sht narxi (tanga/kg)</label>
+                      <Input
+                        type="number"
+                        value={appSettings.market_prices?.meat_price ?? 300}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.market_prices, meat_price: parseInt(e.target.value) || 0 };
+                          setAppSettings(prev => ({ ...prev, market_prices: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "market_prices", value: appSettings.market_prices }).then(() => toast.success("Saqlandi"))}
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-3">💵 Pul chiqarish sozlamalari</h3>
+                  <div className="space-y-2.5">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Minimal chiqarish (tanga)</label>
+                      <Input
+                        type="number"
+                        value={appSettings.withdrawal?.min_amount ?? 20000}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.withdrawal, min_amount: parseInt(e.target.value) || 0 };
+                          setAppSettings(prev => ({ ...prev, withdrawal: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "withdrawal", value: appSettings.withdrawal }).then(() => toast.success("Saqlandi"))}
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Konvertatsiya (N tanga = 1 so'm)</label>
+                      <Input
+                        type="number"
+                        value={appSettings.withdrawal?.coins_per_som ?? 4}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.withdrawal, coins_per_som: parseInt(e.target.value) || 4 };
+                          setAppSettings(prev => ({ ...prev, withdrawal: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "withdrawal", value: appSettings.withdrawal }).then(() => toast.success("Saqlandi"))}
                         className="text-xs mt-0.5"
                       />
                     </div>

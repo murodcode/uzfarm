@@ -5,10 +5,11 @@ export interface AnimalType {
   price: number;
   growthDurationHours: number;
   feedCost: number;
-  productType: "meat" | "egg";
+  productType: "meat" | "egg" | "milk";
   productionIntervalHours: number;
   meatYield: number;
   eggYield: number;
+  milkYield: number;
   feedsToGrow: number; // how many feeds to reach 100%
 }
 
@@ -28,6 +29,7 @@ export interface GameState {
   animals: OwnedAnimal[];
   eggs: number;
   meat: number;
+  milk: number;
   level: number;
   exp: number;
   registeredAt: number;
@@ -44,10 +46,11 @@ export const ANIMAL_TYPES: AnimalType[] = [
     price: 5000,
     growthDurationHours: 48,
     feedCost: 200,
-    productType: "meat",
-    productionIntervalHours: 0,
+    productType: "milk",
+    productionIntervalHours: 8,
     meatYield: 15,
     eggYield: 0,
+    milkYield: 3,
     feedsToGrow: 10,
   },
   {
@@ -61,6 +64,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     productionIntervalHours: 0,
     meatYield: 8,
     eggYield: 0,
+    milkYield: 0,
     feedsToGrow: 8,
   },
   {
@@ -74,6 +78,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     productionIntervalHours: 0,
     meatYield: 6,
     eggYield: 0,
+    milkYield: 0,
     feedsToGrow: 6,
   },
   {
@@ -87,6 +92,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     productionIntervalHours: 1,
     meatYield: 2,
     eggYield: 1,
+    milkYield: 0,
     feedsToGrow: 4,
   },
   {
@@ -100,6 +106,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
     productionIntervalHours: 1,
     meatYield: 4,
     eggYield: 2,
+    milkYield: 0,
     feedsToGrow: 5,
   },
 ];
@@ -107,6 +114,7 @@ export const ANIMAL_TYPES: AnimalType[] = [
 export const MARKET_PRICES = {
   egg: { base: 50, variance: 15 },
   meat: { base: 300, variance: 80 },
+  milk: { base: 150, variance: 30 },
 };
 
 export const STARTING_BALANCE = 10000;
@@ -115,7 +123,7 @@ export function getAnimalType(id: string): AnimalType | undefined {
   return ANIMAL_TYPES.find((a) => a.id === id);
 }
 
-export function getMarketPrice(type: "egg" | "meat"): number {
+export function getMarketPrice(type: "egg" | "meat" | "milk"): number {
   const { base, variance } = MARKET_PRICES[type];
   return base + Math.floor(Math.random() * variance * 2 - variance);
 }
@@ -127,6 +135,7 @@ export function createDefaultGameState(): GameState {
     animals: [],
     eggs: 0,
     meat: 0,
+    milk: 0,
     level: 1,
     exp: 0,
     registeredAt: Date.now(),
