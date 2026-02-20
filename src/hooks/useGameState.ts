@@ -24,6 +24,7 @@ function loadState(): GameState {
           animals: parsed.animals ?? [],
           eggs: parsed.eggs ?? 0,
           meat: parsed.meat ?? 0,
+          milk: parsed.milk ?? 0,
           level: parsed.level ?? 1,
           exp: parsed.exp ?? 0,
           registeredAt: parsed.registeredAt ?? Date.now(),
@@ -87,6 +88,7 @@ export function useGameState() {
             cash: profileRes.data.cash,
             eggs: profileRes.data.eggs,
             meat: profileRes.data.meat,
+            milk: (profileRes.data as any).milk ?? 0,
             level: profileRes.data.level,
             exp: profileRes.data.exp,
             animals: dbAnimals,
@@ -167,6 +169,7 @@ export function useGameState() {
             cash: state.cash,
             eggs: state.eggs,
             meat: state.meat,
+            milk: state.milk,
             level: state.level,
             exp: state.exp,
           })
@@ -223,10 +226,11 @@ export function useGameState() {
     return bought;
   }, [userId]);
 
-  const feedAnimal = useCallback(async (animalId: string) => {
+  const feedAnimal = useCallback(async (animalId: string): Promise<boolean> => {
     const now = Date.now();
-    let success = false;
-    let newGrowth = 0;
+
+    // Read current state directly to avoid closure issues
+    let feedResult: { success: boolean; newGrowth: number; feedCost: number } | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -235,10 +239,14 @@ export function useGameState() {
       const type = getAnimalType(animal.typeId);
       if (!type || prev.coins < type.feedCost) return prev;
 
-      const growthIncrease = 100 / type.feedsToGrow;
-      newGrowth = Math.min(100, animal.growthPercent + growthIncrease);
+      // Check cooldown
+      const FEED_COOLDOWN_MS = 15 * 60 * 1000;
+      if (animal.lastFedAt > 0 && now - animal.lastFedAt < FEED_COOLDOWN_MS) return prev;
 
-      success = true;
+      const growthIncrease = 100 / type.feedsToGrow;
+      const newGrowth = Math.min(100, animal.growthPercent + growthIncrease);
+      feedResult = { success: true, newGrowth, feedCost: type.feedCost };
+
       const updated = [...prev.animals];
       updated[idx] = {
         ...animal,
@@ -253,13 +261,16 @@ export function useGameState() {
       };
     });
 
-    if (success && userId) {
+    // Wait for state to be set, then sync to DB
+    if (feedResult && userId) {
       await supabase.from("animals").update({
-        growth_percent: newGrowth,
+        growth_percent: feedResult.newGrowth,
         hunger: 100,
         last_fed_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
+      return true;
     }
+    return false;
   }, [userId]);
 
   const collectEggs = useCallback(async (animalId: string): Promise<number> => {
@@ -303,6 +314,44 @@ export function useGameState() {
     return eggsCollected;
   }, [userId]);
 
+  const collectMilk = useCallback(async (animalId: string): Promise<number> => {
+    const now = Date.now();
+    let milkCollected = 0;
+    let didCollect = false;
+
+    setState((prev) => {
+      const idx = prev.animals.findIndex((a) => a.id === animalId);
+      if (idx === -1) return prev;
+      const animal = prev.animals[idx];
+      const type = getAnimalType(animal.typeId);
+      if (!type || type.productType !== "milk") return prev;
+      if (animal.growthPercent < 100) return prev;
+
+      const hoursElapsed = (now - animal.lastCollectedAt) / 3600000;
+      const cappedHours = Math.min(24, Math.max(0, hoursElapsed));
+      milkCollected = Math.floor(cappedHours / type.productionIntervalHours) * type.milkYield;
+
+      if (milkCollected <= 0) return prev;
+
+      didCollect = true;
+      const updated = [...prev.animals];
+      updated[idx] = { ...animal, lastCollectedAt: now };
+      return {
+        ...prev,
+        animals: updated,
+        milk: prev.milk + milkCollected,
+      };
+    });
+
+    if (didCollect && userId) {
+      await supabase.from("animals").update({
+        last_collected_at: new Date(now).toISOString(),
+      }).eq("id", animalId).eq("user_id", userId);
+    }
+
+    return milkCollected;
+  }, [userId]);
+
   const slaughterAnimal = useCallback(async (animalId: string) => {
     let success = false;
 
@@ -326,18 +375,19 @@ export function useGameState() {
     }
   }, [userId]);
 
-  const sellProduct = useCallback((type: "egg" | "meat", quantity: number, pricePerUnit: number) => {
+  const sellProduct = useCallback((type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
     let sold = false;
     setState((prev) => {
-      const available = type === "egg" ? prev.eggs : prev.meat;
+      const available = type === "egg" ? prev.eggs : type === "meat" ? prev.meat : prev.milk;
       if (quantity > available || quantity <= 0) return prev;
       sold = true;
       const total = quantity * pricePerUnit;
       const coinShare = Math.floor(total * SELL_SPLIT.coinPercent / 100);
       const cashShare = total - coinShare;
+      const fieldKey = type === "egg" ? "eggs" : type === "meat" ? "meat" : "milk";
       return {
         ...prev,
-        [type === "egg" ? "eggs" : "meat"]: available - quantity,
+        [fieldKey]: available - quantity,
         coins: prev.coins + coinShare,
         cash: prev.cash + cashShare,
       };
@@ -426,6 +476,7 @@ export function useGameState() {
     buyAnimal,
     feedAnimal,
     collectEggs,
+    collectMilk,
     slaughterAnimal,
     sellProduct,
     exchangeCurrency,
