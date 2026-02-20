@@ -76,169 +76,151 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="farm-card relative overflow-hidden"
+      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
     >
-      {/* Subtle wood grain top */}
-      <div className="absolute top-0 left-0 right-0 h-1 rounded-t-2xl" style={{
-        background: 'linear-gradient(90deg, hsl(28 40% 65%), hsl(28 45% 55%), hsl(28 40% 65%))'
-      }} />
-
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-3 mt-1">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 border border-primary/20 text-2xl">
-            {type.emoji}
-          </div>
-          <div>
-            <h3 className="font-black text-foreground text-sm">{type.name}</h3>
-            <p className="text-[10px] font-semibold text-muted-foreground flex items-center gap-1">
-              <span className={`inline-block h-2 w-2 rounded-full ${isHungry ? 'bg-destructive' : 'bg-primary'}`} />
-              {isHungry ? "Och" : "To'q"}
-              {isGrown && <span className="ml-1 text-primary">✓ Tayyor</span>}
-            </p>
-          </div>
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 pt-4 pb-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-3xl shrink-0">
+          {type.emoji}
         </div>
-
-        {/* Feed cost hint */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="font-black text-foreground text-base leading-tight">{type.name}</h3>
+            {isGrown && (
+              <span className="text-[10px] font-bold text-primary bg-primary/10 rounded-full px-2 py-0.5">
+                ✓ Tayyor
+              </span>
+            )}
+          </div>
+          <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1 mt-0.5">
+            <span className={`inline-block h-2 w-2 rounded-full shrink-0 ${isHungry ? 'bg-destructive' : 'bg-primary'}`} />
+            {isHungry ? "Och" : "To'q"}
+          </p>
+        </div>
         {!isGrown && (
-          <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 rounded-lg px-2 py-1">
-            🪙 {type.feedCost}/boqish
+          <span className="text-[10px] font-bold text-muted-foreground bg-muted rounded-lg px-2 py-1 shrink-0">
+            🪙 {type.feedCost}
           </span>
         )}
       </div>
 
-      {/* Growth bar */}
-      <div className="mb-2">
-        <div className="flex justify-between text-[10px] font-bold text-muted-foreground mb-1">
-          <span>🌱 O'sish</span>
-          <span>{Math.round(animal.growthPercent)}%</span>
+      <div className="px-4 pb-4 space-y-3">
+        {/* Growth bar */}
+        <div>
+          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground mb-1.5">
+            <span>🌱 O'sish</span>
+            <span className="font-bold text-foreground">{Math.round(animal.growthPercent)}%</span>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+            <motion.div
+              className="h-full rounded-full bg-primary"
+              initial={{ width: 0 }}
+              animate={{ width: `${animal.growthPercent}%` }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
         </div>
-        <div className="h-3 w-full overflow-hidden rounded-full bg-muted/60 border border-border/50">
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: 'linear-gradient(90deg, hsl(142 45% 45%), hsl(142 50% 38%))' }}
-            initial={{ width: 0 }}
-            animate={{ width: `${animal.growthPercent}%` }}
-            transition={{ duration: 0.5 }}
-          />
-        </div>
-      </div>
 
-      {/* Hunger bar */}
-      <div className="mb-3">
-        <div className="flex justify-between text-[10px] font-bold text-muted-foreground mb-1">
-          <span>🍽️ Toʻqlik</span>
-          <span>{hungerDisplay}%</span>
+        {/* Hunger bar */}
+        <div>
+          <div className="flex justify-between text-[11px] font-semibold text-muted-foreground mb-1.5">
+            <span>🍽️ To'qlik</span>
+            <span className="font-bold text-foreground">{hungerDisplay}%</span>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${hungerDisplay}%`,
+                background: isHungry
+                  ? 'hsl(var(--destructive))'
+                  : 'hsl(42 90% 55%)'
+              }}
+            />
+          </div>
         </div>
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/60 border border-border/50">
-          <div
-            className="h-full rounded-full transition-all"
-            style={{
-              width: `${hungerDisplay}%`,
-              background: isHungry
-                ? 'linear-gradient(90deg, hsl(0 72% 55%), hsl(0 72% 45%))'
-                : 'linear-gradient(90deg, hsl(42 90% 55%), hsl(38 80% 50%))'
-            }}
-          />
-        </div>
-      </div>
 
-      {/* Egg info */}
-      {isEggReady && (
-        <div className="mb-3 rounded-xl p-2.5 border border-accent/30" style={{ background: 'hsl(45 70% 88% / 0.5)' }}>
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-foreground">
-              🥚 Yig'ilgan: <span className="text-primary font-black">{accumulatedEggs} ta</span>
+        {/* Egg info */}
+        {isEggReady && (
+          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2.5">
+            <span className="text-sm font-bold text-foreground">
+              🥚 Yig'ilgan: <span className="text-primary">{accumulatedEggs} ta</span>
             </span>
-            <span className="text-muted-foreground font-semibold">
-              ⏱ {nextEggH > 0 ? `${nextEggH}:` : ""}{nextEggM.toString().padStart(2, "0")}:{nextEggS.toString().padStart(2, "0")}
+            <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {nextEggH > 0 ? `${nextEggH}:` : ""}{nextEggM.toString().padStart(2, "0")}:{nextEggS.toString().padStart(2, "0")}
             </span>
           </div>
-          {accumulatedEggs >= 24 * type.eggYield && (
-            <p className="text-[10px] text-destructive font-bold mt-1">⚠️ Limit to'ldi! Tuxumlarni yig'ing</p>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Milk info */}
-      {isMilkReady && (
-        <div className="mb-3 rounded-xl p-2.5 border border-blue-300/30" style={{ background: 'hsl(210 80% 92% / 0.5)' }}>
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-foreground">
-              🥛 Sut: <span className="text-blue-600 font-black">{accumulatedMilk} l</span>
+        {/* Milk info */}
+        {isMilkReady && (
+          <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2.5">
+            <span className="text-sm font-bold text-foreground">
+              🥛 Sut: <span className="text-primary">{accumulatedMilk} l</span>
             </span>
-            <span className="text-muted-foreground font-semibold">
-              ⏱ {nextMilkH > 0 ? `${nextMilkH}:` : ""}{nextMilkM.toString().padStart(2, "0")}:{nextMilkS.toString().padStart(2, "0")}
+            <span className="text-xs text-muted-foreground font-semibold flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {nextMilkH > 0 ? `${nextMilkH}:` : ""}{nextMilkM.toString().padStart(2, "0")}:{nextMilkS.toString().padStart(2, "0")}
             </span>
           </div>
-          {accumulatedMilk >= 24 / type.productionIntervalHours * type.milkYield && (
-            <p className="text-[10px] text-destructive font-bold mt-1">⚠️ Sut to'lib ketdi! Yig'ing</p>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Actions */}
-      <div className="flex gap-2">
-        {!isGrown && (
-          canFeed ? (
+        {/* Action buttons */}
+        <div className="flex gap-2">
+          {!isGrown && (
+            canFeed ? (
+              <button
+                onClick={onFeed}
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
+              >
+                <Utensils className="h-4 w-4" />
+                Boqish
+              </button>
+            ) : feedCooldownRemaining > 0 ? (
+              <div className="flex flex-1 items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 py-3 text-sm font-bold text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, "0")}
+              </div>
+            ) : null
+          )}
+          {isEggReady && accumulatedEggs > 0 && (
             <button
-              onClick={onFeed}
-              className="btn-farm flex flex-1 items-center justify-center gap-1.5 py-2.5 text-xs"
+              onClick={onCollect}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary"
             >
-              <Utensils className="h-3.5 w-3.5" />
-              Boqish
+              <Egg className="h-4 w-4" />
+              Yig'ish ({accumulatedEggs} 🥚)
             </button>
-          ) : feedCooldownRemaining > 0 ? (
-            <div className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 border-border bg-muted/50 py-2.5 text-xs font-bold text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, "0")}
-            </div>
-          ) : null
-        )}
-        {isEggReady && accumulatedEggs > 0 && (
-          <button
-            onClick={onCollect}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-extrabold transition-all active:scale-95 border-2"
-            style={{
-              background: 'linear-gradient(180deg, hsl(42 90% 55%), hsl(38 80% 45%))',
-              borderColor: 'hsl(38 70% 35%)',
-              color: 'hsl(30 20% 15%)',
-              boxShadow: '0 3px 10px hsl(42 90% 40% / 0.3), inset 0 1px 0 hsl(45 90% 70% / 0.4)'
-            }}
-          >
-            <Egg className="h-3.5 w-3.5" />
-            Yig'ish ({accumulatedEggs} 🥚)
-          </button>
-        )}
-        {isMilkReady && accumulatedMilk > 0 && (
-          <button
-            onClick={onCollectMilk}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-extrabold transition-all active:scale-95 border-2"
-            style={{
-              background: 'linear-gradient(180deg, hsl(210 80% 60%), hsl(210 70% 50%))',
-              borderColor: 'hsl(210 60% 40%)',
-              color: 'white',
-              boxShadow: '0 3px 10px hsl(210 80% 40% / 0.3)'
-            }}
-          >
-            <Droplets className="h-3.5 w-3.5" />
-            Sut ({accumulatedMilk}l 🥛)
-          </button>
-        )}
-        {canSlaughter && (
-          <button
-            onClick={onSlaughter}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-2.5 text-xs font-extrabold text-destructive-foreground transition-all active:scale-95 border-2"
-            style={{
-              background: 'linear-gradient(180deg, hsl(0 65% 55%), hsl(0 72% 42%))',
-              borderColor: 'hsl(0 60% 35%)',
-              boxShadow: '0 3px 10px hsl(0 72% 35% / 0.3), inset 0 1px 0 hsl(0 60% 70% / 0.3)'
-            }}
-          >
-            <Scissors className="h-3.5 w-3.5" />
-            So'yish
-          </button>
-        )}
+          )}
+          {isMilkReady && accumulatedMilk > 0 && (
+            <button
+              onClick={onCollectMilk}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
+              style={{ background: 'hsl(210 70% 55%)' }}
+            >
+              <Droplets className="h-4 w-4" />
+              Sut ({accumulatedMilk}l)
+            </button>
+          )}
+          {canSlaughter && !isEggType && !isMilkType && (
+            <button
+              onClick={onSlaughter}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-destructive-foreground active:scale-95 transition-transform bg-destructive"
+            >
+              <Scissors className="h-4 w-4" />
+              So'yish
+            </button>
+          )}
+          {canSlaughter && (isEggType || isMilkType) && (
+            <button
+              onClick={onSlaughter}
+              className="flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold text-destructive border border-destructive/30 bg-destructive/5 active:scale-95 transition-transform"
+            >
+              <Scissors className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
   );

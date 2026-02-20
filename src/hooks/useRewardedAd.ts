@@ -1,7 +1,6 @@
 import { useCallback, useRef } from "react";
 import createAdHandler from "monetag-tg-sdk";
 import { supabase } from "@/integrations/supabase/client";
-import { incrementDailyTask } from "@/lib/dailyTasks";
 
 const ZONE_ID = 10612725;
 
@@ -31,9 +30,8 @@ async function recordAdView() {
         .update({ ad_views: (profile.ad_views || 0) + 1 })
         .eq("id", userId);
     }
-
-    // Track daily task progress
-    await incrementDailyTask(userId, "watch_ads");
+    // Note: watch_ads daily task is tracked only from Tasks page (handleWatchAd)
+    // NOT here, to avoid double-counting from other ad triggers
   } catch (err) {
     console.error("Failed to record ad view:", err);
   }
