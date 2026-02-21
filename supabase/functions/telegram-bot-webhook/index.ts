@@ -183,18 +183,24 @@ async function sendPaymentChannelNotification(
 
     if (!userProfile) return;
 
-    // Get withdrawal details
     const { data: wd } = await supabase.from("withdrawal_requests")
       .select("requested_at, card_number")
       .eq("id", wdId).single();
 
-    // Count total approved withdrawals for numbering
     const { count: approvedCount } = await supabase.from("withdrawal_requests")
       .select("*", { count: "exact", head: true })
       .eq("status", "approved");
 
+    // Get dynamic conversion rate
+    let coinsPerSom = 4;
+    const { data: settingsData } = await supabase.from("app_settings").select("value").eq("key", "withdrawal").single();
+    if (settingsData?.value && typeof settingsData.value === "object") {
+      const sv = settingsData.value as any;
+      if (sv.coins_per_som) coinsPerSom = sv.coins_per_som;
+    }
+
     const paymentNumber = approvedCount || 1;
-    const somAmount = Math.floor(amount / 10);
+    const somAmount = Math.floor(amount / coinsPerSom);
     const cardDigits = wd?.card_number?.replace(/\D/g, "") || "";
     const maskedCard = cardDigits.length >= 8
       ? `${cardDigits.slice(0, 4)}****${cardDigits.slice(-4)}`
@@ -282,16 +288,21 @@ Deno.serve(async (req) => {
         const wdId = data.replace("approve_wd_", "");
         await supabase.from("withdrawal_requests").update({ status: "approved", processed_at: new Date().toISOString() }).eq("id", wdId);
 
-        // Get withdrawal info
         const { data: wd } = await supabase.from("withdrawal_requests").select("user_id, amount").eq("id", wdId).single();
         if (wd) {
-          // Notify user
+          // Get dynamic conversion rate
+          let coinsPerSom = 4;
+          const { data: sData } = await supabase.from("app_settings").select("value").eq("key", "withdrawal").single();
+          if (sData?.value && typeof sData.value === "object") {
+            const sv = sData.value as any;
+            if (sv.coins_per_som) coinsPerSom = sv.coins_per_som;
+          }
+
           const { data: userProfile } = await supabase.from("profiles").select("telegram_id").eq("id", wd.user_id).single();
           if (userProfile?.telegram_id) {
-            const somAmt = Math.floor(wd.amount / 10);
+            const somAmt = Math.floor(wd.amount / coinsPerSom);
             await sendMessage(userProfile.telegram_id, `✅ Sizning 💵 ${wd.amount.toLocaleString()} tangalik (${somAmt.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`);
           }
-          // Send to payment channel
           await sendPaymentChannelNotification(supabase, wdId, wd.user_id, wd.amount);
         }
 

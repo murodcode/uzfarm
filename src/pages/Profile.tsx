@@ -57,29 +57,29 @@ export default function Profile() {
                 <img
                   src={profile.photo_url}
                   alt={profile.first_name || "User"}
-                  className="h-16 w-16 rounded-full border-2 border-primary-foreground/30 mb-3"
+                  className="h-16 w-16 rounded-full border-2 border-white/40 mb-3 shadow-lg"
                 />
               ) : (
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20 text-3xl mb-3">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/25 text-3xl mb-3 shadow-lg">
                   🧑‍🌾
                 </div>
               )}
-              <h1 className="text-xl font-extrabold text-primary-foreground">
+              <h1 className="text-xl font-extrabold text-white drop-shadow-md">
                 {profile.first_name || "Fermer"}
               </h1>
               {profile.username && (
-                <p className="text-xs font-medium text-primary-foreground/70 mt-1">
+                <p className="text-xs font-semibold text-white/80 mt-1 drop-shadow-sm">
                   @{profile.username}
                 </p>
               )}
               {isAdmin && (
-                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-accent/20 px-2.5 py-0.5 text-[10px] font-bold text-accent">
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/25 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-sm">
                   <Shield className="h-3 w-3" /> Admin
                 </span>
               )}
               <button
                 onClick={signOut}
-                className="mt-2 flex items-center gap-1.5 rounded-xl bg-destructive/20 px-4 py-2 text-xs font-bold text-primary-foreground backdrop-blur-sm transition-transform active:scale-95"
+                className="mt-2 flex items-center gap-1.5 rounded-xl bg-white/20 px-4 py-2 text-xs font-bold text-white backdrop-blur-sm transition-transform active:scale-95 shadow-sm"
               >
                 <LogOut className="h-3.5 w-3.5" />
                 Chiqish
@@ -87,20 +87,20 @@ export default function Profile() {
             </>
           ) : (
             <>
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-foreground/20 text-3xl mb-3">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/25 text-3xl mb-3 shadow-lg">
                 🧑‍🌾
               </div>
-              <h1 className="text-xl font-extrabold text-primary-foreground">Fermer</h1>
+              <h1 className="text-xl font-extrabold text-white drop-shadow-md">Fermer</h1>
               <button
                 onClick={() => navigate("/login")}
-                className="mt-2 flex items-center gap-1.5 rounded-xl bg-primary-foreground/15 px-4 py-2 text-xs font-bold text-primary-foreground backdrop-blur-sm transition-transform active:scale-95"
+                className="mt-2 flex items-center gap-1.5 rounded-xl bg-white/20 px-4 py-2 text-xs font-bold text-white backdrop-blur-sm transition-transform active:scale-95 shadow-sm"
               >
                 <LogIn className="h-3.5 w-3.5" />
                 Telegram bilan kirish
               </button>
             </>
           )}
-          <p className="text-xs font-medium text-primary-foreground/70 mt-2">
+          <p className="text-xs font-semibold text-white/80 mt-2 drop-shadow-sm">
             {daysSinceRegistration} kundan beri o'ynayapsiz
           </p>
         </motion.div>
