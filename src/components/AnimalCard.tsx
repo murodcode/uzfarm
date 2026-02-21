@@ -44,7 +44,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
   const hasFedBefore = animal.lastFedAt > 0;
   const timeSinceLastFed = hasFedBefore ? now - animal.lastFedAt : Infinity;
   const feedCooldownRemaining = hasFedBefore ? Math.max(0, FEED_COOLDOWN_MS - timeSinceLastFed) : 0;
-  const canFeed = feedCooldownRemaining <= 0 && !isGrown;
+  const canFeed = feedCooldownRemaining <= 0;
   const cooldownMinutes = Math.floor(feedCooldownRemaining / 60000);
   const cooldownSeconds = Math.floor((feedCooldownRemaining % 60000) / 1000);
 
@@ -197,22 +197,20 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
         {/* Action buttons — always in a column so they never wrap */}
         <div className="flex flex-col gap-2">
           {/* Feed button row */}
-          {!isGrown && (
-            canFeed ? (
-              <button
-                onClick={onFeed}
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
-              >
-                <Utensils className="h-4 w-4" />
-                Boqish
-              </button>
-            ) : feedCooldownRemaining > 0 ? (
-              <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 py-3 text-sm font-bold text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, "0")}
-              </div>
-            ) : null
-          )}
+          {canFeed ? (
+            <button
+              onClick={onFeed}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
+            >
+              <Utensils className="h-4 w-4" />
+              Boqish
+            </button>
+          ) : feedCooldownRemaining > 0 ? (
+            <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 py-3 text-sm font-bold text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, "0")}
+            </div>
+          ) : null}
 
           {/* Collect + Slaughter row for egg producers */}
           {isEggReady && (
