@@ -301,13 +301,25 @@ Deno.serve(async (req) => {
           .eq("id", user_id)
           .single();
 
+        // Get dynamic conversion rate from settings
+        let coinsPerSom = 4;
+        const { data: settingsData } = await adminClient
+          .from("app_settings")
+          .select("value")
+          .eq("key", "withdrawal")
+          .single();
+        if (settingsData?.value && typeof settingsData.value === "object") {
+          const sv = settingsData.value as any;
+          if (sv.coins_per_som) coinsPerSom = sv.coins_per_som;
+        }
+
         const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
         if (botToken && userProfile) {
           const ADMIN_CHAT_ID = 6854856230;
           const cardFormatted = card_number?.length === 16
             ? card_number.replace(/(.{4})/g, "$1 ").trim()
             : card_number || "—";
-          const somAmount = Math.floor(amount / 10);
+          const somAmount = Math.floor(amount / coinsPerSom);
           
           // Get withdrawal ID for callback buttons
           const { data: latestWd } = await adminClient

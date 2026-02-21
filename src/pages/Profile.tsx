@@ -112,15 +112,15 @@ export default function Profile() {
           transition={{ delay: 0.1 }}
           className="mt-5 grid grid-cols-2 gap-3"
         >
-          <div className="rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 p-4 text-center">
-            <p className="text-xs font-semibold text-primary-foreground/70">🪙 Tangalar</p>
-            <p className="text-2xl font-black text-primary-foreground">
+          <div className="rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 p-4 text-center shadow-lg">
+            <p className="text-xs font-bold text-white/90 drop-shadow-sm">🪙 Tangalar</p>
+            <p className="text-2xl font-black text-white drop-shadow-md">
               {state.coins.toLocaleString()}
             </p>
           </div>
-          <div className="rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 p-4 text-center">
-            <p className="text-xs font-semibold text-primary-foreground/70">💵 Naqd pul</p>
-            <p className="text-2xl font-black text-primary-foreground">
+          <div className="rounded-2xl bg-white/20 backdrop-blur-md border border-white/20 p-4 text-center shadow-lg">
+            <p className="text-xs font-bold text-white/90 drop-shadow-sm">💵 Naqd pul</p>
+            <p className="text-2xl font-black text-white drop-shadow-md">
               {state.cash.toLocaleString()}
             </p>
           </div>
