@@ -194,73 +194,61 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           </div>
         )}
 
-        {/* Action buttons — always in a column so they never wrap */}
-        <div className="flex flex-col gap-2">
-          {/* Feed button row */}
+        {/* Action buttons — single row */}
+        <div className="flex gap-2">
+          {/* Feed button */}
           {canFeed ? (
             <button
               onClick={onFeed}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform"
             >
-              <Utensils className="h-4 w-4" />
+              <Utensils className="h-3.5 w-3.5" />
               Boqish
             </button>
           ) : feedCooldownRemaining > 0 ? (
-            <div className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-border bg-muted/50 py-3 text-sm font-bold text-muted-foreground">
-              <Clock className="h-4 w-4" />
+            <div className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl border-2 border-border bg-muted/50 py-3 text-xs font-bold text-muted-foreground">
+              <Clock className="h-3.5 w-3.5" />
               {cooldownMinutes}:{cooldownSeconds.toString().padStart(2, "0")}
             </div>
           ) : null}
 
-          {/* Collect + Slaughter row for egg producers */}
+          {/* Collect button for egg producers */}
           {isEggReady && (
-            <div className="flex gap-2">
-              <button
-                onClick={onCollect}
-                disabled={accumulatedEggs === 0}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary disabled:opacity-50"
-              >
-                <Egg className="h-4 w-4" />
-                Yig'ish ({accumulatedEggs} 🥚)
-              </button>
-              <button
-                onClick={onSlaughter}
-                className="flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold text-destructive border border-destructive/30 bg-destructive/5 active:scale-95 transition-transform"
-              >
-                <Scissors className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <button
+              onClick={onCollect}
+              disabled={accumulatedEggs === 0}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary disabled:opacity-50"
+            >
+              <Egg className="h-3.5 w-3.5" />
+              Yig'ish ({accumulatedEggs})
+            </button>
           )}
 
-          {/* Collect + Slaughter row for milk producers */}
+          {/* Collect button for milk producers */}
           {isMilkReady && (
-            <div className="flex gap-2">
-              <button
-                onClick={onCollectMilk}
-                disabled={accumulatedMilk === 0}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
-                style={{ background: 'hsl(210 70% 55%)' }}
-              >
-                <Droplets className="h-4 w-4" />
-                Sut ({accumulatedMilk} l)
-              </button>
-              <button
-                onClick={onSlaughter}
-                className="flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold text-destructive border border-destructive/30 bg-destructive/5 active:scale-95 transition-transform"
-              >
-                <Scissors className="h-3.5 w-3.5" />
-              </button>
-            </div>
+            <button
+              onClick={onCollectMilk}
+              disabled={accumulatedMilk === 0}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
+              style={{ background: 'hsl(210 70% 55%)' }}
+            >
+              <Droplets className="h-3.5 w-3.5" />
+              Sut ({accumulatedMilk})
+            </button>
           )}
 
-          {/* Full slaughter button for meat animals */}
-          {canSlaughter && !isEggType && !isMilkType && (
+          {/* Slaughter button */}
+          {canSlaughter && (
             <button
               onClick={onSlaughter}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold text-destructive-foreground active:scale-95 transition-transform bg-destructive"
+              className={`flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold active:scale-95 transition-transform ${
+                !isEggType && !isMilkType
+                  ? "flex-1 rounded-2xl text-destructive-foreground bg-destructive"
+                  : "text-destructive border border-destructive/30 bg-destructive/5"
+              }`}
             >
-              <Scissors className="h-4 w-4" />
-              So'yish
+              <Scissors className="h-3.5 w-3.5" />
+              {!isEggType && !isMilkType && "So'yish"}
             </button>
           )}
         </div>
