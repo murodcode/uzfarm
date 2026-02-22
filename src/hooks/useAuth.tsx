@@ -77,6 +77,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Enable fullscreen and prevent swipe-to-close
+    try {
+      if (tgApp.expand) tgApp.expand();
+      if (tgApp.requestFullscreen) tgApp.requestFullscreen();
+      if (tgApp.disableVerticalSwipes) tgApp.disableVerticalSwipes();
+      if (tgApp.isClosingConfirmationEnabled !== undefined) {
+        tgApp.enableClosingConfirmation?.();
+      }
+    } catch (e) {
+      console.log("[TG] Fullscreen setup error (non-fatal):", e);
+    }
+
     // Parse telegram user from initData
     try {
       const params = new URLSearchParams(tgApp.initData);

@@ -98,6 +98,12 @@ async function processReferralInDB(
     }
   }
 
+  // Only process if existingProfile exists (user already opened WebApp)
+  if (!existingProfile) {
+    console.log("[bot-referral] ❌ New user has no profile yet, skipping bot-side referral (will be handled by telegram-auth)");
+    return null;
+  }
+
   const newCount = (referrerProfile.referral_count || 0) + 1;
   const newLevel = Math.min(Math.floor(newCount / 10), 10);
   const newCoins = (referrerProfile.coins || 0) + referrerBonus;
