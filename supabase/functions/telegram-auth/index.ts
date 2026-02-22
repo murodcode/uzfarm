@@ -46,18 +46,18 @@ async function processReferral(
   supabase: any,
   newUserId: string,
   startParam: string
-): Promise<boolean> {
+) {
   console.log("[referral] Processing referral for user:", newUserId, "param:", startParam);
 
   if (!startParam || !startParam.startsWith("ref_")) {
     console.log("[referral] No valid ref param, skipping");
-    return false;
+    return;
   }
 
   const referrerIdentifier = startParam.replace("ref_", "");
   if (!referrerIdentifier) {
     console.log("[referral] Empty referrer identifier");
-    return false;
+    return;
   }
 
   // Check if user already has a referrer
@@ -69,7 +69,7 @@ async function processReferral(
 
   if (currentProfile?.referred_by) {
     console.log("[referral] User already has referrer:", currentProfile.referred_by);
-    return false;
+    return;
   }
 
   // Find referrer by telegram_id (numeric) or UUID
@@ -96,12 +96,12 @@ async function processReferral(
 
   if (!referrerUserId) {
     console.log("[referral] ❌ Referrer not found");
-    return false;
+    return;
   }
 
   if (referrerUserId === newUserId) {
     console.log("[referral] ❌ Self-referral blocked");
-    return false;
+    return;
   }
 
   // Get referral settings
@@ -114,7 +114,7 @@ async function processReferral(
   const settings = settingsData?.value as any;
   if (settings?.enabled === false) {
     console.log("[referral] ❌ Referral system disabled");
-    return false;
+    return;
   }
 
   const referrerBonus = settings?.referrer_bonus ?? 1000;
@@ -128,7 +128,7 @@ async function processReferral(
 
   if (refErr) {
     console.error("[referral] ❌ Failed to set referred_by:", refErr.message);
-    return false;
+    return;
   }
   console.log("[referral] ✅ Set referred_by");
 
@@ -177,7 +177,6 @@ async function processReferral(
   }
 
   console.log(`[referral] ✅ COMPLETE: ${newUserId} referred by ${referrerUserId}`);
-  return true;
 }
 
 Deno.serve(async (req) => {
@@ -273,35 +272,7 @@ Deno.serve(async (req) => {
     // Process referral for any user without a referrer
     if (start_param) {
       try {
-        const referralResult = await processReferral(supabase, userId!, start_param);
-
-        // If referral was processed, notify referrer via bot
-        if (referralResult === true) {
-          const refId = start_param.replace("ref_", "");
-          const numId = Number(refId);
-          if (!isNaN(numId) && numId > 0) {
-            const { data: referrerProfile } = await supabase
-              .from("profiles").select("telegram_id").eq("telegram_id", numId).single();
-            const { data: settingsData } = await supabase
-              .from("app_settings").select("value").eq("key", "referral").single();
-            const bonus = (settingsData?.value as any)?.referrer_bonus ?? 1000;
-            if (referrerProfile?.telegram_id) {
-              const botToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
-              if (botToken) {
-                const newUserName = telegramUser.first_name || telegramUser.username || `ID:${telegramUser.id}`;
-                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    chat_id: referrerProfile.telegram_id,
-                    text: `🎉 <b>Yangi referal!</b>\n\n👤 <b>${newUserName}</b> sizning havolangiz orqali botga qo'shildi!\n\n🪙 Sizga +${bonus} bonus berildi!`,
-                    parse_mode: "HTML",
-                  }),
-                });
-              }
-            }
-          }
-        }
+        await processReferral(supabase, userId!, start_param);
       } catch (err) {
         console.error("[auth] Referral processing error (non-fatal):", err);
       }

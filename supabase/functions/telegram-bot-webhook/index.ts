@@ -393,8 +393,18 @@ Deno.serve(async (req) => {
 
       if (startParam?.startsWith("ref_")) {
         miniAppStartParam = startParam;
-        // Referral processing is handled ONLY in telegram-auth to prevent duplicates
-        console.log("[bot] Referral param detected:", startParam, "- will be processed in WebApp auth");
+        const referrerIdentifier = startParam.replace("ref_", "");
+        const newUserName = fromUser.first_name || fromUser.username || `ID:${fromUser.id}`;
+
+        const result = await processReferralInDB(supabase, fromUser.id, newUserName, referrerIdentifier);
+
+        if (result && !result.alreadyReferred && result.referrerProfile?.telegram_id) {
+          const s = (await supabase.from("app_settings").select("value").eq("key", "referral").single())?.data?.value as any;
+          const bonus = s?.referrer_bonus ?? 500;
+          await sendMessage(result.referrerProfile.telegram_id,
+            `🎉 <b>Yangi referal!</b>\n\n👤 <b>${newUserName}</b> sizning havolangiz orqali botga qo'shildi!\n\n🪙 Sizga +${bonus} bonus berildi!`
+          );
+        }
       }
 
       const miniAppButton = { text: "🎮 O'yinni ochish", web_app: { url: "https://c294.coresuz.ru" } };
