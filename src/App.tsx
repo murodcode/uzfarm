@@ -19,6 +19,7 @@ import Referral from "./pages/Referral";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import LoadingScreen from "./components/LoadingScreen";
+import BackgroundMusic from "./components/BackgroundMusic";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ function AppRoutes() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />
+        <BackgroundMusic />
       </div>
     </GameStateProvider>
   );
