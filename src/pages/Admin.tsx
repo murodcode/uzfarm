@@ -28,7 +28,29 @@ interface Stats {
   totalCoins: number;
   totalCash: number;
   totalAdViews: number;
+  todayAdViews: number;
+  totalReferrals: number;
+  todayReferrals: number;
   pendingWithdrawals: number;
+}
+
+interface UserDetail {
+  id: string;
+  first_name: string | null;
+  username: string | null;
+  telegram_id: number | null;
+  photo_url: string | null;
+  coins: number;
+  cash: number;
+  eggs: number;
+  meat: number;
+  milk: number;
+  ad_views: number;
+  is_blocked: boolean;
+  referral_count: number;
+  referral_earnings: number;
+  level: number;
+  animal_count?: number;
 }
 
 type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings";
@@ -37,7 +59,9 @@ export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
-  const [profiles, setProfiles] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<UserDetail[]>([]);
+  const [filteredProfiles, setFilteredProfiles] = useState<UserDetail[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [stats, setStats] = useState<Stats | null>(null);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -119,7 +143,10 @@ export default function Admin() {
         setWithdrawals(data?.withdrawals || []);
       } else if (tab === "users") {
         const data = await callAdmin({ action: "get_users" });
-        setProfiles(data?.users || []);
+        const users = data?.users || [];
+        setProfiles(users);
+        setFilteredProfiles(users);
+        setSearchQuery("");
       } else if (tab === "tasks") {
         const data = await callAdmin({ action: "get_tasks" });
         setTasks(data?.tasks || []);
@@ -271,9 +298,10 @@ export default function Admin() {
                   <StatBox icon={Banknote} label="Kutilayotgan so'rovlar" value={stats.pendingWithdrawals} color="text-farm-gold" />
                   <StatBox icon={Coins} label="Jami tangalar" value={stats.totalCoins.toLocaleString()} />
                   <StatBox icon={DollarSign} label="Jami naqd pul" value={stats.totalCash.toLocaleString()} />
-                  <div className="col-span-2">
-                    <StatBox icon={Eye} label="Jami reklama ko'rishlari" value={stats.totalAdViews.toLocaleString()} color="text-primary" />
-                  </div>
+                  <StatBox icon={Eye} label="Jami reklama" value={stats.totalAdViews.toLocaleString()} color="text-primary" />
+                  <StatBox icon={Eye} label="Bugungi reklama" value={stats.todayAdViews} color="text-primary" />
+                  <StatBox icon={Users} label="Jami referallar" value={stats.totalReferrals} />
+                  <StatBox icon={UserPlus} label="Bugungi referallar" value={stats.todayReferrals} color="text-primary" />
                 </div>
               </div>
             )}
@@ -331,10 +359,32 @@ export default function Admin() {
             {/* === USERS === */}
             {tab === "users" && (
               <div className="space-y-3">
-                {profiles.length === 0 ? (
-                  <p className="text-center text-sm text-muted-foreground py-8">Foydalanuvchilar yo'q</p>
+                {/* Search */}
+                <Input
+                  placeholder="🔍 ID, ism yoki username bo'yicha qidirish..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    const q = e.target.value.toLowerCase();
+                    setSearchQuery(e.target.value);
+                    if (!q) {
+                      setFilteredProfiles(profiles);
+                    } else {
+                      setFilteredProfiles(profiles.filter((p) =>
+                        (p.first_name?.toLowerCase().includes(q)) ||
+                        (p.username?.toLowerCase().includes(q)) ||
+                        (p.telegram_id?.toString().includes(q)) ||
+                        (p.id.toLowerCase().includes(q))
+                      ));
+                    }
+                  }}
+                  className="text-xs"
+                />
+                {filteredProfiles.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-8">
+                    {searchQuery ? "Topilmadi" : "Foydalanuvchilar yo'q"}
+                  </p>
                 ) : (
-                  profiles.map((p: any) => (
+                  filteredProfiles.map((p) => (
                     <div key={p.id} className="farm-card">
                       <div className="flex items-center gap-3">
                         {p.photo_url ? (
@@ -346,12 +396,32 @@ export default function Admin() {
                           <div className="flex items-center gap-1.5">
                             <p className="text-sm font-bold text-foreground truncate">{p.first_name || "Noma'lum"}</p>
                             {p.is_blocked && <span className="text-[9px] bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 font-bold">BLOCK</span>}
+                            <span className="text-[9px] bg-muted text-muted-foreground rounded-full px-1.5 py-0.5 font-bold">Lv.{p.level || 1}</span>
                           </div>
-                          <p className="text-[10px] text-muted-foreground">@{p.username || "—"} · 👁 {p.ad_views || 0}</p>
+                          <p className="text-[10px] text-muted-foreground">@{p.username || "—"} · TG: {p.telegram_id || "—"}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-bold text-foreground">🪙 {p.coins}</p>
-                          <p className="text-xs text-muted-foreground">💵 {p.cash}</p>
+                          <p className="text-xs font-bold text-foreground">🪙 {(p.coins || 0).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">💵 {(p.cash || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      {/* User details */}
+                      <div className="mt-2 grid grid-cols-4 gap-1.5 text-center">
+                        <div className="rounded-lg bg-muted/50 py-1">
+                          <p className="text-[10px] text-muted-foreground">👥 Ref</p>
+                          <p className="text-xs font-bold text-foreground">{p.referral_count || 0}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/50 py-1">
+                          <p className="text-[10px] text-muted-foreground">🐾 Hayvon</p>
+                          <p className="text-xs font-bold text-foreground">{p.animal_count ?? 0}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/50 py-1">
+                          <p className="text-[10px] text-muted-foreground">👁 Reklama</p>
+                          <p className="text-xs font-bold text-foreground">{p.ad_views || 0}</p>
+                        </div>
+                        <div className="rounded-lg bg-muted/50 py-1">
+                          <p className="text-[10px] text-muted-foreground">🪙 Ref.dar</p>
+                          <p className="text-xs font-bold text-foreground">{(p.referral_earnings || 0).toLocaleString()}</p>
                         </div>
                       </div>
                       <div className="flex gap-1.5 mt-2">
