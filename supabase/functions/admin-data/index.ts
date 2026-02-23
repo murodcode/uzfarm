@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
 
     // === GET STATS ===
     if (action === "get_stats") {
-      const { data: allProfiles } = await adminClient.from("profiles").select("id, coins, cash, ad_views, is_blocked, created_at");
+      const { data: allProfiles } = await adminClient.from("profiles").select("id, coins, cash, ad_views, is_blocked, created_at, referral_count");
       const profiles = allProfiles || [];
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -162,6 +162,23 @@ Deno.serve(async (req) => {
       const totalCoins = profiles.reduce((s: number, p: any) => s + (p.coins || 0), 0);
       const totalCash = profiles.reduce((s: number, p: any) => s + (p.cash || 0), 0);
       const totalAdViews = profiles.reduce((s: number, p: any) => s + (p.ad_views || 0), 0);
+      const totalReferrals = profiles.reduce((s: number, p: any) => s + (p.referral_count || 0), 0);
+
+      // Today's ad views from daily_task_progress
+      const { data: todayAdData } = await adminClient
+        .from("daily_task_progress")
+        .select("progress")
+        .eq("task_key", "watch_ad")
+        .eq("task_date", today.toISOString().split('T')[0]);
+      const todayAdViews = (todayAdData || []).reduce((s: number, d: any) => s + (d.progress || 0), 0);
+
+      // Today's referrals - profiles with referred_by set today
+      const { data: todayRefData } = await adminClient
+        .from("profiles")
+        .select("id")
+        .not("referred_by", "is", null)
+        .gte("created_at", todayStr);
+      const todayReferrals = todayRefData?.length || 0;
 
       const { count: pendingWithdrawals } = await adminClient
         .from("withdrawal_requests")
@@ -169,7 +186,7 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
 
       return json({
-        stats: { totalUsers, todayUsers, blockedUsers, totalCoins, totalCash, totalAdViews, pendingWithdrawals: pendingWithdrawals || 0 }
+        stats: { totalUsers, todayUsers, blockedUsers, totalCoins, totalCash, totalAdViews, todayAdViews, totalReferrals, todayReferrals, pendingWithdrawals: pendingWithdrawals || 0 }
       });
     }
 
@@ -203,7 +220,24 @@ Deno.serve(async (req) => {
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
-      return json({ users: users || [] });
+      
+      // Get animal counts per user
+      const userIds = (users || []).map((u: any) => u.id);
+      const { data: animals } = await adminClient
+        .from("animals")
+        .select("user_id");
+      
+      const animalCountMap = new Map<string, number>();
+      (animals || []).forEach((a: any) => {
+        animalCountMap.set(a.user_id, (animalCountMap.get(a.user_id) || 0) + 1);
+      });
+
+      const enrichedUsers = (users || []).map((u: any) => ({
+        ...u,
+        animal_count: animalCountMap.get(u.id) || 0,
+      }));
+
+      return json({ users: enrichedUsers });
     }
 
     // === UPDATE WITHDRAWAL ===

@@ -9,8 +9,8 @@ export default function Shop() {
   const { state, buyAnimal } = useGameContext();
   const { showAd } = useRewardedAd();
 
-  const handleBuy = (typeId: string) => {
-    const result = buyAnimal(typeId);
+  const handleBuy = async (typeId: string) => {
+    const result = await buyAnimal(typeId);
     if (result) {
       toast.success("Hayvon sotib olindi! 🎉");
       // Show ad after successful purchase

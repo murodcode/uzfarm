@@ -209,7 +209,7 @@ export function useGameState() {
     });
 
     if (bought && userId) {
-      await supabase.from("animals").insert({
+      const { error: insertError } = await supabase.from("animals").insert({
         id: animalId,
         user_id: userId,
         type_id: typeId,
@@ -219,6 +219,17 @@ export function useGameState() {
         last_collected_at: new Date(now).toISOString(),
         bought_at: new Date(now).toISOString(),
       });
+      
+      if (insertError) {
+        console.error("Animal insert error:", insertError);
+        // Rollback local state if DB insert failed
+        setState((prev) => ({
+          ...prev,
+          coins: prev.coins + type.price,
+          animals: prev.animals.filter((a) => a.id !== animalId),
+        }));
+        return false;
+      }
       // Track daily task
       incrementDailyTask(userId, "buy_animal");
     }

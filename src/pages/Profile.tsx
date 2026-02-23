@@ -1,24 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users, BarChart3 } from "lucide-react";
+import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users } from "lucide-react";
 import StatCard from "@/components/StatCard";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-
-interface GlobalStats {
-  total_users: number;
-  total_coins: number;
-  total_referrals: number;
-  total_eggs: number;
-}
-
 export default function Profile() {
   const { state } = useGameContext();
   const { session, profile, isAdmin, signOut, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const [globalStats, setGlobalStats] = useState<GlobalStats | null>(null);
 
   // Refresh profile data when page loads and every 10 seconds
   useEffect(() => {
@@ -28,13 +18,6 @@ export default function Profile() {
       return () => clearInterval(interval);
     }
   }, [session, refreshProfile]);
-
-  // Fetch global stats
-  useEffect(() => {
-    supabase.functions.invoke("global-stats").then(({ data }) => {
-      if (data) setGlobalStats(data);
-    });
-  }, []);
 
   const daysSinceRegistration = Math.floor(
     (Date.now() - state.registeredAt) / (1000 * 60 * 60 * 24)
@@ -258,40 +241,6 @@ export default function Profile() {
           </motion.div>
         )}
 
-        {/* Global Stats */}
-        {globalStats && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="mt-4"
-          >
-            <h2 className="mb-3 text-sm font-bold text-foreground flex items-center gap-1.5">
-              <BarChart3 className="h-4 w-4" /> Umumiy statistika
-            </h2>
-            <div className="farm-card space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Jami foydalanuvchilar</span>
-                <span className="text-sm font-bold text-foreground">{globalStats.total_users.toLocaleString()}</span>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Jami tangalar</span>
-                <span className="text-sm font-bold text-foreground">🪙 {globalStats.total_coins.toLocaleString()}</span>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Jami referallar</span>
-                <span className="text-sm font-bold text-foreground">👥 {globalStats.total_referrals.toLocaleString()}</span>
-              </div>
-              <div className="h-px bg-border" />
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Jami tuxumlar</span>
-                <span className="text-sm font-bold text-foreground">🥚 {globalStats.total_eggs.toLocaleString()}</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
 
         {/* Game info */}
         <motion.div

@@ -50,70 +50,28 @@ async function setAdminState(supabase: any, state: { action: string; data?: any 
   );
 }
 
-async function processReferralInDB(
+// Store pending referral in app_settings so telegram-auth can process it
+async function storePendingReferral(
   supabase: any,
   newTelegramId: number,
-  newUserName: string,
   referrerIdentifier: string
-): Promise<{ referrerProfile: any; alreadyReferred: boolean } | null> {
-  console.log("[bot-referral] Processing referral in DB:", newTelegramId, "ref:", referrerIdentifier);
-
+): Promise<void> {
+  console.log("[bot-referral] Storing pending referral:", newTelegramId, "ref:", referrerIdentifier);
+  
   const numericId = Number(referrerIdentifier);
-  if (isNaN(numericId) || numericId <= 0) return null;
-  if (numericId === newTelegramId) return null;
+  if (isNaN(numericId) || numericId <= 0) return;
+  if (numericId === newTelegramId) return;
 
-  const { data: referrerProfile } = await supabase
-    .from("profiles")
-    .select("id, telegram_id, first_name, username, coins, referral_count, referral_earnings, referral_level")
-    .eq("telegram_id", numericId)
-    .single();
-
-  if (!referrerProfile) return null;
-
-  const { data: existingProfile } = await supabase
-    .from("profiles")
-    .select("id, referred_by")
-    .eq("telegram_id", newTelegramId)
-    .single();
-
-  if (existingProfile?.referred_by) {
-    return { referrerProfile, alreadyReferred: true };
-  }
-
-  const { data: settingsData } = await supabase
-    .from("app_settings").select("value").eq("key", "referral").single();
-  const settings = settingsData?.value as any;
-  if (settings?.enabled === false) return null;
-
-  const referrerBonus = settings?.referrer_bonus ?? 500;
-  const refereeBonus = settings?.referee_bonus ?? 300;
-
-  if (existingProfile) {
-    await supabase.from("profiles").update({ referred_by: referrerProfile.id }).eq("id", existingProfile.id);
-    if (refereeBonus > 0) {
-      const { data: refProfile } = await supabase.from("profiles").select("coins").eq("id", existingProfile.id).single();
-      if (refProfile) {
-        await supabase.from("profiles").update({ coins: (refProfile.coins || 0) + refereeBonus }).eq("id", existingProfile.id);
-      }
-    }
-  }
-
-  // Only process if existingProfile exists (user already opened WebApp)
-  if (!existingProfile) {
-    console.log("[bot-referral] ❌ New user has no profile yet, skipping bot-side referral (will be handled by telegram-auth)");
-    return null;
-  }
-
-  const newCount = (referrerProfile.referral_count || 0) + 1;
-  const newLevel = Math.min(Math.floor(newCount / 10), 10);
-  const newCoins = (referrerProfile.coins || 0) + referrerBonus;
-  const newEarnings = (referrerProfile.referral_earnings || 0) + referrerBonus;
-
-  await supabase.from("profiles").update({
-    coins: newCoins, referral_count: newCount, referral_earnings: newEarnings, referral_level: newLevel,
-  }).eq("id", referrerProfile.id);
-
-  return { referrerProfile, alreadyReferred: false };
+  // Store as pending referral
+  await supabase.from("app_settings").upsert(
+    { 
+      key: `pending_ref_${newTelegramId}`, 
+      value: { referrer_tg_id: numericId, created_at: new Date().toISOString() },
+      updated_at: new Date().toISOString() 
+    },
+    { onConflict: "key" }
+  );
+  console.log("[bot-referral] ✅ Pending referral stored for tg:", newTelegramId);
 }
 
 async function handleAdminPanel(chatId: number) {
@@ -327,6 +285,14 @@ Deno.serve(async (req) => {
           }
         }
         await sendMessage(chatId, `❌ So'rov rad etildi: <code>${wdId.slice(0, 8)}</code>`);
+      } else if (data === "bot_help" || data === "back_to_start") {
+        // Redirect to help or start via deeplink
+        const url = data === "bot_help" 
+          ? `https://t.me/${BOT_USERNAME}?start=help`
+          : `https://t.me/${BOT_USERNAME}?start=main`;
+        await sendMessage(chatId, data === "bot_help" ? "📖 Qo'llanmani ko'rish uchun tugmani bosing:" : "🏠 Bosh menyu:", {
+          inline_keyboard: [[{ text: data === "bot_help" ? "📖 Qo'llanma" : "🏠 Bosh menyu", url }]],
+        });
       } else if (data.startsWith("reply_to_")) {
         const targetTgId = parseInt(data.replace("reply_to_", ""));
         if (!isNaN(targetTgId)) {
@@ -395,43 +361,100 @@ Deno.serve(async (req) => {
     if (text.startsWith("/start")) {
       const parts = text.split(" ");
       const startParam = parts.length > 1 ? parts[1] : null;
-      let miniAppStartParam = "";
 
       if (startParam?.startsWith("ref_")) {
-        miniAppStartParam = startParam;
         const referrerIdentifier = startParam.replace("ref_", "");
-        const newUserName = fromUser.first_name || fromUser.username || `ID:${fromUser.id}`;
-
-        const result = await processReferralInDB(supabase, fromUser.id, newUserName, referrerIdentifier);
-
-        if (result && !result.alreadyReferred && result.referrerProfile?.telegram_id) {
-          const s = (await supabase.from("app_settings").select("value").eq("key", "referral").single())?.data?.value as any;
-          const bonus = s?.referrer_bonus ?? 500;
-          await sendMessage(result.referrerProfile.telegram_id,
-            `🎉 <b>Yangi referal!</b>\n\n👤 <b>${newUserName}</b> sizning havolangiz orqali botga qo'shildi!\n\n🪙 Sizga +${bonus} bonus berildi!`
-          );
-        }
+        // Just store pending referral - telegram-auth will process it
+        await storePendingReferral(supabase, fromUser.id, referrerIdentifier);
       }
-
-      const miniAppButton = { text: "🎮 O'yinni ochish", web_app: { url: "https://c294.coresuz.ru" } };
-
-      await sendMessage(chatId,
-        `🌾 <b>Farm Empire</b>ga xush kelibsiz!\n\n🐔 Hayvonlar sotib oling\n🥚 Mahsulot yig'ing\n💰 Pul ishlang\n\nO'yinni boshlash uchun quyidagi tugmani bosing 👇`,
-        {
-          inline_keyboard: [
-            [miniAppButton],
-            [{ text: "📞 Admin bilan aloqa", url: `https://t.me/${BOT_USERNAME}?start=contact_admin` }],
-            [{ text: "👥 Do'stlarni taklif qilish", url: `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${BOT_USERNAME}?start=ref_${fromUser.id}`)}&text=${encodeURIComponent("🌾 Farm Empire o'yiniga qo'shiling va bonus oling!")}` }],
-          ],
-        }
-      );
 
       if (startParam === "contact_admin") {
         await sendMessage(chatId, `📞 <b>Admin bilan aloqa</b>\n\nSavolingizni shu yerga yozing, admin javob beradi.`);
         const userName = fromUser.first_name || fromUser.username || `ID:${fromUser.id}`;
         await sendMessage(ADMIN_CHAT_ID, `📩 <b>Yangi xabar!</b>\n\n👤 <b>${userName}</b> (@${fromUser.username || "noma'lum"})\n🆔 ID: <code>${fromUser.id}</code>\n\nFoydalanuvchi aloqa so'radi.`);
+        return new Response("OK", { status: 200 });
       }
 
+      // Help/guide command
+      if (startParam === "help") {
+        await sendMessage(chatId,
+          `📖 <b>Farm Empire — To'liq Qo'llanma</b>\n\n` +
+          `🌾 <b>Farm Empire</b> — bu virtual ferma o'yini. Hayvonlar sotib oling, boqing, mahsulotlarni yig'ing va haqiqiy pul ishlang!\n\n` +
+          `━━━━━━━━━━━━━━━━\n` +
+          `🎮 <b>QANDAY O'YNASH KERAK?</b>\n━━━━━━━━━━━━━━━━\n\n` +
+          `1️⃣ <b>Hayvon sotib oling</b>\n` +
+          `   🐔 Tovuq — 500 tanga\n` +
+          `   🦃 Kurka — 1,200 tanga\n` +
+          `   🐐 Echki — 2,000 tanga\n` +
+          `   🐑 Qo'y — 3,000 tanga\n` +
+          `   🐄 Sigir — 5,000 tanga\n\n` +
+          `2️⃣ <b>Hayvonlarni boqing</b>\n` +
+          `   🍽 Har 15 daqiqada ovqat bering\n` +
+          `   📈 Har boqishda o'sish foizi oshadi\n` +
+          `   ⚠️ Och qolsa — mahsuldorlik tushadi\n\n` +
+          `3️⃣ <b>Mahsulot yig'ing</b>\n` +
+          `   🥚 Tovuq/Kurka → Tuxum\n` +
+          `   🥛 Sigir → Sut\n` +
+          `   🥩 Qo'y/Echki → Go'sht (so'yish)\n\n` +
+          `4️⃣ <b>Bozorda soting</b>\n` +
+          `   💰 Mahsulotlarni bozorda soting\n` +
+          `   🪙 70% tanga + 💵 30% naqd pul\n\n` +
+          `━━━━━━━━━━━━━━━━\n` +
+          `💰 <b>PUL ISHLASH USULLARI</b>\n━━━━━━━━━━━━━━━━\n\n` +
+          `✅ Mahsulotlarni bozorda sotish\n` +
+          `✅ Kunlik vazifalarni bajarish\n` +
+          `✅ Do'stlarni taklif qilish (referal)\n` +
+          `✅ Reklama ko'rish\n\n` +
+          `━━━━━━━━━━━━━━━━\n` +
+          `💵 <b>PUL CHIQARISH</b>\n━━━━━━━━━━━━━━━━\n\n` +
+          `📌 Minimal: 20,000 tanga\n` +
+          `💳 Karta raqamini kiriting\n` +
+          `⏳ 24 soat ichida ko'rib chiqiladi\n\n` +
+          `━━━━━━━━━━━━━━━━\n` +
+          `👥 <b>REFERAL TIZIM</b>\n━━━━━━━━━━━━━━━━\n\n` +
+          `🔗 Havolangizni do'stlarga yuboring\n` +
+          `🪙 Har bir referal uchun bonus oling\n` +
+          `📈 Ko'proq referal = yuqori daraja\n`,
+          {
+            inline_keyboard: [
+              [{ text: "🎮 O'yinni ochish", web_app: { url: "https://c294.coresuz.ru" } }],
+              [{ text: "🔙 Bosh menyu", callback_data: "back_to_start" }],
+            ],
+          }
+        );
+        return new Response("OK", { status: 200 });
+      }
+
+      const miniAppUrl = startParam?.startsWith("ref_")
+        ? `https://c294.coresuz.ru?startapp=${startParam}`
+        : "https://c294.coresuz.ru";
+      const miniAppButton = { text: "🎮 O'yinni ochish", web_app: { url: miniAppUrl } };
+
+      await sendMessage(chatId,
+        `🌾 <b>Farm Empire</b>ga xush kelibsiz!\n\n` +
+        `🐔 Hayvonlar sotib oling\n` +
+        `🥚 Mahsulot yig'ing\n` +
+        `💰 Haqiqiy pul ishlang\n\n` +
+        `O'yinni boshlash uchun quyidagi tugmani bosing 👇`,
+        {
+          inline_keyboard: [
+            [miniAppButton],
+            [{ text: "📖 Qo'llanma", callback_data: "bot_help" }, { text: "📞 Admin", url: `https://t.me/${BOT_USERNAME}?start=contact_admin` }],
+            [{ text: "👥 Do'stlarni taklif qilish", url: `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${BOT_USERNAME}?start=ref_${fromUser.id}`)}&text=${encodeURIComponent("🌾 Farm Empire o'yiniga qo'shiling va bonus oling!")}` }],
+            [{ text: "📢 Rasmiy kanal", url: "https://t.me/farm_market_pay" }],
+          ],
+        }
+      );
+
+      return new Response("OK", { status: 200 });
+    }
+
+    // Handle /help command
+    if (text === "/help" || text === "/yordam") {
+      // Redirect to help
+      await sendMessage(chatId, "📖 Qo'llanmani ko'rish uchun pastdagi tugmani bosing:", {
+        inline_keyboard: [[{ text: "📖 Qo'llanmani ochish", url: `https://t.me/${BOT_USERNAME}?start=help` }]],
+      });
       return new Response("OK", { status: 200 });
     }
 
