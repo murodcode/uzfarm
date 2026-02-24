@@ -1,16 +1,30 @@
-import { useCallback, useRef } from "react";
-import createAdHandler from "monetag-tg-sdk";
+import { useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const ZONE_ID = 10612725;
+const BLOCK_ID = "int-23556";
 
-let adHandlerInstance: ReturnType<typeof createAdHandler> | null = null;
+interface AdController {
+  show: () => Promise<{ done: boolean; description: string; state: string; error: boolean }>;
+  destroy: () => void;
+}
 
-function getAdHandler() {
-  if (!adHandlerInstance) {
-    adHandlerInstance = createAdHandler(ZONE_ID);
+declare global {
+  interface Window {
+    Adsgram?: {
+      init: (config: { blockId: string; debug?: boolean }) => AdController;
+    };
   }
-  return adHandlerInstance;
+}
+
+let adController: AdController | null = null;
+
+function getAdController(): AdController | null {
+  if (adController) return adController;
+  if (window.Adsgram) {
+    adController = window.Adsgram.init({ blockId: BLOCK_ID });
+    return adController;
+  }
+  return null;
 }
 
 async function recordAdView() {
@@ -30,37 +44,36 @@ async function recordAdView() {
         .update({ ad_views: (profile.ad_views || 0) + 1 })
         .eq("id", userId);
     }
-    // Note: watch_ads daily task is tracked only from Tasks page (handleWatchAd)
-    // NOT here, to avoid double-counting from other ad triggers
   } catch (err) {
     console.error("Failed to record ad view:", err);
   }
 }
-
-const MIN_WATCH_SECONDS = 10;
 
 export function useRewardedAd() {
   const showingRef = useRef(false);
 
   const showAd = useCallback((): Promise<void> => {
     if (showingRef.current) return Promise.reject(new Error("Ad already showing"));
+    
+    const controller = getAdController();
+    if (!controller) {
+      // No adsgram SDK loaded (not in Telegram), resolve silently
+      return Promise.resolve();
+    }
+
     showingRef.current = true;
 
-    const startTime = Date.now();
-    const handler = getAdHandler();
-
-    return handler()
-      .then(() => {
+    return controller.show()
+      .then((result) => {
         showingRef.current = false;
-        const watchedSeconds = (Date.now() - startTime) / 1000;
-        if (watchedSeconds < MIN_WATCH_SECONDS) {
-          throw new Error("AD_NOT_WATCHED");
+        if (result.done) {
+          recordAdView();
         }
-        recordAdView();
       })
-      .catch((err: unknown) => {
+      .catch((result) => {
         showingRef.current = false;
-        throw err;
+        // Ad was skipped or errored - resolve silently to not block actions
+        console.log("Ad skipped/error:", result);
       });
   }, []);
 
@@ -71,11 +84,42 @@ export function useRewardedAd() {
           action();
         })
         .catch(() => {
-          // Ad failed or skipped
+          // Ad failed, still execute action
+          action();
         });
     },
     [showAd]
   );
 
   return { showAd, withAd };
+}
+
+/**
+ * Hook to show an ad once when the app loads
+ */
+export function useEntryAd() {
+  const shownRef = useRef(false);
+
+  useEffect(() => {
+    if (shownRef.current) return;
+    shownRef.current = true;
+
+    // Wait a bit for SDK to load
+    const timer = setTimeout(() => {
+      const controller = getAdController();
+      if (controller) {
+        controller.show()
+          .then((result) => {
+            if (result.done) {
+              recordAdView();
+            }
+          })
+          .catch(() => {
+            // silently ignore
+          });
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 }

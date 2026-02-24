@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export default function Market() {
   const { state, sellProduct } = useGameContext();
-  const { withAd } = useRewardedAd();
+  const { showAd } = useRewardedAd();
   const [eggPrice, setEggPrice] = useState(50);
   const [meatPrice, setMeatPrice] = useState(300);
   const [milkPrice, setMilkPrice] = useState(150);
@@ -42,18 +42,19 @@ export default function Market() {
     const price = type === "egg" ? eggPrice : type === "meat" ? meatPrice : milkPrice;
     const available = type === "egg" ? state.eggs : type === "meat" ? state.meat : (state.milk ?? 0);
 
-    if (qty > available) {
+    if (qty <= 0 || qty > available) {
       toast.error("Yetarli mahsulot yo'q");
       return;
     }
 
-    withAd(() => {
-      sellProduct(type, qty, price);
-      const total = qty * price;
-      const coinShare = Math.floor(total * SELL_SPLIT.coinPercent / 100);
-      const cashShare = total - coinShare;
-      toast.success(`Sotildi! 🪙 +${coinShare} | 💵 +${cashShare}`);
-    });
+    sellProduct(type, qty, price);
+    const total = qty * price;
+    const coinShare = Math.floor(total * SELL_SPLIT.coinPercent / 100);
+    const cashShare = total - coinShare;
+    toast.success(`Sotildi! 🪙 +${coinShare} | 💵 +${cashShare}`);
+    
+    // Show ad after selling, non-blocking
+    showAd().catch(() => {});
   };
 
   return (
