@@ -150,19 +150,44 @@ Deno.serve(async (req) => {
 
     // === GET STATS ===
     if (action === "get_stats") {
-      const { data: allProfiles } = await adminClient.from("profiles").select("id, coins, cash, ad_views, is_blocked, created_at, referral_count");
-      const profiles = allProfiles || [];
+      // Use count queries to avoid 1000-row limit
+      const { count: totalUsers } = await adminClient
+        .from("profiles")
+        .select("*", { count: "exact", head: true });
+
+      const { count: blockedUsers } = await adminClient
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("is_blocked", true);
+
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = today.toISOString();
 
-      const totalUsers = profiles.length;
-      const todayUsers = profiles.filter((p: any) => p.created_at >= todayStr).length;
-      const blockedUsers = profiles.filter((p: any) => p.is_blocked).length;
-      const totalCoins = profiles.reduce((s: number, p: any) => s + (p.coins || 0), 0);
-      const totalCash = profiles.reduce((s: number, p: any) => s + (p.cash || 0), 0);
-      const totalAdViews = profiles.reduce((s: number, p: any) => s + (p.ad_views || 0), 0);
-      const totalReferrals = profiles.reduce((s: number, p: any) => s + (p.referral_count || 0), 0);
+      const { count: todayUsers } = await adminClient
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", todayStr);
+
+      // Get aggregated totals using multiple paginated queries
+      let totalCoins = 0, totalCash = 0, totalAdViews = 0, totalReferrals = 0;
+      let offset = 0;
+      const PAGE_SIZE = 1000;
+      while (true) {
+        const { data: batch } = await adminClient
+          .from("profiles")
+          .select("coins, cash, ad_views, referral_count")
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (!batch || batch.length === 0) break;
+        for (const p of batch) {
+          totalCoins += p.coins || 0;
+          totalCash += p.cash || 0;
+          totalAdViews += p.ad_views || 0;
+          totalReferrals += p.referral_count || 0;
+        }
+        if (batch.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
 
       // Today's ad views from daily_task_progress
       const { data: todayAdData } = await adminClient
@@ -172,13 +197,12 @@ Deno.serve(async (req) => {
         .eq("task_date", today.toISOString().split('T')[0]);
       const todayAdViews = (todayAdData || []).reduce((s: number, d: any) => s + (d.progress || 0), 0);
 
-      // Today's referrals - profiles with referred_by set today
-      const { data: todayRefData } = await adminClient
+      // Today's referrals
+      const { count: todayReferrals } = await adminClient
         .from("profiles")
-        .select("id")
+        .select("*", { count: "exact", head: true })
         .not("referred_by", "is", null)
         .gte("created_at", todayStr);
-      const todayReferrals = todayRefData?.length || 0;
 
       const { count: pendingWithdrawals } = await adminClient
         .from("withdrawal_requests")
@@ -186,7 +210,18 @@ Deno.serve(async (req) => {
         .eq("status", "pending");
 
       return json({
-        stats: { totalUsers, todayUsers, blockedUsers, totalCoins, totalCash, totalAdViews, todayAdViews, totalReferrals, todayReferrals, pendingWithdrawals: pendingWithdrawals || 0 }
+        stats: {
+          totalUsers: totalUsers || 0,
+          todayUsers: todayUsers || 0,
+          blockedUsers: blockedUsers || 0,
+          totalCoins,
+          totalCash,
+          totalAdViews,
+          todayAdViews,
+          totalReferrals,
+          todayReferrals: todayReferrals || 0,
+          pendingWithdrawals: pendingWithdrawals || 0,
+        }
       });
     }
 
@@ -216,23 +251,42 @@ Deno.serve(async (req) => {
 
     // === GET USERS ===
     if (action === "get_users") {
-      const { data: users } = await adminClient
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-      
-      // Get animal counts per user
-      const userIds = (users || []).map((u: any) => u.id);
-      const { data: animals } = await adminClient
-        .from("animals")
-        .select("user_id");
+      // Paginate to get all users beyond 1000 limit
+      let allUsers: any[] = [];
+      let offset = 0;
+      const PAGE_SIZE = 1000;
+      while (true) {
+        const { data: batch } = await adminClient
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (!batch || batch.length === 0) break;
+        allUsers = allUsers.concat(batch);
+        if (batch.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
+
+      // Get all animal counts
+      let allAnimals: any[] = [];
+      offset = 0;
+      while (true) {
+        const { data: batch } = await adminClient
+          .from("animals")
+          .select("user_id")
+          .range(offset, offset + PAGE_SIZE - 1);
+        if (!batch || batch.length === 0) break;
+        allAnimals = allAnimals.concat(batch);
+        if (batch.length < PAGE_SIZE) break;
+        offset += PAGE_SIZE;
+      }
       
       const animalCountMap = new Map<string, number>();
-      (animals || []).forEach((a: any) => {
+      allAnimals.forEach((a: any) => {
         animalCountMap.set(a.user_id, (animalCountMap.get(a.user_id) || 0) + 1);
       });
 
-      const enrichedUsers = (users || []).map((u: any) => ({
+      const enrichedUsers = allUsers.map((u: any) => ({
         ...u,
         animal_count: animalCountMap.get(u.id) || 0,
       }));

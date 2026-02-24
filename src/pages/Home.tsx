@@ -6,7 +6,7 @@ import { useGameContext } from "@/contexts/GameStateContext";
 import { toast } from "sonner";
 import { ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useRewardedAd } from "@/hooks/useRewardedAd";
+import { useRewardedAd, useEntryAd } from "@/hooks/useRewardedAd";
 import { expRequired } from "@/lib/levelSystem";
 import { EXP_SOURCES } from "@/lib/levelSystem";
 import { ANIMAL_TYPES } from "@/lib/gameData";
@@ -15,6 +15,7 @@ export default function Home() {
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
   const navigate = useNavigate();
   const { showAd } = useRewardedAd();
+  useEntryAd();
 
   const handleAdError = (err: unknown) => {
     if (err instanceof Error && err.message === "AD_NOT_WATCHED") {
