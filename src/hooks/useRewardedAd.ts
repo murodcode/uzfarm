@@ -1,7 +1,8 @@
 import { useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-const BLOCK_ID = "int-23556";
+/* ── Adsgram (entry ad only) ── */
+const ADSGRAM_BLOCK_ID = "int-23556";
 
 interface AdController {
   show: () => Promise<{ done: boolean; description: string; state: string; error: boolean }>;
@@ -13,20 +14,22 @@ declare global {
     Adsgram?: {
       init: (config: { blockId: string; debug?: boolean }) => AdController;
     };
+    show_10612725?: () => Promise<void>;
   }
 }
 
-let adController: AdController | null = null;
+let adsgramController: AdController | null = null;
 
-function getAdController(): AdController | null {
-  if (adController) return adController;
+function getAdsgramController(): AdController | null {
+  if (adsgramController) return adsgramController;
   if (window.Adsgram) {
-    adController = window.Adsgram.init({ blockId: BLOCK_ID });
-    return adController;
+    adsgramController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+    return adsgramController;
   }
   return null;
 }
 
+/* ── Record ad view in DB ── */
 async function recordAdView() {
   try {
     const { data: { session } } = await supabase.auth.getSession();
@@ -49,44 +52,38 @@ async function recordAdView() {
   }
 }
 
+/* ── Monetag rewarded ad (for actions: feed, collect, sell, etc.) ── */
 export function useRewardedAd() {
   const showingRef = useRef(false);
 
   const showAd = useCallback((): Promise<void> => {
     if (showingRef.current) return Promise.reject(new Error("Ad already showing"));
-    
-    const controller = getAdController();
-    if (!controller) {
-      // No adsgram SDK loaded (not in Telegram), resolve silently
+
+    const monetagShow = window.show_10612725;
+    if (!monetagShow) {
+      // SDK not loaded – resolve silently so actions still work
       return Promise.resolve();
     }
 
     showingRef.current = true;
 
-    return controller.show()
-      .then((result) => {
+    return monetagShow()
+      .then(() => {
         showingRef.current = false;
-        if (result.done) {
-          recordAdView();
-        }
+        recordAdView();
       })
-      .catch((result) => {
+      .catch((err) => {
         showingRef.current = false;
-        // Ad was skipped or errored - resolve silently to not block actions
-        console.log("Ad skipped/error:", result);
+        console.log("Monetag ad skipped/error:", err);
+        // Resolve so actions still execute
       });
   }, []);
 
   const withAd = useCallback(
     (action: () => void) => {
       showAd()
-        .then(() => {
-          action();
-        })
-        .catch(() => {
-          // Ad failed, still execute action
-          action();
-        });
+        .then(() => action())
+        .catch(() => action());
     },
     [showAd]
   );
@@ -94,9 +91,7 @@ export function useRewardedAd() {
   return { showAd, withAd };
 }
 
-/**
- * Hook to show an ad once when the app loads
- */
+/* ── Adsgram entry ad (shown once on app load) ── */
 export function useEntryAd() {
   const shownRef = useRef(false);
 
@@ -104,9 +99,8 @@ export function useEntryAd() {
     if (shownRef.current) return;
     shownRef.current = true;
 
-    // Wait a bit for SDK to load
     const timer = setTimeout(() => {
-      const controller = getAdController();
+      const controller = getAdsgramController();
       if (controller) {
         controller.show()
           .then((result) => {
