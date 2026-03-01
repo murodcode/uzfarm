@@ -154,8 +154,8 @@
 
   .resource-card {
     @apply rounded-xl px-3 py-2.5;
-    background: hsl(var(--farm-cream));
-    border: 2px solid hsl(var(--farm-brown-light));
+    background: hsl(var(--card));
+    border: 2px solid hsl(var(--border));
     box-shadow: 0 2px 8px hsl(30 20% 15% / 0.08);
   }
 
