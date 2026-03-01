@@ -329,7 +329,7 @@ export default function Admin() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`py-2 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-0.5 ${
+              className={`py-2 px-3 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-0.5 shrink-0 ${
                 tab === t.key ? "bg-primary text-primary-foreground" : "farm-card text-foreground"
               }`}
             >
