@@ -198,6 +198,16 @@ export default function Profile() {
           </motion.div>
         )}
 
+        {/* Theme toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-4"
+        >
+          <ThemeToggle />
+        </motion.div>
+
         {/* Personal Stats grid */}
         <div className="grid grid-cols-3 gap-3">
           <StatCard icon={Dog} label="Hayvonlar" value={state.animals.length} bgClass="bg-farm-green-light" iconColorClass="text-primary" />
