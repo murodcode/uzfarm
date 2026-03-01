@@ -12,4 +12,17 @@ if (savedTheme === "dark") {
   }
 }
 
+// Prevent Telegram WebApp vertical swipe close immediately
+try {
+  const tg = (window as any).Telegram?.WebApp;
+  if (tg) {
+    tg.expand?.();
+    tg.disableVerticalSwipes?.();
+    tg.enableClosingConfirmation?.();
+    tg.requestFullscreen?.();
+  }
+} catch (e) {
+  // non-fatal
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
