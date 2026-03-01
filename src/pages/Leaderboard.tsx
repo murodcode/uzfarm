@@ -89,7 +89,7 @@ export default function Leaderboard() {
       </div>
       <div className="text-right shrink-0">
         <p className="text-sm font-black text-foreground">
-          {tab === "coins" ? `🪙 ${u.coins.toLocaleString()}` : `👥 ${u.referral_count}`}
+          {getValueLabel(u)}
         </p>
       </div>
     </motion.div>
