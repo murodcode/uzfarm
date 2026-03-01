@@ -190,7 +190,7 @@ async function sendPaymentChannelNotification(
       `😀 Foydalanuvchi: <b>${name}</b>\n` +
       `👤 Username: ${uname}\n` +
       `📇 Telegram ID: <code>${tgId}</code>\n` +
-      `💰 Miqdor: <b>${amount.toLocaleString()} tanga</b>\n` +
+      `💰 Miqdor: <b>${amount.toLocaleString()} pul</b>\n` +
       `🍀 Pul ekvivalenti: <b>${somAmount.toLocaleString()} so'm</b>\n` +
       `📥 Hamyon: <code>${maskedCard}</code>\n` +
       `⏱ Yechib olish vaqti: ${requestedDate}\n\n` +
@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
           const { data: userProfile } = await supabase.from("profiles").select("telegram_id").eq("id", wd.user_id).single();
           if (userProfile?.telegram_id) {
             const somAmt = Math.floor(wd.amount / coinsPerSom);
-            await sendMessage(userProfile.telegram_id, `✅ Sizning 💵 ${wd.amount.toLocaleString()} tangalik (${somAmt.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`);
+            await sendMessage(userProfile.telegram_id, `✅ Sizning 💵 ${wd.amount.toLocaleString()} pullik (${somAmt.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`);
           }
           await sendPaymentChannelNotification(supabase, wdId, wd.user_id, wd.amount);
         }
@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
           if (userProfile) {
             await supabase.from("profiles").update({ cash: (userProfile.cash || 0) + wd.amount }).eq("id", wd.user_id);
             if (userProfile.telegram_id) {
-              await sendMessage(userProfile.telegram_id, `❌ Sizning 💵 ${wd.amount.toLocaleString()} tangalik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`);
+              await sendMessage(userProfile.telegram_id, `❌ Sizning 💵 ${wd.amount.toLocaleString()} pullik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`);
             }
           }
         }
@@ -439,7 +439,7 @@ Deno.serve(async (req) => {
         {
           inline_keyboard: [
             [miniAppButton],
-            [{ text: "📖 Qo'llanma", callback_data: "bot_help" }, { text: "📞 Admin", url: `https://t.me/${BOT_USERNAME}?start=contact_admin` }],
+            [{ text: "📖 Qo'llanma", callback_data: "bot_help" }, { text: "📞 Bog'lanish", url: "https://t.me/Boglanish_mazkazi_Bot" }],
             [{ text: "👥 Do'stlarni taklif qilish", url: `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${BOT_USERNAME}?start=ref_${fromUser.id}`)}&text=${encodeURIComponent("🌾 Farm Empire o'yiniga qo'shiling va bonus oling!")}` }],
             [{ text: "📢 Rasmiy kanal", url: "https://t.me/farm_market_pay" }],
           ],

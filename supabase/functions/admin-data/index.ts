@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
             `💰 <b>Yangi pul chiqarish so'rovi!</b>\n\n` +
             `👤 <b>${userProfile.first_name || "Noma'lum"}</b> (@${userProfile.username || "—"})\n` +
             `🆔 TG: <code>${userProfile.telegram_id || "—"}</code>\n\n` +
-            `💵 Miqdor: <b>${amount.toLocaleString()} tanga</b> (${somAmount.toLocaleString()} so'm)\n\n` +
+            `💵 Miqdor: <b>${amount.toLocaleString()} pul</b> (${somAmount.toLocaleString()} so'm)\n\n` +
             `💳 Karta raqami:\n<code>${cardFormatted}</code>`;
 
           const replyMarkup = latestWd ? {
@@ -349,8 +349,8 @@ Deno.serve(async (req) => {
 
           if (userProfile?.telegram_id) {
             const msg = status === "approved"
-              ? `✅ Sizning 💵 ${wd.amount.toLocaleString()} tangalik (${somAmount.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`
-              : `❌ Sizning 💵 ${wd.amount.toLocaleString()} tangalik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`;
+              ? `✅ Sizning 💵 ${wd.amount.toLocaleString()} pullik (${somAmount.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`
+              : `❌ Sizning 💵 ${wd.amount.toLocaleString()} pullik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`;
             await sendTgMessage(userProfile.telegram_id, msg);
           }
 
@@ -386,7 +386,7 @@ Deno.serve(async (req) => {
               `😀 Foydalanuvchi: <b>${name}</b>\n` +
               `👤 Username: ${uname}\n` +
               `📇 Telegram ID: <code>${tgId}</code>\n` +
-              `💰 Miqdor: <b>${wd.amount.toLocaleString()} tanga</b>\n` +
+              `💰 Miqdor: <b>${wd.amount.toLocaleString()} pul</b>\n` +
               `🍀 Pul ekvivalenti: <b>${somAmount.toLocaleString()} so'm</b>\n` +
               `📥 Hamyon: <code>${maskedCard}</code>\n` +
               `⏱ Yechib olish vaqti: ${requestedDate}\n\n` +
@@ -529,6 +529,95 @@ Deno.serve(async (req) => {
         { onConflict: "key" }
       );
       return json({ success: true });
+    }
+
+    // === GET REFERRAL LEADERBOARD ===
+    if (action === "get_referral_leaderboard") {
+      const { period } = body; // "daily" | "weekly" | "all"
+      
+      let dateFilter: string | null = null;
+      if (period === "daily") {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        dateFilter = today.toISOString();
+      } else if (period === "weekly") {
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        weekAgo.setHours(0, 0, 0, 0);
+        dateFilter = weekAgo.toISOString();
+      }
+
+      // Get all users who have referrals
+      let query = adminClient
+        .from("profiles")
+        .select("id, first_name, username, telegram_id, photo_url, coins, cash, referral_count, referral_earnings")
+        .gt("referral_count", 0)
+        .order("referral_count", { ascending: false })
+        .limit(50);
+
+      const { data: topUsers } = await query;
+      
+      // For each user, get their referrals
+      const leaderboard = [];
+      for (const u of (topUsers || [])) {
+        let refQuery = adminClient
+          .from("profiles")
+          .select("id, first_name, username, coins, cash, created_at")
+          .eq("referred_by", u.id);
+        
+        if (dateFilter) {
+          refQuery = refQuery.gte("created_at", dateFilter);
+        }
+        
+        const { data: referrals } = await refQuery.order("created_at", { ascending: false });
+        
+        // If filtering by period and no referrals in period, skip
+        if (dateFilter && (!referrals || referrals.length === 0)) continue;
+        
+        leaderboard.push({
+          ...u,
+          referral_count: dateFilter ? (referrals?.length || 0) : u.referral_count,
+          referrals: referrals || [],
+        });
+      }
+
+      // Sort by period-specific referral count
+      leaderboard.sort((a, b) => b.referral_count - a.referral_count);
+
+      return json({ leaderboard });
+    }
+
+    // === SEND USER MESSAGE ===
+    if (action === "send_user_message") {
+      const { telegram_id, text: msgText } = body;
+      if (!telegram_id || !msgText) return json({ error: "telegram_id va text kerak" }, 400);
+      
+      await sendTgMessage(telegram_id, `💬 <b>Admin xabari:</b>\n\n${msgText}`);
+      return json({ success: true });
+    }
+
+    // === BROADCAST MESSAGE ===
+    if (action === "broadcast_message") {
+      const { text: msgText } = body;
+      if (!msgText) return json({ error: "text kerak" }, 400);
+
+      const { data: allProfiles } = await adminClient
+        .from("profiles")
+        .select("telegram_id")
+        .not("telegram_id", "is", null);
+
+      const users = allProfiles || [];
+      let sent = 0, failed = 0;
+
+      for (const u of users) {
+        try {
+          await sendTgMessage(u.telegram_id, msgText);
+          sent++;
+        } catch { failed++; }
+        if (sent % 25 === 0) await new Promise(r => setTimeout(r, 1000));
+      }
+
+      return json({ success: true, sent, failed });
     }
 
     return json({ error: "Invalid action" }, 400);

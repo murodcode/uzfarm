@@ -3,7 +3,7 @@ import TelegramBackButton from "@/components/TelegramBackButton";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Banknote, CheckCircle, XCircle, Loader2,
-  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard
+  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -53,7 +53,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -80,6 +80,14 @@ export default function Admin() {
     is_daily: false, requirement_type: "subscribe", requirement_value: 1,
     url: "", task_type: "general"
   });
+  // Referral leaderboard
+  const [refPeriod, setRefPeriod] = useState<"daily" | "weekly" | "all">("daily");
+  const [refLeaderboard, setRefLeaderboard] = useState<any[]>([]);
+  const [selectedRefUser, setSelectedRefUser] = useState<any>(null);
+  // Messaging
+  const [msgTargetTgId, setMsgTargetTgId] = useState("");
+  const [msgText, setMsgText] = useState("");
+  const [broadcastText, setBroadcastText] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -153,6 +161,8 @@ export default function Admin() {
       } else if (tab === "settings") {
         const data = await callAdmin({ action: "get_settings" });
         setAppSettings(data?.settings || {});
+      } else if (tab === "referral_rank") {
+        await fetchRefLeaderboard();
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
@@ -237,6 +247,51 @@ export default function Admin() {
     }
   };
 
+  const fetchRefLeaderboard = async () => {
+    try {
+      const data = await callAdmin({ action: "get_referral_leaderboard", period: refPeriod });
+      setRefLeaderboard(data?.leaderboard || []);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    }
+  };
+
+  // Re-fetch when period changes
+  useEffect(() => {
+    if (tab === "referral_rank" && isAdmin) {
+      setLoading(true);
+      fetchRefLeaderboard().finally(() => setLoading(false));
+    }
+  }, [refPeriod]);
+
+  const handleSendMessage = async () => {
+    if (!msgTargetTgId || !msgText || processing) return;
+    setProcessing("msg");
+    try {
+      await callAdmin({ action: "send_user_message", telegram_id: parseInt(msgTargetTgId), text: msgText });
+      toast.success("Xabar yuborildi!");
+      setMsgText("");
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleBroadcast = async () => {
+    if (!broadcastText || processing) return;
+    setProcessing("broadcast");
+    try {
+      const data = await callAdmin({ action: "broadcast_message", text: broadcastText });
+      toast.success(`Xabar yuborildi! ${data?.sent || 0} ta foydalanuvchiga`);
+      setBroadcastText("");
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -251,7 +306,9 @@ export default function Admin() {
     { key: "stats", label: "Statistika", icon: BarChart3 },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
+    { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
+    { key: "messaging", label: "Xabarlar", icon: MessageCircle },
     { key: "settings", label: "Sozlamalar", icon: Settings },
   ];
 
@@ -267,12 +324,12 @@ export default function Admin() {
 
       <div className="px-4 -mt-3">
         {/* Tabs */}
-        <div className="grid grid-cols-5 gap-1 mb-4">
+        <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`py-2 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-0.5 ${
+              className={`py-2 px-3 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-0.5 shrink-0 ${
                 tab === t.key ? "bg-primary text-primary-foreground" : "farm-card text-foreground"
               }`}
             >
@@ -558,6 +615,130 @@ export default function Admin() {
               </div>
             )}
 
+            {/* === REFERRAL LEADERBOARD === */}
+            {tab === "referral_rank" && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-3 gap-2">
+                  {(["daily", "weekly", "all"] as const).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => setRefPeriod(p)}
+                      className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                        refPeriod === p ? "bg-primary text-primary-foreground" : "farm-card text-foreground"
+                      }`}
+                    >
+                      {p === "daily" ? "📅 Kunlik" : p === "weekly" ? "📆 Haftalik" : "🏆 Hammasi"}
+                    </button>
+                  ))}
+                </div>
+
+                {refLeaderboard.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-8">Ma'lumot topilmadi</p>
+                ) : (
+                  refLeaderboard.map((u: any, i: number) => (
+                    <div key={u.id} className="farm-card cursor-pointer" onClick={() => setSelectedRefUser(selectedRefUser?.id === u.id ? null : u)}>
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-black">
+                          {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
+                        </div>
+                        {u.photo_url ? (
+                          <img src={u.photo_url} className="h-9 w-9 rounded-full shrink-0 object-cover" alt="" />
+                        ) : (
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-lg">🧑‍🌾</div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-foreground truncate">{u.first_name || "Noma'lum"}</p>
+                          <p className="text-[10px] text-muted-foreground">@{u.username || "—"} · TG: {u.telegram_id || "—"}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-black text-primary">👥 {u.referral_count}</p>
+                          <p className="text-[10px] text-muted-foreground">🪙 {(u.referral_earnings || 0).toLocaleString()}</p>
+                        </div>
+                      </div>
+
+                      {/* Expanded: show referrals */}
+                      {selectedRefUser?.id === u.id && u.referrals && (
+                        <div className="mt-3 pt-3 border-t border-border space-y-2">
+                          <p className="text-xs font-bold text-foreground">📋 Taklif qilganlari:</p>
+                          {u.referrals.length === 0 ? (
+                            <p className="text-xs text-muted-foreground">Hali referal yo'q</p>
+                          ) : (
+                            u.referrals.map((ref: any) => (
+                              <div key={ref.id} className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-foreground truncate">{ref.first_name || "Noma'lum"}</p>
+                                  <p className="text-[10px] text-muted-foreground">@{ref.username || "—"}</p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs font-bold text-foreground">🪙 {(ref.coins || 0).toLocaleString()}</p>
+                                  <p className="text-[10px] text-muted-foreground">💵 {(ref.cash || 0).toLocaleString()}</p>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* === MESSAGING === */}
+            {tab === "messaging" && (
+              <div className="space-y-4">
+                {/* Send to individual user */}
+                <div className="farm-card space-y-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <Send className="h-4 w-4" /> Foydalanuvchiga xabar
+                  </h3>
+                  <Input
+                    placeholder="Telegram ID kiriting"
+                    value={msgTargetTgId}
+                    onChange={(e) => setMsgTargetTgId(e.target.value)}
+                    className="text-xs"
+                    type="number"
+                  />
+                  <textarea
+                    placeholder="Xabar matni..."
+                    value={msgText}
+                    onChange={(e) => setMsgText(e.target.value)}
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[80px] resize-none"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={!msgTargetTgId || !msgText || processing === "msg"}
+                    className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {processing === "msg" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                    Yuborish
+                  </button>
+                </div>
+
+                {/* Broadcast to all */}
+                <div className="farm-card space-y-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <MessageCircle className="h-4 w-4" /> 📢 Umumiy xabar (Barcha foydalanuvchilarga)
+                  </h3>
+                  <textarea
+                    placeholder="Umumiy xabar matni..."
+                    value={broadcastText}
+                    onChange={(e) => setBroadcastText(e.target.value)}
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[100px] resize-none"
+                  />
+                  <button
+                    onClick={handleBroadcast}
+                    disabled={!broadcastText || processing === "broadcast"}
+                    className="w-full rounded-xl bg-destructive py-2.5 text-xs font-bold text-destructive-foreground disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {processing === "broadcast" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                    📢 Barchaga yuborish
+                  </button>
+                  <p className="text-[10px] text-muted-foreground">⚠️ Bu xabar barcha foydalanuvchilarga yuboriladi!</p>
+                </div>
+              </div>
+            )}
+
             {/* === SETTINGS === */}
             {tab === "settings" && (
               <div className="space-y-3">
@@ -690,6 +871,65 @@ export default function Admin() {
                           setAppSettings(prev => ({ ...prev, withdrawal: updated }));
                         }}
                         onBlur={() => callAdmin({ action: "update_settings", key: "withdrawal", value: appSettings.withdrawal }).then(() => toast.success("Saqlandi"))}
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mandatory channel */}
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-3">📢 Majburiy kanal</h3>
+                  <div className="space-y-2.5">
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={appSettings.mandatory_channel?.enabled === true}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, enabled: e.target.checked };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                          callAdmin({ action: "update_settings", key: "mandatory_channel", value: updated }).then(() => toast.success("Saqlandi"));
+                        }}
+                        className="rounded"
+                      />
+                      Majburiy kanalni yoqish
+                    </label>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Kanal ID (masalan: @channel_name yoki -100...)</label>
+                      <Input
+                        value={appSettings.mandatory_channel?.channel_id ?? ""}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, channel_id: e.target.value };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "mandatory_channel", value: appSettings.mandatory_channel }).then(() => toast.success("Saqlandi"))}
+                        placeholder="@farm_market_pay"
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Kanal havolasi</label>
+                      <Input
+                        value={appSettings.mandatory_channel?.channel_url ?? ""}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, channel_url: e.target.value };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "mandatory_channel", value: appSettings.mandatory_channel }).then(() => toast.success("Saqlandi"))}
+                        placeholder="https://t.me/farm_market_pay"
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Kanal nomi</label>
+                      <Input
+                        value={appSettings.mandatory_channel?.channel_name ?? ""}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, channel_name: e.target.value };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "mandatory_channel", value: appSettings.mandatory_channel }).then(() => toast.success("Saqlandi"))}
+                        placeholder="Farm Market"
                         className="text-xs mt-0.5"
                       />
                     </div>

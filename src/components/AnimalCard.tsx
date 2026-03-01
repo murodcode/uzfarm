@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { getAnimalType, OwnedAnimal } from "@/lib/gameData";
-import { Utensils, Egg, Scissors, Clock, Droplets } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Utensils, Egg, Scissors, Clock, Droplets, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 
 const FEED_COOLDOWN_MS = 15 * 60 * 1000;
 
@@ -25,11 +25,22 @@ interface AnimalCardProps {
 export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, onSlaughter }: AnimalCardProps) {
   const type = getAnimalType(animal.typeId);
   const [now, setNow] = useState(Date.now());
+  const [busyAction, setBusyAction] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleAction = useCallback(async (actionName: string, fn: () => void | Promise<void>) => {
+    if (busyAction) return;
+    setBusyAction(actionName);
+    try {
+      await fn();
+    } finally {
+      setBusyAction(null);
+    }
+  }, [busyAction]);
 
   if (!type) return null;
 
@@ -199,10 +210,11 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           {/* Feed button */}
           {canFeed ? (
             <button
-              onClick={onFeed}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform"
+              onClick={() => handleAction("feed", onFeed)}
+              disabled={!!busyAction}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-60"
             >
-              <Utensils className="h-3.5 w-3.5" />
+              {busyAction === "feed" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Utensils className="h-3.5 w-3.5" />}
               Boqish
             </button>
           ) : feedCooldownRemaining > 0 ? (
@@ -215,11 +227,11 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           {/* Collect button for egg producers */}
           {isEggReady && (
             <button
-              onClick={onCollect}
-              disabled={accumulatedEggs === 0}
+              onClick={() => handleAction("collect", onCollect)}
+              disabled={accumulatedEggs === 0 || !!busyAction}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary disabled:opacity-50"
             >
-              <Egg className="h-3.5 w-3.5" />
+              {busyAction === "collect" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Egg className="h-3.5 w-3.5" />}
               Yig'ish ({accumulatedEggs})
             </button>
           )}
@@ -227,12 +239,12 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           {/* Collect button for milk producers */}
           {isMilkReady && (
             <button
-              onClick={onCollectMilk}
-              disabled={accumulatedMilk === 0}
+              onClick={() => handleAction("milk", onCollectMilk)}
+              disabled={accumulatedMilk === 0 || !!busyAction}
               className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
               style={{ background: 'hsl(210 70% 55%)' }}
             >
-              <Droplets className="h-3.5 w-3.5" />
+              {busyAction === "milk" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Droplets className="h-3.5 w-3.5" />}
               Sut ({accumulatedMilk})
             </button>
           )}
@@ -240,14 +252,15 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           {/* Slaughter button */}
           {canSlaughter && (
             <button
-              onClick={onSlaughter}
-              className={`flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold active:scale-95 transition-transform ${
+              onClick={() => handleAction("slaughter", onSlaughter)}
+              disabled={!!busyAction}
+              className={`flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold active:scale-95 transition-transform disabled:opacity-60 ${
                 !isEggType && !isMilkType
                   ? "flex-1 rounded-2xl text-destructive-foreground bg-destructive"
                   : "text-destructive border border-destructive/30 bg-destructive/5"
               }`}
             >
-              <Scissors className="h-3.5 w-3.5" />
+              {busyAction === "slaughter" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Scissors className="h-3.5 w-3.5" />}
               {!isEggType && !isMilkType && "So'yish"}
             </button>
           )}
