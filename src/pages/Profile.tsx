@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users } from "lucide-react";
 import StatCard from "@/components/StatCard";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -196,6 +197,16 @@ export default function Profile() {
             </button>
           </motion.div>
         )}
+
+        {/* Theme toggle */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-4"
+        >
+          <ThemeToggle />
+        </motion.div>
 
         {/* Personal Stats grid */}
         <div className="grid grid-cols-3 gap-3">

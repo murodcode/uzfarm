@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Medal, Users, Loader2 } from "lucide-react";
+import { Trophy, Medal, Users, Loader2, Wallet } from "lucide-react";
 import TelegramBackButton from "@/components/TelegramBackButton";
 
 interface LeaderUser {
@@ -11,10 +11,11 @@ interface LeaderUser {
   username: string | null;
   photo_url: string | null;
   coins: number;
+  cash: number;
   referral_count: number;
 }
 
-type Tab = "coins" | "referrals";
+type Tab = "coins" | "referrals" | "cash";
 
 export default function Leaderboard() {
   const { profile } = useAuth();
@@ -26,11 +27,11 @@ export default function Leaderboard() {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
-      const orderCol = tab === "referrals" ? "referral_count" : "coins";
+      const orderCol = tab === "referrals" ? "referral_count" : tab === "cash" ? "cash" : "coins";
 
       const { data } = await supabase
         .from("profiles")
-        .select("id, first_name, username, photo_url, coins, referral_count")
+        .select("id, first_name, username, photo_url, coins, cash, referral_count")
         .order(orderCol, { ascending: false })
         .limit(50);
 
@@ -59,6 +60,12 @@ export default function Leaderboard() {
     return `${i + 1}`;
   };
 
+  const getValueLabel = (u: LeaderUser) => {
+    if (tab === "coins") return `🪙 ${u.coins.toLocaleString()}`;
+    if (tab === "cash") return `💵 ${u.cash.toLocaleString()}`;
+    return `👥 ${u.referral_count}`;
+  };
+
   const renderUserRow = (u: LeaderUser, displayRank: number, isMe: boolean) => (
     <motion.div
       key={u.id}
@@ -83,7 +90,7 @@ export default function Leaderboard() {
       </div>
       <div className="text-right shrink-0">
         <p className="text-sm font-black text-foreground">
-          {tab === "coins" ? `🪙 ${u.coins.toLocaleString()}` : `👥 ${u.referral_count}`}
+          {getValueLabel(u)}
         </p>
       </div>
     </motion.div>
@@ -107,7 +114,7 @@ export default function Leaderboard() {
       </div>
 
       <div className="px-4 -mt-3 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setTab("coins")}
             className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
@@ -115,6 +122,14 @@ export default function Leaderboard() {
             }`}
           >
             <Medal className="h-3.5 w-3.5" /> Tangalar
+          </button>
+          <button
+            onClick={() => setTab("cash")}
+            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              tab === "cash" ? "bg-primary text-primary-foreground" : "farm-card text-foreground"
+            }`}
+          >
+            <Wallet className="h-3.5 w-3.5" /> Balans
           </button>
           <button
             onClick={() => setTab("referrals")}
@@ -144,6 +159,7 @@ export default function Leaderboard() {
                     username: profile.username || null,
                     photo_url: profile.photo_url || null,
                     coins: profile.coins || 0,
+                    cash: profile.cash || 0,
                     referral_count: profile.referral_count || 0,
                   },
                   myRank - 1,
