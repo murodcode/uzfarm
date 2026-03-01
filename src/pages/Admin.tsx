@@ -247,6 +247,51 @@ export default function Admin() {
     }
   };
 
+  const fetchRefLeaderboard = async () => {
+    try {
+      const data = await callAdmin({ action: "get_referral_leaderboard", period: refPeriod });
+      setRefLeaderboard(data?.leaderboard || []);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    }
+  };
+
+  // Re-fetch when period changes
+  useEffect(() => {
+    if (tab === "referral_rank" && isAdmin) {
+      setLoading(true);
+      fetchRefLeaderboard().finally(() => setLoading(false));
+    }
+  }, [refPeriod]);
+
+  const handleSendMessage = async () => {
+    if (!msgTargetTgId || !msgText || processing) return;
+    setProcessing("msg");
+    try {
+      await callAdmin({ action: "send_user_message", telegram_id: parseInt(msgTargetTgId), text: msgText });
+      toast.success("Xabar yuborildi!");
+      setMsgText("");
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleBroadcast = async () => {
+    if (!broadcastText || processing) return;
+    setProcessing("broadcast");
+    try {
+      const data = await callAdmin({ action: "broadcast_message", text: broadcastText });
+      toast.success(`Xabar yuborildi! ${data?.sent || 0} ta foydalanuvchiga`);
+      setBroadcastText("");
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -261,7 +306,9 @@ export default function Admin() {
     { key: "stats", label: "Statistika", icon: BarChart3 },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
+    { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
+    { key: "messaging", label: "Xabarlar", icon: MessageCircle },
     { key: "settings", label: "Sozlamalar", icon: Settings },
   ];
 
