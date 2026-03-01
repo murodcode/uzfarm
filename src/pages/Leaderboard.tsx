@@ -114,7 +114,7 @@ export default function Leaderboard() {
       </div>
 
       <div className="px-4 -mt-3 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => setTab("coins")}
             className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
@@ -122,6 +122,14 @@ export default function Leaderboard() {
             }`}
           >
             <Medal className="h-3.5 w-3.5" /> Tangalar
+          </button>
+          <button
+            onClick={() => setTab("cash")}
+            className={`py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              tab === "cash" ? "bg-primary text-primary-foreground" : "farm-card text-foreground"
+            }`}
+          >
+            <Wallet className="h-3.5 w-3.5" /> Balans
           </button>
           <button
             onClick={() => setTab("referrals")}
