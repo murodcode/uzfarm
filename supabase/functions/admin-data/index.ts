@@ -99,7 +99,7 @@ Deno.serve(async (req) => {
             `💰 <b>Yangi pul chiqarish so'rovi!</b>\n\n` +
             `👤 <b>${userProfile.first_name || "Noma'lum"}</b> (@${userProfile.username || "—"})\n` +
             `🆔 TG: <code>${userProfile.telegram_id || "—"}</code>\n\n` +
-            `💵 Miqdor: <b>${amount.toLocaleString()} tanga</b> (${somAmount.toLocaleString()} so'm)\n\n` +
+            `💵 Miqdor: <b>${amount.toLocaleString()} pul</b> (${somAmount.toLocaleString()} so'm)\n\n` +
             `💳 Karta raqami:\n<code>${cardFormatted}</code>`;
 
           const replyMarkup = latestWd ? {
