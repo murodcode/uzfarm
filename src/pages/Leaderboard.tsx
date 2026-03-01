@@ -59,6 +59,12 @@ export default function Leaderboard() {
     return `${i + 1}`;
   };
 
+  const getValueLabel = (u: LeaderUser) => {
+    if (tab === "coins") return `🪙 ${u.coins.toLocaleString()}`;
+    if (tab === "cash") return `💵 ${u.cash.toLocaleString()}`;
+    return `👥 ${u.referral_count}`;
+  };
+
   const renderUserRow = (u: LeaderUser, displayRank: number, isMe: boolean) => (
     <motion.div
       key={u.id}
