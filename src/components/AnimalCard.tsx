@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { getAnimalType, OwnedAnimal } from "@/lib/gameData";
-import { Utensils, Egg, Scissors, Clock, Droplets } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Utensils, Egg, Scissors, Clock, Droplets, Loader2 } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 
 const FEED_COOLDOWN_MS = 15 * 60 * 1000;
 
