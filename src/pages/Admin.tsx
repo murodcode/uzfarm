@@ -876,6 +876,65 @@ export default function Admin() {
                     </div>
                   </div>
                 </div>
+
+                {/* Mandatory channel */}
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-3">📢 Majburiy kanal</h3>
+                  <div className="space-y-2.5">
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={appSettings.mandatory_channel?.enabled === true}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, enabled: e.target.checked };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                          callAdmin({ action: "update_settings", key: "mandatory_channel", value: updated }).then(() => toast.success("Saqlandi"));
+                        }}
+                        className="rounded"
+                      />
+                      Majburiy kanalni yoqish
+                    </label>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Kanal ID (masalan: @channel_name yoki -100...)</label>
+                      <Input
+                        value={appSettings.mandatory_channel?.channel_id ?? ""}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, channel_id: e.target.value };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "mandatory_channel", value: appSettings.mandatory_channel }).then(() => toast.success("Saqlandi"))}
+                        placeholder="@farm_market_pay"
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Kanal havolasi</label>
+                      <Input
+                        value={appSettings.mandatory_channel?.channel_url ?? ""}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, channel_url: e.target.value };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "mandatory_channel", value: appSettings.mandatory_channel }).then(() => toast.success("Saqlandi"))}
+                        placeholder="https://t.me/farm_market_pay"
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Kanal nomi</label>
+                      <Input
+                        value={appSettings.mandatory_channel?.channel_name ?? ""}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.mandatory_channel, channel_name: e.target.value };
+                          setAppSettings(prev => ({ ...prev, mandatory_channel: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "mandatory_channel", value: appSettings.mandatory_channel }).then(() => toast.success("Saqlandi"))}
+                        placeholder="Farm Market"
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </>
