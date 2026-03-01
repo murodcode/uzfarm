@@ -11,6 +11,7 @@ interface LeaderUser {
   username: string | null;
   photo_url: string | null;
   coins: number;
+  cash: number;
   referral_count: number;
 }
 
