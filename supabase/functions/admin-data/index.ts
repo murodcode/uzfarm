@@ -349,8 +349,8 @@ Deno.serve(async (req) => {
 
           if (userProfile?.telegram_id) {
             const msg = status === "approved"
-              ? `✅ Sizning 💵 ${wd.amount.toLocaleString()} tangalik (${somAmount.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`
-              : `❌ Sizning 💵 ${wd.amount.toLocaleString()} tangalik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`;
+              ? `✅ Sizning 💵 ${wd.amount.toLocaleString()} pullik (${somAmount.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`
+              : `❌ Sizning 💵 ${wd.amount.toLocaleString()} pullik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`;
             await sendTgMessage(userProfile.telegram_id, msg);
           }
 

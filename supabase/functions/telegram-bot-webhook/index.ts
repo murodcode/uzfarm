@@ -280,7 +280,7 @@ Deno.serve(async (req) => {
           if (userProfile) {
             await supabase.from("profiles").update({ cash: (userProfile.cash || 0) + wd.amount }).eq("id", wd.user_id);
             if (userProfile.telegram_id) {
-              await sendMessage(userProfile.telegram_id, `❌ Sizning 💵 ${wd.amount.toLocaleString()} tangalik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`);
+              await sendMessage(userProfile.telegram_id, `❌ Sizning 💵 ${wd.amount.toLocaleString()} pullik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`);
             }
           }
         }
