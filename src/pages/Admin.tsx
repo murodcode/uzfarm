@@ -80,6 +80,14 @@ export default function Admin() {
     is_daily: false, requirement_type: "subscribe", requirement_value: 1,
     url: "", task_type: "general"
   });
+  // Referral leaderboard
+  const [refPeriod, setRefPeriod] = useState<"daily" | "weekly" | "all">("daily");
+  const [refLeaderboard, setRefLeaderboard] = useState<any[]>([]);
+  const [selectedRefUser, setSelectedRefUser] = useState<any>(null);
+  // Messaging
+  const [msgTargetTgId, setMsgTargetTgId] = useState("");
+  const [msgText, setMsgText] = useState("");
+  const [broadcastText, setBroadcastText] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
