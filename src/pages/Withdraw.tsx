@@ -107,7 +107,7 @@ export default function Withdraw() {
 
     await refreshProfile();
 
-    toast.success(`💵 ${numAmount.toLocaleString()} tanga chiqarish so'rovi yuborildi!`);
+    toast.success(`💵 ${numAmount.toLocaleString()} balans chiqarish so'rovi yuborildi!`);
     setAmount("");
     setCardNumber("");
     setLoading(false);

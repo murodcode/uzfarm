@@ -159,6 +159,7 @@ export default function Leaderboard() {
                     username: profile.username || null,
                     photo_url: profile.photo_url || null,
                     coins: profile.coins || 0,
+                    cash: profile.cash || 0,
                     referral_count: profile.referral_count || 0,
                   },
                   myRank - 1,
