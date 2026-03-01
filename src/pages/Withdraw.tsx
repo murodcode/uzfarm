@@ -148,7 +148,7 @@ export default function Withdraw() {
         {/* Info banner */}
         <div className="farm-card bg-primary/5 border-primary/20">
           <p className="text-xs font-semibold text-foreground text-center">
-            💰 Minimal chiqarish: <span className="text-primary">{minWithdrawal.toLocaleString()} tanga</span> = <span className="text-primary">{coinsToSom(minWithdrawal)} so'm</span>
+            💰 Minimal chiqarish: <span className="text-primary">{minWithdrawal.toLocaleString()} balans</span> = <span className="text-primary">{coinsToSom(minWithdrawal)} so'm</span>
           </p>
         </div>
 
