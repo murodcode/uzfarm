@@ -265,7 +265,7 @@ Deno.serve(async (req) => {
           const { data: userProfile } = await supabase.from("profiles").select("telegram_id").eq("id", wd.user_id).single();
           if (userProfile?.telegram_id) {
             const somAmt = Math.floor(wd.amount / coinsPerSom);
-            await sendMessage(userProfile.telegram_id, `✅ Sizning 💵 ${wd.amount.toLocaleString()} tangalik (${somAmt.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`);
+            await sendMessage(userProfile.telegram_id, `✅ Sizning 💵 ${wd.amount.toLocaleString()} pullik (${somAmt.toLocaleString()} so'm) pul chiqarish so'rovingiz <b>tasdiqlandi</b>!`);
           }
           await sendPaymentChannelNotification(supabase, wdId, wd.user_id, wd.amount);
         }
