@@ -26,7 +26,7 @@ export default function Leaderboard() {
   useEffect(() => {
     const fetchLeaderboard = async () => {
       setLoading(true);
-      const orderCol = tab === "referrals" ? "referral_count" : "coins";
+      const orderCol = tab === "referrals" ? "referral_count" : tab === "cash" ? "cash" : "coins";
 
       const { data } = await supabase
         .from("profiles")
