@@ -113,8 +113,8 @@
 @layer utilities {
   .farm-card {
     @apply rounded-2xl border-2 p-4;
-    background: hsl(var(--farm-cream));
-    border-color: hsl(var(--farm-brown-light));
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
     box-shadow: var(--shadow-card);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
