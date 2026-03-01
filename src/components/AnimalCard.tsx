@@ -25,11 +25,22 @@ interface AnimalCardProps {
 export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, onSlaughter }: AnimalCardProps) {
   const type = getAnimalType(animal.typeId);
   const [now, setNow] = useState(Date.now());
+  const [busyAction, setBusyAction] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  const handleAction = useCallback(async (actionName: string, fn: () => void | Promise<void>) => {
+    if (busyAction) return;
+    setBusyAction(actionName);
+    try {
+      await fn();
+    } finally {
+      setBusyAction(null);
+    }
+  }, [busyAction]);
 
   if (!type) return null;
 
