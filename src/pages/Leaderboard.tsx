@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Trophy, Medal, Users, Loader2 } from "lucide-react";
+import { Trophy, Medal, Users, Loader2, Wallet } from "lucide-react";
 import TelegramBackButton from "@/components/TelegramBackButton";
 
 interface LeaderUser {
