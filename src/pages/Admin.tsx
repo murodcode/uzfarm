@@ -324,7 +324,7 @@ export default function Admin() {
 
       <div className="px-4 -mt-3">
         {/* Tabs */}
-        <div className="grid grid-cols-5 gap-1 mb-4">
+        <div className="flex gap-1 mb-4 overflow-x-auto pb-1">
           {tabs.map(t => (
             <button
               key={t.key}
