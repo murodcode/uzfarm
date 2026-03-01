@@ -31,7 +31,7 @@ export default function Leaderboard() {
 
       const { data } = await supabase
         .from("profiles")
-        .select("id, first_name, username, photo_url, coins, referral_count")
+        .select("id, first_name, username, photo_url, coins, cash, referral_count")
         .order(orderCol, { ascending: false })
         .limit(50);
 
