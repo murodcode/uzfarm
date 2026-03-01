@@ -14,7 +14,7 @@ interface LeaderUser {
   referral_count: number;
 }
 
-type Tab = "coins" | "referrals";
+type Tab = "coins" | "referrals" | "cash";
 
 export default function Leaderboard() {
   const { profile } = useAuth();
