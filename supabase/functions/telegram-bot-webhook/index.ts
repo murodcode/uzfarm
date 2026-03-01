@@ -439,7 +439,7 @@ Deno.serve(async (req) => {
         {
           inline_keyboard: [
             [miniAppButton],
-            [{ text: "📖 Qo'llanma", callback_data: "bot_help" }, { text: "📞 Admin", url: `https://t.me/${BOT_USERNAME}?start=contact_admin` }],
+            [{ text: "📖 Qo'llanma", callback_data: "bot_help" }, { text: "📞 Bog'lanish", url: "https://t.me/Boglanish_mazkazi_Bot" }],
             [{ text: "👥 Do'stlarni taklif qilish", url: `https://t.me/share/url?url=${encodeURIComponent(`https://t.me/${BOT_USERNAME}?start=ref_${fromUser.id}`)}&text=${encodeURIComponent("🌾 Farm Empire o'yiniga qo'shiling va bonus oling!")}` }],
             [{ text: "📢 Rasmiy kanal", url: "https://t.me/farm_market_pay" }],
           ],
