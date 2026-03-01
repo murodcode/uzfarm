@@ -190,7 +190,7 @@ async function sendPaymentChannelNotification(
       `😀 Foydalanuvchi: <b>${name}</b>\n` +
       `👤 Username: ${uname}\n` +
       `📇 Telegram ID: <code>${tgId}</code>\n` +
-      `💰 Miqdor: <b>${amount.toLocaleString()} tanga</b>\n` +
+      `💰 Miqdor: <b>${amount.toLocaleString()} pul</b>\n` +
       `🍀 Pul ekvivalenti: <b>${somAmount.toLocaleString()} so'm</b>\n` +
       `📥 Hamyon: <code>${maskedCard}</code>\n` +
       `⏱ Yechib olish vaqti: ${requestedDate}\n\n` +
