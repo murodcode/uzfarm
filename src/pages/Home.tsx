@@ -17,24 +17,9 @@ export default function Home() {
   const { showAd } = useRewardedAd();
   useEntryAd();
 
-  const handleAdError = (err: unknown) => {
-    if (err instanceof Error && err.message === "AD_NOT_WATCHED") {
-      toast.warning("Reklamani kamida 10 soniya ko'ring! ⚠️", {
-        description: "Iltimos reklamani to'liq tomosha qilib, keyin qayta urinib ko'ring.",
-        duration: 4000,
-      });
-      return true; // was ad-not-watched error
-    }
-    return false; // other error, fail silently
-  };
-
   const handleFeed = async (id: string) => {
-    try {
-      await showAd();
-    } catch (err) {
-      handleAdError(err);
-      return;
-    }
+    const adOk = await showAd();
+    if (!adOk) return;
     const success = await feedAnimal(id);
     if (success) {
       gainExp(EXP_SOURCES.feed_animal);
@@ -45,12 +30,8 @@ export default function Home() {
   };
 
   const handleCollect = async (id: string) => {
-    try {
-      await showAd();
-    } catch (err) {
-      handleAdError(err);
-      return;
-    }
+    const adOk = await showAd();
+    if (!adOk) return;
     const eggs = await collectEggs(id);
     if (eggs > 0) {
       gainExp(EXP_SOURCES.collect_eggs);
@@ -61,12 +42,8 @@ export default function Home() {
   };
 
   const handleCollectMilk = async (id: string) => {
-    try {
-      await showAd();
-    } catch (err) {
-      handleAdError(err);
-      return;
-    }
+    const adOk = await showAd();
+    if (!adOk) return;
     const milk = await collectMilk(id);
     if (milk > 0) {
       toast.success(`${milk} litr sut yig'ildi! 🥛`);
@@ -76,12 +53,8 @@ export default function Home() {
   };
 
   const handleSlaughter = async (id: string) => {
-    try {
-      await showAd();
-    } catch (err) {
-      handleAdError(err);
-      return;
-    }
+    const adOk = await showAd();
+    if (!adOk) return;
     slaughterAnimal(id);
     toast.success("Go'sht inventarga qo'shildi! 🥩");
   };
