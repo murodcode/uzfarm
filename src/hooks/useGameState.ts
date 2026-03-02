@@ -61,7 +61,7 @@ export function useGameState() {
         const [profileRes, animalsRes] = await Promise.all([
           supabase
             .from("profiles")
-            .select("coins, cash, eggs, meat, level, exp")
+            .select("coins, cash, eggs, meat, milk, level, exp")
             .eq("id", session.user.id)
             .single(),
           supabase
