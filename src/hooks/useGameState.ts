@@ -138,9 +138,10 @@ export function useGameState() {
               ...prev,
               coins: profileRes.data.coins,
               cash: profileRes.data.cash,
-              eggs: profileRes.data.eggs,
-              meat: profileRes.data.meat,
-              level: profileRes.data.level,
+            eggs: profileRes.data.eggs,
+            meat: profileRes.data.meat,
+            milk: (profileRes.data as any).milk ?? 0,
+            level: profileRes.data.level,
               exp: profileRes.data.exp,
               animals: dbAnimals,
             }));
