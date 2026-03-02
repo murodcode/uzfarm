@@ -61,7 +61,7 @@ export function useGameState() {
         const [profileRes, animalsRes] = await Promise.all([
           supabase
             .from("profiles")
-            .select("coins, cash, eggs, meat, level, exp")
+            .select("coins, cash, eggs, meat, milk, level, exp")
             .eq("id", session.user.id)
             .single(),
           supabase
@@ -120,7 +120,7 @@ export function useGameState() {
         initializedFromDb.current = false;
         const reload = async () => {
           const [profileRes, animalsRes] = await Promise.all([
-            supabase.from("profiles").select("coins, cash, eggs, meat, level, exp").eq("id", userId).single(),
+            supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
             supabase.from("animals").select("*").eq("user_id", userId),
           ]);
           if (profileRes.data) {
@@ -138,9 +138,10 @@ export function useGameState() {
               ...prev,
               coins: profileRes.data.coins,
               cash: profileRes.data.cash,
-              eggs: profileRes.data.eggs,
-              meat: profileRes.data.meat,
-              level: profileRes.data.level,
+            eggs: profileRes.data.eggs,
+            meat: profileRes.data.meat,
+            milk: (profileRes.data as any).milk ?? 0,
+            level: profileRes.data.level,
               exp: profileRes.data.exp,
               animals: dbAnimals,
             }));
@@ -434,7 +435,7 @@ export function useGameState() {
   const refreshFromDb = useCallback(async () => {
     if (!userId) return;
     const [profileRes, animalsRes] = await Promise.all([
-      supabase.from("profiles").select("coins, cash, eggs, meat, level, exp").eq("id", userId).single(),
+      supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
       supabase.from("animals").select("*").eq("user_id", userId),
     ]);
     
@@ -455,6 +456,7 @@ export function useGameState() {
         cash: profileRes.data.cash,
         eggs: profileRes.data.eggs,
         meat: profileRes.data.meat,
+        milk: (profileRes.data as any).milk ?? 0,
         level: profileRes.data.level,
         exp: profileRes.data.exp,
         animals: dbAnimals,

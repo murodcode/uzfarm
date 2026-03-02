@@ -29,7 +29,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen safe-bottom pb-4">
       {/* Hero header */}
-      <div className="gradient-hero px-4 pb-8 pt-10">
+      <div className="gradient-hero px-4 pb-8 pt-10" style={{ background: 'var(--gradient-hero)' }}>
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
