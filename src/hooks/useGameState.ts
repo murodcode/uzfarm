@@ -434,7 +434,7 @@ export function useGameState() {
   const refreshFromDb = useCallback(async () => {
     if (!userId) return;
     const [profileRes, animalsRes] = await Promise.all([
-      supabase.from("profiles").select("coins, cash, eggs, meat, level, exp").eq("id", userId).single(),
+      supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
       supabase.from("animals").select("*").eq("user_id", userId),
     ]);
     
