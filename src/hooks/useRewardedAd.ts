@@ -1,5 +1,6 @@
 import { useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 /* ── Adsgram (entry ad only) ── */
 const ADSGRAM_BLOCK_ID = "int-23556";
@@ -53,37 +54,61 @@ async function recordAdView() {
 }
 
 /* ── Monetag rewarded ad (for actions: feed, collect, sell, etc.) ── */
+const MIN_AD_VIEW_MS = 10_000; // 10 seconds minimum
+
 export function useRewardedAd() {
   const showingRef = useRef(false);
 
-  const showAd = useCallback((): Promise<void> => {
+  const showAd = useCallback((): Promise<boolean> => {
     if (showingRef.current) return Promise.reject(new Error("Ad already showing"));
 
     const monetagShow = window.show_10612725;
     if (!monetagShow) {
-      // SDK not loaded – resolve silently so actions still work
-      return Promise.resolve();
+      // SDK not loaded – resolve so actions still work
+      return Promise.resolve(true);
     }
 
     showingRef.current = true;
+    const startTime = Date.now();
 
     return monetagShow()
       .then(() => {
         showingRef.current = false;
+        const elapsed = Date.now() - startTime;
+        if (elapsed < MIN_AD_VIEW_MS) {
+          toast.error(
+            `❌ Reklamadagi tugmani bosmadingiz va ${Math.ceil(MIN_AD_VIEW_MS / 1000)} soniya reklamani ko'rmadingiz!`,
+            { duration: 5000, style: { fontSize: "16px", fontWeight: "bold" } }
+          );
+          return false;
+        }
         recordAdView();
+        toast.success("✅ Reklama muvaffaqiyatli ko'rildi!", { duration: 2000 });
+        return true;
       })
-      .catch((err) => {
+      .catch(() => {
         showingRef.current = false;
-        console.log("Monetag ad skipped/error:", err);
-        // Resolve so actions still execute
+        toast.error(
+          `❌ Reklamadagi tugmani bosmadingiz va ${Math.ceil(MIN_AD_VIEW_MS / 1000)} soniya reklamani ko'rmadingiz!`,
+          { duration: 5000, style: { fontSize: "16px", fontWeight: "bold" } }
+        );
+        return false;
       });
   }, []);
 
   const withAd = useCallback(
     (action: () => void) => {
+      toast.info("📺 Reklamani ko'rishingiz shart!", { duration: 3000 });
       showAd()
-        .then(() => action())
-        .catch(() => action());
+        .then((success) => {
+          if (success) {
+            action();
+          }
+          // If not success, action is NOT executed
+        })
+        .catch(() => {
+          // Ad failed, action is NOT executed
+        });
     },
     [showAd]
   );
