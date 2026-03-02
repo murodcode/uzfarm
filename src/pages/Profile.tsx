@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users } from "lucide-react";
+import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users, ExternalLink } from "lucide-react";
 import StatCard from "@/components/StatCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useGameContext } from "@/contexts/GameStateContext";
@@ -10,6 +10,31 @@ export default function Profile() {
   const { state } = useGameContext();
   const { session, profile, isAdmin, signOut, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const DIRECT_LINK = "https://omg10.com/4/10644130";
+  const LINK_COOLDOWN_MS = 60_000; // 1 minute
+  const lastLinkClickRef = useRef(0);
+  const [linkCooldown, setLinkCooldown] = useState(0);
+
+  // Link cooldown timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - lastLinkClickRef.current;
+      const remaining = Math.max(0, Math.ceil((LINK_COOLDOWN_MS - elapsed) / 1000));
+      setLinkCooldown(remaining);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleDirectLink = useCallback(() => {
+    if (Date.now() - lastLinkClickRef.current < LINK_COOLDOWN_MS) return;
+    lastLinkClickRef.current = Date.now();
+    const tgApp = (window as any).Telegram?.WebApp;
+    if (tgApp?.openLink) {
+      tgApp.openLink(DIRECT_LINK);
+    } else {
+      window.open(DIRECT_LINK, "_blank");
+    }
+  }, []);
 
   // Refresh profile data when page loads and every 10 seconds
   useEffect(() => {
@@ -206,6 +231,30 @@ export default function Profile() {
           className="mb-4"
         >
           <ThemeToggle />
+        </motion.div>
+
+        {/* Direct link */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-4"
+        >
+          <button
+            onClick={handleDirectLink}
+            disabled={linkCooldown > 0}
+            className="farm-card w-full flex items-center gap-3 py-3 transition-transform active:scale-95 disabled:opacity-50"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-xs font-bold text-foreground">🎁 Bonus havola</p>
+              <p className="text-[10px] text-muted-foreground">
+                {linkCooldown > 0 ? `⏳ ${linkCooldown}s kutish` : "Bosing va bonus oling!"}
+              </p>
+            </div>
+          </button>
         </motion.div>
 
         {/* Personal Stats grid */}
