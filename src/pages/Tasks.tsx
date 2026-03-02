@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { useRewardedAd } from "@/hooks/useRewardedAd";
-import { CheckCircle2, Clock, Gift, Star, ExternalLink, Loader2, Trophy } from "lucide-react";
+import { useAdsgramTask } from "@/hooks/useAdsgramTask";
+import { CheckCircle2, Clock, Gift, Star, ExternalLink, Loader2, Trophy, Play } from "lucide-react";
 import { toast } from "sonner";
 import { DAILY_TASK_DEFS, getDailyProgress, claimDailyReward } from "@/lib/dailyTasks";
 
