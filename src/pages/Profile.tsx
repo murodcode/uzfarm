@@ -233,6 +233,30 @@ export default function Profile() {
           <ThemeToggle />
         </motion.div>
 
+        {/* Direct link */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-4"
+        >
+          <button
+            onClick={handleDirectLink}
+            disabled={linkCooldown > 0}
+            className="farm-card w-full flex items-center gap-3 py-3 transition-transform active:scale-95 disabled:opacity-50"
+          >
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
+              <ExternalLink className="h-4 w-4 text-primary" />
+            </div>
+            <div className="text-left flex-1">
+              <p className="text-xs font-bold text-foreground">🎁 Bonus havola</p>
+              <p className="text-[10px] text-muted-foreground">
+                {linkCooldown > 0 ? `⏳ ${linkCooldown}s kutish` : "Bosing va bonus oling!"}
+              </p>
+            </div>
+          </button>
+        </motion.div>
+
         {/* Personal Stats grid */}
         <div className="grid grid-cols-3 gap-3">
           <StatCard icon={Dog} label="Hayvonlar" value={state.animals.length} bgClass="bg-farm-green-light" iconColorClass="text-primary" />
