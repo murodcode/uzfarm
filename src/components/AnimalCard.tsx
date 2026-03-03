@@ -1,11 +1,10 @@
 import { motion } from "framer-motion";
-import { getAnimalType, OwnedAnimal } from "@/lib/gameData";
-import { Utensils, Egg, Scissors, Clock, Droplets, Loader2 } from "lucide-react";
+import { getAnimalType, OwnedAnimal, DEATH_HOURS, isAnimalDead } from "@/lib/gameData";
+import { Utensils, Egg, Scissors, Clock, Droplets, Loader2, Skull, Heart } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 
 const FEED_COOLDOWN_MS = 15 * 60 * 1000;
 
-// Big animated emoji per animal type
 const ANIMAL_ANIMATIONS: Record<string, { emoji: string; color: string }> = {
   cow:     { emoji: "🐄", color: "hsl(38 60% 88%)" },
   sheep:   { emoji: "🐑", color: "hsl(200 30% 90%)" },
@@ -43,6 +42,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
   }, [busyAction]);
 
   if (!type) return null;
+  if (isAnimalDead(animal)) return null;
 
   const animalAnim = ANIMAL_ANIMATIONS[animal.typeId] || { emoji: type.emoji, color: "hsl(var(--muted))" };
 
@@ -58,6 +58,25 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
   const canFeed = feedCooldownRemaining <= 0;
   const cooldownMinutes = Math.floor(feedCooldownRemaining / 60000);
   const cooldownSeconds = Math.floor((feedCooldownRemaining % 60000) / 1000);
+
+  // Starvation timer
+  const lastFoodTime = animal.lastFedAt > 0 ? animal.lastFedAt : animal.boughtAt;
+  const hoursSinceFood = (now - lastFoodTime) / 3600000;
+  const starvationHoursLeft = Math.max(0, DEATH_HOURS - hoursSinceFood);
+  const starvationH = Math.floor(starvationHoursLeft);
+  const starvationM = Math.floor((starvationHoursLeft - starvationH) * 60);
+  const isStarving = starvationHoursLeft < 12;
+
+  // Lifetime timer (after grown)
+  const lifetimeHoursLeft = isGrown && animal.grownAt > 0
+    ? Math.max(0, type.lifetimeHours - (now - animal.grownAt) / 3600000)
+    : -1;
+  const lifetimeH = lifetimeHoursLeft >= 0 ? Math.floor(lifetimeHoursLeft) : 0;
+  const lifetimeM = lifetimeHoursLeft >= 0 ? Math.floor((lifetimeHoursLeft - lifetimeH) * 60) : 0;
+  const isLifetimeLow = lifetimeHoursLeft >= 0 && lifetimeHoursLeft < 12;
+
+  // Feed progress
+  const feedProgress = `${animal.feedCount} / ${type.feedsToGrow}`;
 
   // Hunger display
   const hungerDecay = hasFedBefore
@@ -142,9 +161,14 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
         )}
       </div>
 
-      <div className="px-4 pt-3 pb-4 space-y-3">
-        {/* Name */}
-        <h3 className="font-black text-foreground text-base leading-tight">{type.name}</h3>
+      <div className="px-4 pt-3 pb-4 space-y-2.5">
+        {/* Name & feed count */}
+        <div className="flex items-center justify-between">
+          <h3 className="font-black text-foreground text-base leading-tight">{type.name}</h3>
+          <span className="text-[10px] font-bold text-muted-foreground bg-muted rounded-full px-2 py-0.5">
+            📺 {feedProgress}
+          </span>
+        </div>
 
         {/* Growth bar */}
         <div>
@@ -179,6 +203,30 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           </div>
         </div>
 
+        {/* Starvation timer */}
+        <div className={`flex items-center justify-between rounded-xl px-3 py-2 ${isStarving ? 'bg-destructive/10' : 'bg-muted/60'}`}>
+          <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+            {isStarving ? <Skull className="h-3.5 w-3.5 text-destructive" /> : <Heart className="h-3.5 w-3.5 text-primary" />}
+            Ovqatsiz qolish
+          </span>
+          <span className={`text-xs font-bold ${isStarving ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {starvationH}s {starvationM}d
+          </span>
+        </div>
+
+        {/* Lifetime timer (only when grown) */}
+        {lifetimeHoursLeft >= 0 && (
+          <div className={`flex items-center justify-between rounded-xl px-3 py-2 ${isLifetimeLow ? 'bg-destructive/10' : 'bg-muted/60'}`}>
+            <span className="text-[11px] font-bold text-foreground flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              Hayot muddati
+            </span>
+            <span className={`text-xs font-bold ${isLifetimeLow ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {lifetimeH}s {lifetimeM}d
+            </span>
+          </div>
+        )}
+
         {/* Egg info */}
         {isEggReady && (
           <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3 py-2">
@@ -205,9 +253,8 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
           </div>
         )}
 
-        {/* Action buttons — single row */}
+        {/* Action buttons */}
         <div className="flex gap-2">
-          {/* Feed button */}
           {canFeed ? (
             <button
               onClick={() => handleAction("feed", onFeed)}
@@ -224,7 +271,6 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             </div>
           ) : null}
 
-          {/* Collect button for egg producers */}
           {isEggReady && (
             <button
               onClick={() => handleAction("collect", onCollect)}
@@ -236,7 +282,6 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             </button>
           )}
 
-          {/* Collect button for milk producers */}
           {isMilkReady && (
             <button
               onClick={() => handleAction("milk", onCollectMilk)}
@@ -249,7 +294,6 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             </button>
           )}
 
-          {/* Slaughter button */}
           {canSlaughter && (
             <button
               onClick={() => handleAction("slaughter", onSlaughter)}

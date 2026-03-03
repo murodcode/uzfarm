@@ -10,22 +10,26 @@ export interface AnimalType {
   meatYield: number;
   eggYield: number;
   milkYield: number;
-  feedsToGrow: number; // how many feeds to reach 100%
+  feedsToGrow: number;
+  maxOwned: number;
+  lifetimeHours: number; // hours after fully grown before animal dies
 }
 
 export interface OwnedAnimal {
   id: string;
   typeId: string;
   growthPercent: number;
-  hunger: number; // 0-100, 100 = full
+  hunger: number;
   lastFedAt: number;
   lastCollectedAt: number;
   boughtAt: number;
+  grownAt: number; // timestamp when growth reached 100%, 0 if not grown
+  feedCount: number; // number of times fed (ads watched)
 }
 
 export interface GameState {
-  coins: number;      // O'yin tangasi – hayvon sotib olish uchun
-  cash: number;       // Haqiqiy pul tangasi – chiqarib olish mumkin
+  coins: number;
+  cash: number;
   animals: OwnedAnimal[];
   eggs: number;
   meat: number;
@@ -35,8 +39,9 @@ export interface GameState {
   registeredAt: number;
 }
 
-// Sotuvdan tushadigan daromadning qancha foizi coin va cash bo'lishi
 export const SELL_SPLIT = { coinPercent: 70, cashPercent: 30 };
+
+export const DEATH_HOURS = 48; // hours without food before animal dies
 
 export const ANIMAL_TYPES: AnimalType[] = [
   {
@@ -51,7 +56,9 @@ export const ANIMAL_TYPES: AnimalType[] = [
     meatYield: 15,
     eggYield: 0,
     milkYield: 3,
-    feedsToGrow: 10,
+    feedsToGrow: 15,
+    maxOwned: 5,
+    lifetimeHours: 48,
   },
   {
     id: "sheep",
@@ -65,7 +72,9 @@ export const ANIMAL_TYPES: AnimalType[] = [
     meatYield: 8,
     eggYield: 0,
     milkYield: 0,
-    feedsToGrow: 8,
+    feedsToGrow: 13,
+    maxOwned: 7,
+    lifetimeHours: 48,
   },
   {
     id: "goat",
@@ -79,7 +88,9 @@ export const ANIMAL_TYPES: AnimalType[] = [
     meatYield: 6,
     eggYield: 0,
     milkYield: 0,
-    feedsToGrow: 6,
+    feedsToGrow: 13,
+    maxOwned: 7,
+    lifetimeHours: 48,
   },
   {
     id: "chicken",
@@ -93,7 +104,9 @@ export const ANIMAL_TYPES: AnimalType[] = [
     meatYield: 2,
     eggYield: 1,
     milkYield: 0,
-    feedsToGrow: 4,
+    feedsToGrow: 10,
+    maxOwned: 10,
+    lifetimeHours: 48,
   },
   {
     id: "turkey",
@@ -107,7 +120,9 @@ export const ANIMAL_TYPES: AnimalType[] = [
     meatYield: 4,
     eggYield: 2,
     milkYield: 0,
-    feedsToGrow: 5,
+    feedsToGrow: 10,
+    maxOwned: 10,
+    lifetimeHours: 48,
   },
 ];
 
@@ -140,4 +155,34 @@ export function createDefaultGameState(): GameState {
     exp: 0,
     registeredAt: Date.now(),
   };
+}
+
+/**
+ * Check if an animal is dead based on feeding and lifetime rules.
+ * Returns true if the animal should be removed.
+ */
+export function isAnimalDead(animal: OwnedAnimal): boolean {
+  const now = Date.now();
+  const type = getAnimalType(animal.typeId);
+  if (!type) return false;
+
+  // Death from starvation: 48h without food
+  const lastFoodTime = animal.lastFedAt > 0 ? animal.lastFedAt : animal.boughtAt;
+  const hoursSinceFood = (now - lastFoodTime) / 3600000;
+  if (hoursSinceFood >= DEATH_HOURS) return true;
+
+  // Death from lifetime expiry: 48h after fully grown
+  if (animal.grownAt > 0) {
+    const hoursSinceGrown = (now - animal.grownAt) / 3600000;
+    if (hoursSinceGrown >= type.lifetimeHours) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Count how many animals of a given type are alive.
+ */
+export function countAnimalsByType(animals: OwnedAnimal[], typeId: string): number {
+  return animals.filter(a => a.typeId === typeId && !isAnimalDead(a)).length;
 }
