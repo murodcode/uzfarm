@@ -775,6 +775,58 @@ export default function Admin() {
               </div>
             )}
 
+            {/* === ADMINS === */}
+            {tab === "admins" && (
+              <div className="space-y-3">
+                <div className="farm-card space-y-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <Shield className="h-4 w-4" /> Yangi admin qo'shish
+                  </h3>
+                  <Input
+                    placeholder="Telegram ID kiriting"
+                    value={newAdminTgId}
+                    onChange={(e) => setNewAdminTgId(e.target.value)}
+                    className="text-xs"
+                    type="number"
+                  />
+                  <button
+                    onClick={handleAddAdmin}
+                    disabled={!newAdminTgId || processing === "admin"}
+                    className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {processing === "admin" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                    Admin qo'shish
+                  </button>
+                </div>
+
+                {adminsList.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-8">Adminlar topilmadi</p>
+                ) : (
+                  adminsList.map((admin: any) => (
+                    <div key={admin.id} className="farm-card flex items-center gap-3">
+                      {admin.photo_url ? (
+                        <img src={admin.photo_url} className="h-10 w-10 rounded-full" alt="" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">👤</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{admin.first_name || "Noma'lum"}</p>
+                        <p className="text-[10px] text-muted-foreground">@{admin.username || "—"} · TG: {admin.telegram_id || "—"}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveAdmin(admin.user_id)}
+                        disabled={processing === "admin"}
+                        className="rounded-lg bg-destructive/10 text-destructive px-3 py-1.5 text-[10px] font-bold flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        O'chirish
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
             {/* === SETTINGS === */}
             {tab === "settings" && (
               <div className="space-y-3">
