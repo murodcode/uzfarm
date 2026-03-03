@@ -53,7 +53,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
