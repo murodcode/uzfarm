@@ -53,7 +53,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -88,6 +88,9 @@ export default function Admin() {
   const [msgTargetTgId, setMsgTargetTgId] = useState("");
   const [msgText, setMsgText] = useState("");
   const [broadcastText, setBroadcastText] = useState("");
+  // Admin management
+  const [adminsList, setAdminsList] = useState<any[]>([]);
+  const [newAdminTgId, setNewAdminTgId] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -163,6 +166,9 @@ export default function Admin() {
         setAppSettings(data?.settings || {});
       } else if (tab === "referral_rank") {
         await fetchRefLeaderboard();
+      } else if (tab === "admins") {
+        const data = await callAdmin({ action: "get_admins" });
+        setAdminsList(data?.admins || []);
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
@@ -302,6 +308,35 @@ export default function Admin() {
 
   if (!isAdmin) return null;
 
+  const handleAddAdmin = async () => {
+    if (!newAdminTgId || processing) return;
+    setProcessing("admin");
+    try {
+      await callAdmin({ action: "add_admin", telegram_id: parseInt(newAdminTgId) });
+      toast.success("Admin qo'shildi!");
+      setNewAdminTgId("");
+      fetchData();
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleRemoveAdmin = async (targetUserId: string) => {
+    if (processing) return;
+    setProcessing("admin");
+    try {
+      await callAdmin({ action: "remove_admin", target_user_id: targetUserId });
+      toast.success("Admin o'chirildi!");
+      fetchData();
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
@@ -309,6 +344,7 @@ export default function Admin() {
     { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
     { key: "messaging", label: "Xabarlar", icon: MessageCircle },
+    { key: "admins", label: "Adminlar", icon: Shield },
     { key: "settings", label: "Sozlamalar", icon: Settings },
   ];
 
@@ -736,6 +772,58 @@ export default function Admin() {
                   </button>
                   <p className="text-[10px] text-muted-foreground">⚠️ Bu xabar barcha foydalanuvchilarga yuboriladi!</p>
                 </div>
+              </div>
+            )}
+
+            {/* === ADMINS === */}
+            {tab === "admins" && (
+              <div className="space-y-3">
+                <div className="farm-card space-y-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <Shield className="h-4 w-4" /> Yangi admin qo'shish
+                  </h3>
+                  <Input
+                    placeholder="Telegram ID kiriting"
+                    value={newAdminTgId}
+                    onChange={(e) => setNewAdminTgId(e.target.value)}
+                    className="text-xs"
+                    type="number"
+                  />
+                  <button
+                    onClick={handleAddAdmin}
+                    disabled={!newAdminTgId || processing === "admin"}
+                    className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {processing === "admin" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                    Admin qo'shish
+                  </button>
+                </div>
+
+                {adminsList.length === 0 ? (
+                  <p className="text-center text-sm text-muted-foreground py-8">Adminlar topilmadi</p>
+                ) : (
+                  adminsList.map((admin: any) => (
+                    <div key={admin.id} className="farm-card flex items-center gap-3">
+                      {admin.photo_url ? (
+                        <img src={admin.photo_url} className="h-10 w-10 rounded-full" alt="" />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg">👤</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{admin.first_name || "Noma'lum"}</p>
+                        <p className="text-[10px] text-muted-foreground">@{admin.username || "—"} · TG: {admin.telegram_id || "—"}</p>
+                      </div>
+                      <button
+                        onClick={() => handleRemoveAdmin(admin.user_id)}
+                        disabled={processing === "admin"}
+                        className="rounded-lg bg-destructive/10 text-destructive px-3 py-1.5 text-[10px] font-bold flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        O'chirish
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             )}
 

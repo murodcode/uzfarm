@@ -620,6 +620,77 @@ Deno.serve(async (req) => {
       return json({ success: true, sent, failed });
     }
 
+    // === GET ADMINS ===
+    if (action === "get_admins") {
+      const { data: roles } = await adminClient
+        .from("user_roles")
+        .select("id, user_id, role")
+        .eq("role", "admin");
+
+      const userIds = (roles || []).map((r: any) => r.user_id);
+      const { data: profiles } = await adminClient
+        .from("profiles")
+        .select("id, first_name, username, telegram_id, photo_url")
+        .in("id", userIds.length > 0 ? userIds : ["00000000-0000-0000-0000-000000000000"]);
+
+      const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+      const admins = (roles || []).map((r: any) => ({
+        ...r,
+        ...(profileMap.get(r.user_id) || {}),
+      }));
+
+      return json({ admins });
+    }
+
+    // === ADD ADMIN ===
+    if (action === "add_admin") {
+      const { telegram_id } = body;
+      if (!telegram_id) return json({ error: "telegram_id kerak" }, 400);
+
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("id")
+        .eq("telegram_id", telegram_id)
+        .single();
+
+      if (!profile) return json({ error: "Bu Telegram ID bilan foydalanuvchi topilmadi" }, 404);
+
+      // Check if already admin
+      const { data: existing } = await adminClient
+        .from("user_roles")
+        .select("id")
+        .eq("user_id", profile.id)
+        .eq("role", "admin")
+        .single();
+
+      if (existing) return json({ error: "Bu foydalanuvchi allaqachon admin" }, 400);
+
+      const { error: insertErr } = await adminClient.from("user_roles").insert({
+        user_id: profile.id,
+        role: "admin",
+      });
+
+      if (insertErr) return json({ error: insertErr.message }, 500);
+      return json({ success: true });
+    }
+
+    // === REMOVE ADMIN ===
+    if (action === "remove_admin") {
+      const { target_user_id } = body;
+      if (!target_user_id) return json({ error: "target_user_id kerak" }, 400);
+
+      // Prevent removing yourself
+      if (target_user_id === userId) return json({ error: "O'zingizni admin ro'yxatidan o'chira olmaysiz" }, 400);
+
+      await adminClient
+        .from("user_roles")
+        .delete()
+        .eq("user_id", target_user_id)
+        .eq("role", "admin");
+
+      return json({ success: true });
+    }
+
     return json({ error: "Invalid action" }, 400);
   } catch (error) {
     console.error("Admin data error:", error);

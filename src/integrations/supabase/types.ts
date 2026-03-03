@@ -53,6 +53,8 @@ export type Database = {
       animals: {
         Row: {
           bought_at: string
+          feed_count: number
+          grown_at: string | null
           growth_percent: number
           hunger: number
           id: string
@@ -63,6 +65,8 @@ export type Database = {
         }
         Insert: {
           bought_at?: string
+          feed_count?: number
+          grown_at?: string | null
           growth_percent?: number
           hunger?: number
           id?: string
@@ -73,6 +77,8 @@ export type Database = {
         }
         Update: {
           bought_at?: string
+          feed_count?: number
+          grown_at?: string | null
           growth_percent?: number
           hunger?: number
           id?: string

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ANIMAL_TYPES } from "@/lib/gameData";
+import { ANIMAL_TYPES, countAnimalsByType } from "@/lib/gameData";
 import ShopCard from "@/components/ShopCard";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { toast } from "sonner";
@@ -13,10 +13,14 @@ export default function Shop() {
     const result = await buyAnimal(typeId);
     if (result) {
       toast.success("Hayvon sotib olindi! 🎉");
-      // Show ad after successful purchase
       showAd().catch(() => {});
     } else {
-      toast.error("Mablag' yetarli emas");
+      const type = ANIMAL_TYPES.find(a => a.id === typeId);
+      if (type && countAnimalsByType(state.animals, typeId) >= type.maxOwned) {
+        toast.error(`Maksimal ${type.maxOwned} ta ${type.name} sotib olish mumkin!`);
+      } else {
+        toast.error("Mablag' yetarli emas");
+      }
     }
   };
 
@@ -42,6 +46,7 @@ export default function Shop() {
             <ShopCard
               animal={animal}
               balance={state.coins}
+              currentCount={countAnimalsByType(state.animals, animal.id)}
               onBuy={() => handleBuy(animal.id)}
             />
           </motion.div>

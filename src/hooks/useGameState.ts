@@ -5,10 +5,13 @@ import {
   createDefaultGameState,
   getAnimalType,
   SELL_SPLIT,
+  isAnimalDead,
+  countAnimalsByType,
 } from "@/lib/gameData";
 import { supabase } from "@/integrations/supabase/client";
 import { incrementDailyTask } from "@/lib/dailyTasks";
 import { EXP_SOURCES, LEVEL_UP_COIN_REWARD, processLevelUp } from "@/lib/levelSystem";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "farm_empire_state";
 
@@ -40,12 +43,53 @@ function saveState(state: GameState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
+function mapDbAnimal(a: any): OwnedAnimal {
+  return {
+    id: a.id,
+    typeId: a.type_id,
+    growthPercent: a.growth_percent,
+    hunger: a.hunger,
+    lastFedAt: new Date(a.last_fed_at).getTime(),
+    lastCollectedAt: new Date(a.last_collected_at).getTime(),
+    boughtAt: new Date(a.bought_at).getTime(),
+    grownAt: a.grown_at ? new Date(a.grown_at).getTime() : 0,
+    feedCount: a.feed_count || 0,
+  };
+}
+
 export function useGameState() {
   const [state, setState] = useState<GameState>(loadState);
   const [userId, setUserId] = useState<string | null>(null);
   const [levelUpEvent, setLevelUpEvent] = useState<number | null>(null);
   const syncTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initializedFromDb = useRef(false);
+
+  // Remove dead animals from DB
+  const removeDeadAnimalsFromDb = useCallback(async (deadIds: string[], uid: string) => {
+    for (const id of deadIds) {
+      await supabase.from("animals").delete().eq("id", id).eq("user_id", uid);
+    }
+  }, []);
+
+  // Filter dead animals and clean up
+  const filterDeadAnimals = useCallback((animals: OwnedAnimal[], uid: string | null): OwnedAnimal[] => {
+    const alive: OwnedAnimal[] = [];
+    const deadIds: string[] = [];
+    for (const a of animals) {
+      if (isAnimalDead(a)) {
+        deadIds.push(a.id);
+      } else {
+        alive.push(a);
+      }
+    }
+    if (deadIds.length > 0 && uid) {
+      removeDeadAnimalsFromDb(deadIds, uid);
+      if (deadIds.length > 0) {
+        toast.error(`💀 ${deadIds.length} ta hayvon o'lib qoldi!`, { duration: 4000 });
+      }
+    }
+    return alive;
+  }, [removeDeadAnimalsFromDb]);
 
   // Get current auth user and load profile data + animals from DB
   useEffect(() => {
@@ -71,15 +115,8 @@ export function useGameState() {
         ]);
 
         if (profileRes.data) {
-          const dbAnimals: OwnedAnimal[] = (animalsRes.data || []).map((a: any) => ({
-            id: a.id,
-            typeId: a.type_id,
-            growthPercent: a.growth_percent,
-            hunger: a.hunger,
-            lastFedAt: new Date(a.last_fed_at).getTime(),
-            lastCollectedAt: new Date(a.last_collected_at).getTime(),
-            boughtAt: new Date(a.bought_at).getTime(),
-          }));
+          const dbAnimals: OwnedAnimal[] = (animalsRes.data || []).map(mapDbAnimal);
+          const aliveAnimals = filterDeadAnimals(dbAnimals, session.user.id);
 
           initializedFromDb.current = true;
           setState(prev => ({
@@ -91,7 +128,7 @@ export function useGameState() {
             milk: (profileRes.data as any).milk ?? 0,
             level: profileRes.data.level,
             exp: profileRes.data.exp,
-            animals: dbAnimals,
+            animals: aliveAnimals,
           }));
         }
       }
@@ -111,7 +148,7 @@ export function useGameState() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [filterDeadAnimals]);
 
   // Refresh from DB when user returns to the app
   useEffect(() => {
@@ -124,26 +161,19 @@ export function useGameState() {
             supabase.from("animals").select("*").eq("user_id", userId),
           ]);
           if (profileRes.data) {
-            const dbAnimals: OwnedAnimal[] = (animalsRes.data || []).map((a: any) => ({
-              id: a.id,
-              typeId: a.type_id,
-              growthPercent: a.growth_percent,
-              hunger: a.hunger,
-              lastFedAt: new Date(a.last_fed_at).getTime(),
-              lastCollectedAt: new Date(a.last_collected_at).getTime(),
-              boughtAt: new Date(a.bought_at).getTime(),
-            }));
+            const dbAnimals: OwnedAnimal[] = (animalsRes.data || []).map(mapDbAnimal);
+            const aliveAnimals = filterDeadAnimals(dbAnimals, userId);
             initializedFromDb.current = true;
             setState(prev => ({
               ...prev,
               coins: profileRes.data.coins,
               cash: profileRes.data.cash,
-            eggs: profileRes.data.eggs,
-            meat: profileRes.data.meat,
-            milk: (profileRes.data as any).milk ?? 0,
-            level: profileRes.data.level,
+              eggs: profileRes.data.eggs,
+              meat: profileRes.data.meat,
+              milk: (profileRes.data as any).milk ?? 0,
+              level: profileRes.data.level,
               exp: profileRes.data.exp,
-              animals: dbAnimals,
+              animals: aliveAnimals,
             }));
           } else {
             initializedFromDb.current = true;
@@ -154,6 +184,33 @@ export function useGameState() {
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [userId, filterDeadAnimals]);
+
+  // Periodic death check every 60s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setState(prev => {
+        const deadIds: string[] = [];
+        const alive = prev.animals.filter(a => {
+          if (isAnimalDead(a)) {
+            deadIds.push(a.id);
+            return false;
+          }
+          return true;
+        });
+        if (deadIds.length > 0) {
+          if (userId) {
+            for (const id of deadIds) {
+              supabase.from("animals").delete().eq("id", id).eq("user_id", userId);
+            }
+          }
+          toast.error(`💀 ${deadIds.length} ta hayvon o'lib qoldi!`, { duration: 4000 });
+          return { ...prev, animals: alive };
+        }
+        return prev;
+      });
+    }, 60000);
+    return () => clearInterval(interval);
   }, [userId]);
 
   // Save to localStorage and debounce-sync profile to Supabase
@@ -185,13 +242,18 @@ export function useGameState() {
   const buyAnimal = useCallback(async (typeId: string) => {
     const type = getAnimalType(typeId);
     if (!type) return false;
-    
+
     let bought = false;
     const animalId = crypto.randomUUID();
     const now = Date.now();
-    
+
     setState((prev) => {
       if (prev.coins < type.price) return prev;
+
+      // Check max owned limit
+      const currentCount = countAnimalsByType(prev.animals, typeId);
+      if (currentCount >= type.maxOwned) return prev;
+
       bought = true;
       const animal: OwnedAnimal = {
         id: animalId,
@@ -201,6 +263,8 @@ export function useGameState() {
         lastFedAt: 0,
         lastCollectedAt: now,
         boughtAt: now,
+        grownAt: 0,
+        feedCount: 0,
       };
       return {
         ...prev,
@@ -219,11 +283,12 @@ export function useGameState() {
         last_fed_at: new Date(0).toISOString(),
         last_collected_at: new Date(now).toISOString(),
         bought_at: new Date(now).toISOString(),
+        grown_at: null,
+        feed_count: 0,
       });
-      
+
       if (insertError) {
         console.error("Animal insert error:", insertError);
-        // Rollback local state if DB insert failed
         setState((prev) => ({
           ...prev,
           coins: prev.coins + type.price,
@@ -231,7 +296,6 @@ export function useGameState() {
         }));
         return false;
       }
-      // Track daily task
       incrementDailyTask(userId, "buy_animal");
     }
 
@@ -240,9 +304,7 @@ export function useGameState() {
 
   const feedAnimal = useCallback(async (animalId: string): Promise<boolean> => {
     const now = Date.now();
-
-    // Read current state directly to avoid closure issues
-    let feedResult: { success: boolean; newGrowth: number; feedCost: number } | null = null;
+    let feedResult: { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean } | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -255,9 +317,12 @@ export function useGameState() {
       const FEED_COOLDOWN_MS = 15 * 60 * 1000;
       if (animal.lastFedAt > 0 && now - animal.lastFedAt < FEED_COOLDOWN_MS) return prev;
 
+      const newFeedCount = animal.feedCount + 1;
       const growthIncrease = 100 / type.feedsToGrow;
       const newGrowth = Math.min(100, animal.growthPercent + growthIncrease);
-      feedResult = { success: true, newGrowth, feedCost: type.feedCost };
+      const justGrown = animal.growthPercent < 100 && newGrowth >= 100;
+
+      feedResult = { success: true, newGrowth, feedCost: type.feedCost, newFeedCount, justGrown };
 
       const updated = [...prev.animals];
       updated[idx] = {
@@ -265,6 +330,8 @@ export function useGameState() {
         growthPercent: newGrowth,
         hunger: 100,
         lastFedAt: now,
+        feedCount: newFeedCount,
+        grownAt: justGrown ? now : animal.grownAt,
       };
       return {
         ...prev,
@@ -273,13 +340,18 @@ export function useGameState() {
       };
     });
 
-    // Wait for state to be set, then sync to DB
     if (feedResult && userId) {
-      await supabase.from("animals").update({
-        growth_percent: feedResult.newGrowth,
+      const fr = feedResult as { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean };
+      const updateData: any = {
+        growth_percent: fr.newGrowth,
         hunger: 100,
         last_fed_at: new Date(now).toISOString(),
-      }).eq("id", animalId).eq("user_id", userId);
+        feed_count: fr.newFeedCount,
+      };
+      if (fr.justGrown) {
+        updateData.grown_at = new Date(now).toISOString();
+      }
+      await supabase.from("animals").update(updateData).eq("id", animalId).eq("user_id", userId);
       return true;
     }
     return false;
@@ -298,7 +370,6 @@ export function useGameState() {
       if (!type || type.productType !== "egg") return prev;
       if (animal.growthPercent < 100) return prev;
 
-      // Time-based egg calculation
       const hoursElapsed = (now - animal.lastCollectedAt) / 3600000;
       const cappedHours = Math.min(24, Math.max(0, hoursElapsed));
       eggsCollected = Math.floor(cappedHours / type.productionIntervalHours) * type.eggYield;
@@ -319,7 +390,6 @@ export function useGameState() {
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
-      // Track daily task
       incrementDailyTask(userId, "collect_eggs", eggsCollected);
     }
 
@@ -404,7 +474,6 @@ export function useGameState() {
         cash: prev.cash + cashShare,
       };
     });
-    // Track daily task
     if (sold && userId) {
       incrementDailyTask(userId, "sell_product");
     }
@@ -438,17 +507,10 @@ export function useGameState() {
       supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
       supabase.from("animals").select("*").eq("user_id", userId),
     ]);
-    
+
     if (profileRes.data) {
-      const dbAnimals: OwnedAnimal[] = (animalsRes.data || []).map((a: any) => ({
-        id: a.id,
-        typeId: a.type_id,
-        growthPercent: a.growth_percent,
-        hunger: a.hunger,
-        lastFedAt: new Date(a.last_fed_at).getTime(),
-        lastCollectedAt: new Date(a.last_collected_at).getTime(),
-        boughtAt: new Date(a.bought_at).getTime(),
-      }));
+      const dbAnimals: OwnedAnimal[] = (animalsRes.data || []).map(mapDbAnimal);
+      const aliveAnimals = filterDeadAnimals(dbAnimals, userId);
 
       setState(prev => ({
         ...prev,
@@ -459,10 +521,10 @@ export function useGameState() {
         milk: (profileRes.data as any).milk ?? 0,
         level: profileRes.data.level,
         exp: profileRes.data.exp,
-        animals: dbAnimals,
+        animals: aliveAnimals,
       }));
     }
-  }, [userId]);
+  }, [userId, filterDeadAnimals]);
 
   const gainExp = useCallback((amount: number) => {
     setState(prev => {
