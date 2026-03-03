@@ -308,6 +308,35 @@ export default function Admin() {
 
   if (!isAdmin) return null;
 
+  const handleAddAdmin = async () => {
+    if (!newAdminTgId || processing) return;
+    setProcessing("admin");
+    try {
+      await callAdmin({ action: "add_admin", telegram_id: parseInt(newAdminTgId) });
+      toast.success("Admin qo'shildi!");
+      setNewAdminTgId("");
+      fetchData();
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
+  const handleRemoveAdmin = async (targetUserId: string) => {
+    if (processing) return;
+    setProcessing("admin");
+    try {
+      await callAdmin({ action: "remove_admin", target_user_id: targetUserId });
+      toast.success("Admin o'chirildi!");
+      fetchData();
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
@@ -315,6 +344,7 @@ export default function Admin() {
     { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
     { key: "messaging", label: "Xabarlar", icon: MessageCircle },
+    { key: "admins", label: "Adminlar", icon: Shield },
     { key: "settings", label: "Sozlamalar", icon: Settings },
   ];
 
