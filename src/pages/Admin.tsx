@@ -88,6 +88,9 @@ export default function Admin() {
   const [msgTargetTgId, setMsgTargetTgId] = useState("");
   const [msgText, setMsgText] = useState("");
   const [broadcastText, setBroadcastText] = useState("");
+  // Admin management
+  const [adminsList, setAdminsList] = useState<any[]>([]);
+  const [newAdminTgId, setNewAdminTgId] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
