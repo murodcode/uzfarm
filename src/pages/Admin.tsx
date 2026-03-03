@@ -166,6 +166,9 @@ export default function Admin() {
         setAppSettings(data?.settings || {});
       } else if (tab === "referral_rank") {
         await fetchRefLeaderboard();
+      } else if (tab === "admins") {
+        const data = await callAdmin({ action: "get_admins" });
+        setAdminsList(data?.admins || []);
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
