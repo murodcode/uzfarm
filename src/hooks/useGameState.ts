@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { incrementDailyTask } from "@/lib/dailyTasks";
 import { EXP_SOURCES, LEVEL_UP_COIN_REWARD, processLevelUp } from "@/lib/levelSystem";
 import { toast } from "sonner";
+import { logUserAction } from "@/lib/userLogger";
 
 const STORAGE_KEY = "farm_empire_state";
 
