@@ -53,62 +53,89 @@ async function recordAdView() {
   }
 }
 
-/* ── Monetag rewarded ad (for actions: feed, collect, sell, etc.) ── */
-const MIN_AD_VIEW_MS = 10_000; // 10 seconds minimum
+/* ── Direct link ad (for actions: feed, collect, sell, etc.) ── */
+const AD_LINK = "https://omg10.com/4/10644130";
+const WAIT_SECONDS = 5;
+
+function openAdLink() {
+  try {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.openLink) {
+      tg.openLink(AD_LINK);
+    } else {
+      window.open(AD_LINK, "_blank");
+    }
+  } catch {
+    window.open(AD_LINK, "_blank");
+  }
+}
+
+function showAdOverlay(): Promise<boolean> {
+  return new Promise((resolve) => {
+    // Create overlay
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:20px;text-align:center;";
+
+    const title = document.createElement("div");
+    title.style.cssText = "color:#ff2222;font-size:22px;font-weight:900;margin-bottom:16px;line-height:1.3;";
+    title.textContent = "⚠️ Reklama saytiga o'tib 5 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
+
+    const timer = document.createElement("div");
+    timer.style.cssText = "color:#ffffff;font-size:48px;font-weight:900;margin-bottom:24px;";
+    timer.textContent = String(WAIT_SECONDS);
+
+    const btn = document.createElement("button");
+    btn.style.cssText =
+      "background:#22c55e;color:#fff;font-size:18px;font-weight:800;border:none;border-radius:14px;padding:14px 40px;cursor:pointer;display:none;";
+    btn.textContent = "📺 Reklamani ko'rish";
+
+    overlay.appendChild(title);
+    overlay.appendChild(timer);
+    overlay.appendChild(btn);
+    document.body.appendChild(overlay);
+
+    let sec = WAIT_SECONDS;
+    const interval = setInterval(() => {
+      sec--;
+      timer.textContent = String(sec);
+      if (sec <= 0) {
+        clearInterval(interval);
+        timer.style.display = "none";
+        btn.style.display = "block";
+      }
+    }, 1000);
+
+    btn.onclick = () => {
+      openAdLink();
+      recordAdView();
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+  });
+}
 
 export function useRewardedAd() {
   const showingRef = useRef(false);
 
-  const showAd = useCallback((): Promise<boolean> => {
-    if (showingRef.current) return Promise.reject(new Error("Ad already showing"));
-
-    const monetagShow = window.show_10612725;
-    if (!monetagShow) {
-      // SDK not loaded – resolve so actions still work
-      return Promise.resolve(true);
-    }
-
+  const showAd = useCallback(async (): Promise<boolean> => {
+    if (showingRef.current) return false;
     showingRef.current = true;
-    const startTime = Date.now();
-
-    return monetagShow()
-      .then(() => {
-        showingRef.current = false;
-        const elapsed = Date.now() - startTime;
-        if (elapsed < MIN_AD_VIEW_MS) {
-          toast.error(
-            `❌ Reklamadagi tugmani bosmadingiz va ${Math.ceil(MIN_AD_VIEW_MS / 1000)} soniya reklamani ko'rmadingiz!`,
-            { duration: 5000, style: { fontSize: "16px", fontWeight: "bold" } }
-          );
-          return false;
-        }
-        recordAdView();
-        toast.success("✅ Reklama muvaffaqiyatli ko'rildi!", { duration: 2000 });
-        return true;
-      })
-      .catch(() => {
-        showingRef.current = false;
-        toast.error(
-          `❌ Reklamadagi tugmani bosmadingiz va ${Math.ceil(MIN_AD_VIEW_MS / 1000)} soniya reklamani ko'rmadingiz!`,
-          { duration: 5000, style: { fontSize: "16px", fontWeight: "bold" } }
-        );
-        return false;
-      });
+    try {
+      const ok = await showAdOverlay();
+      showingRef.current = false;
+      return ok;
+    } catch {
+      showingRef.current = false;
+      return false;
+    }
   }, []);
 
   const withAd = useCallback(
     (action: () => void) => {
-      toast.info("📺 Reklamani ko'rishingiz shart!", { duration: 3000 });
-      showAd()
-        .then((success) => {
-          if (success) {
-            action();
-          }
-          // If not success, action is NOT executed
-        })
-        .catch(() => {
-          // Ad failed, action is NOT executed
-        });
+      showAd().then((success) => {
+        if (success) action();
+      });
     },
     [showAd]
   );
