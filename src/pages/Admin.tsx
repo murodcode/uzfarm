@@ -587,6 +587,75 @@ export default function Admin() {
               </div>
             )}
 
+            {/* === ACTIVITY LOGS === */}
+            {tab === "activity" && (
+              <div className="space-y-3">
+                <div className="farm-card space-y-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <ScrollText className="h-4 w-4" /> Foydalanuvchi faoliyati
+                  </h3>
+                  <Input
+                    placeholder="User ID, Telegram ID yoki username kiriting"
+                    value={activityUserId}
+                    onChange={(e) => setActivityUserId(e.target.value)}
+                    className="text-xs"
+                  />
+                  <button
+                    onClick={handleFetchActivityLogs}
+                    disabled={!activityUserId || activityLoading}
+                    className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {activityLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+                    Tarixni ko'rish
+                  </button>
+                </div>
+
+                {activityProfile && (
+                  <div className="farm-card">
+                    <p className="text-sm font-bold text-foreground">{activityProfile.first_name || "Noma'lum"}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      @{activityProfile.username || "—"} · TG: {activityProfile.telegram_id || "—"} · Ro'yxatdan: {new Date(activityProfile.created_at).toLocaleDateString("uz-UZ")}
+                    </p>
+                  </div>
+                )}
+
+                {activityLogs.length === 0 && activityProfile && (
+                  <p className="text-center text-sm text-muted-foreground py-8">Faoliyat tarixi yo'q</p>
+                )}
+
+                {activityLogs.map((log: any) => {
+                  const actionEmoji: Record<string, string> = {
+                    buy_animal: "🐄",
+                    feed_animal: "🌾",
+                    collect_eggs: "🥚",
+                    collect_milk: "🥛",
+                    slaughter: "🥩",
+                    sell_product: "💰",
+                    exchange: "🔄",
+                    withdraw: "💸",
+                    referral_bonus: "👥",
+                    login: "🔑",
+                  };
+                  const emoji = actionEmoji[log.action] || "📋";
+
+                  return (
+                    <div key={log.id} className="farm-card py-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg mt-0.5">{emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-foreground">{log.action}</p>
+                          {log.details && <p className="text-[10px] text-muted-foreground mt-0.5">{log.details}</p>}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(log.created_at).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* === TASKS === */}
             {tab === "tasks" && (
               <div className="space-y-3">
