@@ -485,11 +485,13 @@ export function useGameState() {
     setState((prev) => {
       if (from === "cash") {
         if (amount <= 0 || amount > prev.cash) return prev;
+        logUserAction("exchange", `💵 ${amount} cash → 🪙 ${amount * 10} tanga`);
         return { ...prev, cash: prev.cash - amount, coins: prev.coins + amount * 10 };
       } else {
         const cashAmount = Math.floor(amount / 10);
         const coinsNeeded = cashAmount * 10;
         if (cashAmount <= 0 || coinsNeeded > prev.coins) return prev;
+        logUserAction("exchange", `🪙 ${coinsNeeded} tanga → 💵 ${cashAmount} cash`);
         return { ...prev, coins: prev.coins - coinsNeeded, cash: prev.cash + cashAmount };
       }
     });
