@@ -10,31 +10,6 @@ export default function Profile() {
   const { state } = useGameContext();
   const { session, profile, isAdmin, signOut, loading, refreshProfile } = useAuth();
   const navigate = useNavigate();
-  const DIRECT_LINK = "https://omg10.com/4/10644130";
-  const LINK_COOLDOWN_MS = 60_000; // 1 minute
-  const lastLinkClickRef = useRef(0);
-  const [linkCooldown, setLinkCooldown] = useState(0);
-
-  // Link cooldown timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const elapsed = Date.now() - lastLinkClickRef.current;
-      const remaining = Math.max(0, Math.ceil((LINK_COOLDOWN_MS - elapsed) / 1000));
-      setLinkCooldown(remaining);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleDirectLink = useCallback(() => {
-    if (Date.now() - lastLinkClickRef.current < LINK_COOLDOWN_MS) return;
-    lastLinkClickRef.current = Date.now();
-    const tgApp = (window as any).Telegram?.WebApp;
-    if (tgApp?.openLink) {
-      tgApp.openLink(DIRECT_LINK);
-    } else {
-      window.open(DIRECT_LINK, "_blank");
-    }
-  }, []);
 
   // Refresh profile data when page loads and every 10 seconds
   useEffect(() => {
