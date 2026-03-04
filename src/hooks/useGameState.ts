@@ -500,6 +500,7 @@ export function useGameState() {
   const withdrawCash = useCallback((amount: number) => {
     setState((prev) => {
       if (amount <= 0 || amount > prev.cash) return prev;
+      logUserAction("withdraw", `💵 ${amount} cash chiqarish so'rovi`);
       return { ...prev, cash: prev.cash - amount };
     });
     return true;
