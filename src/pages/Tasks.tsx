@@ -218,14 +218,6 @@ export default function Tasks() {
                     {/* Action buttons */}
                     {!isClaimed && (
                       <div className="flex gap-2 mt-3">
-                        {isWatchAds && !isComplete && (
-                          <button
-                            onClick={handleWatchAd}
-                            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2.5 text-xs font-bold text-accent-foreground"
-                          >
-                            🎥 Reklama ko'rish
-                          </button>
-                        )}
                         {isComplete && (
                           <button
                             onClick={() => handleClaimDaily(def.key)}
