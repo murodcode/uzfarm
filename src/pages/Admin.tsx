@@ -337,10 +337,46 @@ export default function Admin() {
     }
   };
 
+  const handleFetchActivityLogs = async () => {
+    if (!activityUserId) return;
+    setActivityLoading(true);
+    try {
+      // Try to find user by telegram_id, username, or uuid
+      let targetId = activityUserId.trim();
+      
+      // If it looks like a telegram ID or username, resolve to UUID
+      if (!targetId.includes("-")) {
+        const data = await callAdmin({ action: "get_users" });
+        const users = data?.users || [];
+        const found = users.find((u: any) =>
+          u.telegram_id?.toString() === targetId ||
+          u.username?.toLowerCase() === targetId.toLowerCase().replace("@", "") ||
+          u.id === targetId
+        );
+        if (found) {
+          targetId = found.id;
+        } else {
+          toast.error("Foydalanuvchi topilmadi");
+          setActivityLoading(false);
+          return;
+        }
+      }
+
+      const data = await callAdmin({ action: "get_user_logs", target_user_id: targetId, limit: 200 });
+      setActivityLogs(data?.logs || []);
+      setActivityProfile(data?.profile || null);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
+    { key: "activity", label: "Faoliyat", icon: ScrollText },
     { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
     { key: "messaging", label: "Xabarlar", icon: MessageCircle },
