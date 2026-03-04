@@ -91,6 +91,11 @@ export default function Admin() {
   // Admin management
   const [adminsList, setAdminsList] = useState<any[]>([]);
   const [newAdminTgId, setNewAdminTgId] = useState("");
+  // Activity logs
+  const [activityUserId, setActivityUserId] = useState("");
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [activityProfile, setActivityProfile] = useState<any>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
