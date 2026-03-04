@@ -298,6 +298,7 @@ export function useGameState() {
         return false;
       }
       incrementDailyTask(userId, "buy_animal");
+      logUserAction("buy_animal", `${type.name} sotib olindi, narxi: ${type.price} tanga`);
     }
 
     return bought;
