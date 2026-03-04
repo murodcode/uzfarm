@@ -7,6 +7,7 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { SELL_SPLIT } from "@/lib/gameData";
 import { useRewardedAd } from "@/hooks/useRewardedAd";
 import { supabase } from "@/integrations/supabase/client";
+import { logUserAction } from "@/lib/userLogger";
 
 export default function Market() {
   const { state, sellProduct } = useGameContext();
