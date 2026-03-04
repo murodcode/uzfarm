@@ -9,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useRewardedAd, useEntryAd } from "@/hooks/useRewardedAd";
 import { expRequired } from "@/lib/levelSystem";
 import { EXP_SOURCES } from "@/lib/levelSystem";
-import { ANIMAL_TYPES } from "@/lib/gameData";
+import { ANIMAL_TYPES, getAnimalType } from "@/lib/gameData";
+import { logUserAction } from "@/lib/userLogger";
 
 export default function Home() {
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
