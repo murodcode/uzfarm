@@ -31,8 +31,6 @@ interface DailyProgressItem {
 export default function Tasks() {
   const { user, refreshProfile } = useAuth();
   const { refreshFromDb } = useGameContext();
-  const { showAd } = useRewardedAd();
-  const { watchAdsgramAd, cooldownRemaining, adsgramLoading } = useAdsgramTask();
   const [tasks, setTasks] = useState<GameTask[]>([]);
   const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
