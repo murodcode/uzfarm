@@ -3,7 +3,7 @@ import TelegramBackButton from "@/components/TelegramBackButton";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Banknote, CheckCircle, XCircle, Loader2,
-  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle
+  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -53,7 +53,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -91,6 +91,11 @@ export default function Admin() {
   // Admin management
   const [adminsList, setAdminsList] = useState<any[]>([]);
   const [newAdminTgId, setNewAdminTgId] = useState("");
+  // Activity logs
+  const [activityUserId, setActivityUserId] = useState("");
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [activityProfile, setActivityProfile] = useState<any>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -337,10 +342,46 @@ export default function Admin() {
     }
   };
 
+  const handleFetchActivityLogs = async () => {
+    if (!activityUserId) return;
+    setActivityLoading(true);
+    try {
+      // Try to find user by telegram_id, username, or uuid
+      let targetId = activityUserId.trim();
+      
+      // If it looks like a telegram ID or username, resolve to UUID
+      if (!targetId.includes("-")) {
+        const data = await callAdmin({ action: "get_users" });
+        const users = data?.users || [];
+        const found = users.find((u: any) =>
+          u.telegram_id?.toString() === targetId ||
+          u.username?.toLowerCase() === targetId.toLowerCase().replace("@", "") ||
+          u.id === targetId
+        );
+        if (found) {
+          targetId = found.id;
+        } else {
+          toast.error("Foydalanuvchi topilmadi");
+          setActivityLoading(false);
+          return;
+        }
+      }
+
+      const data = await callAdmin({ action: "get_user_logs", target_user_id: targetId, limit: 200 });
+      setActivityLogs(data?.logs || []);
+      setActivityProfile(data?.profile || null);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
+    { key: "activity", label: "Faoliyat", icon: ScrollText },
     { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
     { key: "messaging", label: "Xabarlar", icon: MessageCircle },
@@ -543,6 +584,75 @@ export default function Admin() {
                     </div>
                   ))
                 )}
+              </div>
+            )}
+
+            {/* === ACTIVITY LOGS === */}
+            {tab === "activity" && (
+              <div className="space-y-3">
+                <div className="farm-card space-y-3">
+                  <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                    <ScrollText className="h-4 w-4" /> Foydalanuvchi faoliyati
+                  </h3>
+                  <Input
+                    placeholder="User ID, Telegram ID yoki username kiriting"
+                    value={activityUserId}
+                    onChange={(e) => setActivityUserId(e.target.value)}
+                    className="text-xs"
+                  />
+                  <button
+                    onClick={handleFetchActivityLogs}
+                    disabled={!activityUserId || activityLoading}
+                    className="w-full rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {activityLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Eye className="h-3.5 w-3.5" />}
+                    Tarixni ko'rish
+                  </button>
+                </div>
+
+                {activityProfile && (
+                  <div className="farm-card">
+                    <p className="text-sm font-bold text-foreground">{activityProfile.first_name || "Noma'lum"}</p>
+                    <p className="text-[10px] text-muted-foreground">
+                      @{activityProfile.username || "—"} · TG: {activityProfile.telegram_id || "—"} · Ro'yxatdan: {new Date(activityProfile.created_at).toLocaleDateString("uz-UZ")}
+                    </p>
+                  </div>
+                )}
+
+                {activityLogs.length === 0 && activityProfile && (
+                  <p className="text-center text-sm text-muted-foreground py-8">Faoliyat tarixi yo'q</p>
+                )}
+
+                {activityLogs.map((log: any) => {
+                  const actionEmoji: Record<string, string> = {
+                    buy_animal: "🐄",
+                    feed_animal: "🌾",
+                    collect_eggs: "🥚",
+                    collect_milk: "🥛",
+                    slaughter: "🥩",
+                    sell_product: "💰",
+                    exchange: "🔄",
+                    withdraw: "💸",
+                    referral_bonus: "👥",
+                    login: "🔑",
+                  };
+                  const emoji = actionEmoji[log.action] || "📋";
+
+                  return (
+                    <div key={log.id} className="farm-card py-2">
+                      <div className="flex items-start gap-2">
+                        <span className="text-lg mt-0.5">{emoji}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-foreground">{log.action}</p>
+                          {log.details && <p className="text-[10px] text-muted-foreground mt-0.5">{log.details}</p>}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground shrink-0">
+                          {new Date(log.created_at).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
 

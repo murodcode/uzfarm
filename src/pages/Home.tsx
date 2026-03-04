@@ -9,7 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useRewardedAd, useEntryAd } from "@/hooks/useRewardedAd";
 import { expRequired } from "@/lib/levelSystem";
 import { EXP_SOURCES } from "@/lib/levelSystem";
-import { ANIMAL_TYPES } from "@/lib/gameData";
+import { ANIMAL_TYPES, getAnimalType } from "@/lib/gameData";
+import { logUserAction } from "@/lib/userLogger";
 
 export default function Home() {
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
@@ -23,6 +24,9 @@ export default function Home() {
     const success = await feedAnimal(id);
     if (success) {
       gainExp(EXP_SOURCES.feed_animal);
+      const animal = state.animals.find(a => a.id === id);
+      const type = animal ? getAnimalType(animal.typeId) : null;
+      logUserAction("feed_animal", `${type?.name || animal?.typeId} boqildi`);
       toast.success("Hayvon boqildi! 🌾");
     } else {
       toast.error("Kutish vaqti tugamagan yoki mablag' yetarli emas");
@@ -35,6 +39,7 @@ export default function Home() {
     const eggs = await collectEggs(id);
     if (eggs > 0) {
       gainExp(EXP_SOURCES.collect_eggs);
+      logUserAction("collect_eggs", `${eggs} ta tuxum yig'ildi`);
       toast.success(`${eggs} ta tuxum yig'ildi! 🥚`);
     } else {
       toast.info("Hali tuxum yig'ilmagan");
@@ -46,6 +51,7 @@ export default function Home() {
     if (!adOk) return;
     const milk = await collectMilk(id);
     if (milk > 0) {
+      logUserAction("collect_milk", `${milk} litr sut yig'ildi`);
       toast.success(`${milk} litr sut yig'ildi! 🥛`);
     } else {
       toast.info("Hali sut yig'ilmagan");
@@ -55,7 +61,10 @@ export default function Home() {
   const handleSlaughter = async (id: string) => {
     const adOk = await showAd();
     if (!adOk) return;
+    const animal = state.animals.find(a => a.id === id);
+    const type = animal ? getAnimalType(animal.typeId) : null;
     slaughterAnimal(id);
+    logUserAction("slaughter", `${type?.name || "hayvon"} so'yildi`);
     toast.success("Go'sht inventarga qo'shildi! 🥩");
   };
 

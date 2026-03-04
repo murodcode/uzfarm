@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { incrementDailyTask } from "@/lib/dailyTasks";
 import { EXP_SOURCES, LEVEL_UP_COIN_REWARD, processLevelUp } from "@/lib/levelSystem";
 import { toast } from "sonner";
+import { logUserAction } from "@/lib/userLogger";
 
 const STORAGE_KEY = "farm_empire_state";
 
@@ -297,6 +298,7 @@ export function useGameState() {
         return false;
       }
       incrementDailyTask(userId, "buy_animal");
+      logUserAction("buy_animal", `${type.name} sotib olindi, narxi: ${type.price} tanga`);
     }
 
     return bought;
@@ -483,11 +485,13 @@ export function useGameState() {
     setState((prev) => {
       if (from === "cash") {
         if (amount <= 0 || amount > prev.cash) return prev;
+        logUserAction("exchange", `💵 ${amount} cash → 🪙 ${amount * 10} tanga`);
         return { ...prev, cash: prev.cash - amount, coins: prev.coins + amount * 10 };
       } else {
         const cashAmount = Math.floor(amount / 10);
         const coinsNeeded = cashAmount * 10;
         if (cashAmount <= 0 || coinsNeeded > prev.coins) return prev;
+        logUserAction("exchange", `🪙 ${coinsNeeded} tanga → 💵 ${cashAmount} cash`);
         return { ...prev, coins: prev.coins - coinsNeeded, cash: prev.cash + cashAmount };
       }
     });
@@ -496,6 +500,7 @@ export function useGameState() {
   const withdrawCash = useCallback((amount: number) => {
     setState((prev) => {
       if (amount <= 0 || amount > prev.cash) return prev;
+      logUserAction("withdraw", `💵 ${amount} cash chiqarish so'rovi`);
       return { ...prev, cash: prev.cash - amount };
     });
     return true;

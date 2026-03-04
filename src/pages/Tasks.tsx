@@ -3,9 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameContext } from "@/contexts/GameStateContext";
-import { useRewardedAd } from "@/hooks/useRewardedAd";
-import { useAdsgramTask } from "@/hooks/useAdsgramTask";
-import { CheckCircle2, Clock, Gift, Star, ExternalLink, Loader2, Trophy, Play } from "lucide-react";
+import { CheckCircle2, Clock, Gift, Star, ExternalLink, Loader2, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { DAILY_TASK_DEFS, getDailyProgress, claimDailyReward } from "@/lib/dailyTasks";
 
@@ -33,8 +31,6 @@ interface DailyProgressItem {
 export default function Tasks() {
   const { user, refreshProfile } = useAuth();
   const { refreshFromDb } = useGameContext();
-  const { showAd } = useRewardedAd();
-  const { watchAdsgramAd, cooldownRemaining, adsgramLoading } = useAdsgramTask();
   const [tasks, setTasks] = useState<GameTask[]>([]);
   const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -124,30 +120,6 @@ export default function Tasks() {
     }
   };
 
-  const handleWatchAd = () => {
-    // Check if already at target before showing ad
-    const adProgress = dailyProgress.find((p) => p.task_key === "watch_ads");
-    const currentCount = adProgress?.progress || 0;
-    const adDef = DAILY_TASK_DEFS.find((d) => d.key === "watch_ads");
-    if (adDef && currentCount >= adDef.target) {
-      toast.info("Bugunlik reklama limiti to'ldi!");
-      return;
-    }
-
-    showAd()
-      .then(async () => {
-        toast.success("Reklama ko'rildi! 🎥");
-        // Increment task progress directly here (not via useRewardedAd)
-        if (user) {
-          const { incrementDailyTask } = await import("@/lib/dailyTasks");
-          await incrementDailyTask(user.id, "watch_ads");
-          setTimeout(loadDailyProgress, 500);
-        }
-      })
-      .catch(() => {
-        toast.error("Reklama ko'rsatilmadi");
-      });
-  };
 
   const handleClaimDaily = async (taskKey: string) => {
     if (!user) return;
@@ -191,52 +163,6 @@ export default function Tasks() {
       </div>
 
       <div className="px-4 space-y-4 pb-4">
-        {/* Adsgram ad task */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Play className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold text-foreground">🎬 Reklama ko'rish (30 tanga)</h2>
-          </div>
-          <div className="farm-card">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
-                🎬
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-foreground">Reklama ko'ring</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Reklama ko'ring va 30 tanga oling. Har 1 daqiqada ko'rish mumkin.
-                </p>
-                <span className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary mt-2">
-                  🪙 +30
-                </span>
-              </div>
-            </div>
-            <div className="mt-3">
-              <button
-                onClick={async () => {
-                  const success = await watchAdsgramAd();
-                  if (success) {
-                    await refreshFromDb();
-                    await refreshProfile();
-                  }
-                }}
-                disabled={adsgramLoading || cooldownRemaining > 0}
-                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50"
-              >
-                {adsgramLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : cooldownRemaining > 0 ? (
-                  <>⏳ {cooldownRemaining} soniya kutish</>
-                ) : (
-                  <>🎬 Reklama ko'rish</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily tasks */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Clock className="h-4 w-4 text-primary" />
@@ -292,14 +218,6 @@ export default function Tasks() {
                     {/* Action buttons */}
                     {!isClaimed && (
                       <div className="flex gap-2 mt-3">
-                        {isWatchAds && !isComplete && (
-                          <button
-                            onClick={handleWatchAd}
-                            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2.5 text-xs font-bold text-accent-foreground"
-                          >
-                            🎥 Reklama ko'rish
-                          </button>
-                        )}
                         {isComplete && (
                           <button
                             onClick={() => handleClaimDaily(def.key)}

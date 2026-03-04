@@ -691,6 +691,28 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
+    // === GET USER LOGS ===
+    if (action === "get_user_logs") {
+      const { target_user_id, limit: logLimit } = body;
+      if (!target_user_id) return json({ error: "target_user_id kerak" }, 400);
+      
+      const { data: logs } = await adminClient
+        .from("user_logs")
+        .select("*")
+        .eq("user_id", target_user_id)
+        .order("created_at", { ascending: false })
+        .limit(logLimit || 100);
+
+      // Also get profile info
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("first_name, username, telegram_id, created_at")
+        .eq("id", target_user_id)
+        .single();
+
+      return json({ logs: logs || [], profile: profile || null });
+    }
+
     return json({ error: "Invalid action" }, 400);
   } catch (error) {
     console.error("Admin data error:", error);
