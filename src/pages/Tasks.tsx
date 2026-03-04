@@ -120,30 +120,6 @@ export default function Tasks() {
     }
   };
 
-  const handleWatchAd = () => {
-    // Check if already at target before showing ad
-    const adProgress = dailyProgress.find((p) => p.task_key === "watch_ads");
-    const currentCount = adProgress?.progress || 0;
-    const adDef = DAILY_TASK_DEFS.find((d) => d.key === "watch_ads");
-    if (adDef && currentCount >= adDef.target) {
-      toast.info("Bugunlik reklama limiti to'ldi!");
-      return;
-    }
-
-    showAd()
-      .then(async () => {
-        toast.success("Reklama ko'rildi! 🎥");
-        // Increment task progress directly here (not via useRewardedAd)
-        if (user) {
-          const { incrementDailyTask } = await import("@/lib/dailyTasks");
-          await incrementDailyTask(user.id, "watch_ads");
-          setTimeout(loadDailyProgress, 500);
-        }
-      })
-      .catch(() => {
-        toast.error("Reklama ko'rsatilmadi");
-      });
-  };
 
   const handleClaimDaily = async (taskKey: string) => {
     if (!user) return;
