@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users } from "lucide-react";
 import StatCard from "@/components/StatCard";

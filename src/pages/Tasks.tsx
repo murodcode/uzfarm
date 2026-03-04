@@ -163,52 +163,6 @@ export default function Tasks() {
       </div>
 
       <div className="px-4 space-y-4 pb-4">
-        {/* Adsgram ad task */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <Play className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold text-foreground">🎬 Reklama ko'rish (30 tanga)</h2>
-          </div>
-          <div className="farm-card">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xl">
-                🎬
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-foreground">Reklama ko'ring</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Reklama ko'ring va 30 tanga oling. Har 1 daqiqada ko'rish mumkin.
-                </p>
-                <span className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2 py-0.5 text-xs font-bold text-primary mt-2">
-                  🪙 +30
-                </span>
-              </div>
-            </div>
-            <div className="mt-3">
-              <button
-                onClick={async () => {
-                  const success = await watchAdsgramAd();
-                  if (success) {
-                    await refreshFromDb();
-                    await refreshProfile();
-                  }
-                }}
-                disabled={adsgramLoading || cooldownRemaining > 0}
-                className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50"
-              >
-                {adsgramLoading ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : cooldownRemaining > 0 ? (
-                  <>⏳ {cooldownRemaining} soniya kutish</>
-                ) : (
-                  <>🎬 Reklama ko'rish</>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Daily tasks */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Clock className="h-4 w-4 text-primary" />
