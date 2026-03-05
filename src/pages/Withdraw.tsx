@@ -157,6 +157,24 @@ export default function Withdraw() {
       </div>
 
       <div className="px-4 -mt-3 space-y-4 pb-4">
+        {/* Payment day banner */}
+        {paymentDayText && (
+          <div className="farm-card bg-accent/10 border-accent/20">
+            <p className="text-sm font-bold text-foreground text-center">
+              📅 {paymentDayText}
+            </p>
+          </div>
+        )}
+
+        {/* Withdrawal disabled banner */}
+        {!withdrawalEnabled && (
+          <div className="farm-card bg-destructive/10 border-destructive/20">
+            <p className="text-sm font-bold text-destructive text-center">
+              ⚠️ Hozircha to'lovlar vaqtincha yopilgan. Iltimos, kuting.
+            </p>
+          </div>
+        )}
+
         {/* Info banner */}
         <div className="farm-card bg-primary/5 border-primary/20">
           <p className="text-xs font-semibold text-foreground text-center">
