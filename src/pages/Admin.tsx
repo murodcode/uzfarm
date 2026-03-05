@@ -484,6 +484,108 @@ export default function Admin() {
               </div>
             )}
 
+            {/* === CHAT === */}
+            {tab === "chat" && (
+              <div className="space-y-3">
+                {chatSelectedUser ? (
+                  // Chat detail view
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => { setChatSelectedUser(null); setChatMessages([]); setChatProfile(null); fetchData(); }}
+                      className="flex items-center gap-1.5 text-xs font-bold text-primary"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" /> Orqaga
+                    </button>
+
+                    {chatProfile && (
+                      <div className="farm-card">
+                        <p className="text-sm font-bold text-foreground">{chatProfile.first_name || "Noma'lum"}</p>
+                        <p className="text-[10px] text-muted-foreground">@{chatProfile.username || "—"} · TG: {chatProfile.telegram_id || "—"}</p>
+                      </div>
+                    )}
+
+                    {chatLoading ? (
+                      <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+                    ) : (
+                      <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                        {chatMessages.map((msg: any) => (
+                          <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-start" : "justify-end"}`}>
+                            <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs ${
+                              msg.sender === "user" 
+                                ? "bg-muted text-foreground rounded-bl-sm" 
+                                : msg.sender === "ai"
+                                ? "bg-accent/20 text-foreground rounded-br-sm"
+                                : "bg-primary text-primary-foreground rounded-br-sm"
+                            }`}>
+                              {msg.sender === "ai" && <span className="text-[9px] font-bold opacity-70">🤖 AI</span>}
+                              {msg.sender === "admin" && <span className="text-[9px] font-bold opacity-70">👤 Admin</span>}
+                              <p className="mt-0.5">{msg.message}</p>
+                              <p className={`text-[9px] mt-1 ${msg.sender === "user" ? "text-muted-foreground" : "opacity-60"}`}>
+                                {new Date(msg.created_at).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reply input */}
+                    <div className="flex gap-2">
+                      <textarea
+                        placeholder="Javob yozing..."
+                        value={chatReplyText}
+                        onChange={(e) => setChatReplyText(e.target.value)}
+                        className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[40px] resize-none"
+                      />
+                      <button
+                        onClick={handleSendChatReply}
+                        disabled={!chatReplyText || processing === "chat"}
+                        className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
+                      >
+                        {processing === "chat" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Conversations list
+                  <>
+                    {chatConversations.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-8">Xabarlar yo'q</p>
+                    ) : (
+                      chatConversations.map((conv: any) => (
+                        <div
+                          key={conv.user_id}
+                          onClick={() => handleOpenChat(conv.user_id)}
+                          className="farm-card cursor-pointer hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg shrink-0">
+                              {conv.unread_count > 0 ? "🔴" : "💬"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-bold text-foreground truncate">{conv.first_name || "Noma'lum"}</p>
+                                {conv.unread_count > 0 && (
+                                  <span className="bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full px-1.5 py-0.5">{conv.unread_count}</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">@{conv.username || "—"} · TG: {conv.telegram_id || "—"}</p>
+                              <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                {conv.last_sender === "admin" ? "👤 " : conv.last_sender === "ai" ? "🤖 " : ""}{conv.last_message}
+                              </p>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground shrink-0">
+                              {new Date(conv.last_time).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
             {/* === WITHDRAWALS === */}
             {tab === "withdrawals" && (
               <div className="space-y-3">
