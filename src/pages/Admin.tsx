@@ -390,8 +390,39 @@ export default function Admin() {
     }
   };
 
+  const handleOpenChat = async (userId: string) => {
+    setChatLoading(true);
+    setChatSelectedUser(userId);
+    try {
+      const data = await callAdmin({ action: "get_chat_messages", target_user_id: userId });
+      setChatMessages(data?.messages || []);
+      setChatProfile(data?.profile || null);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleSendChatReply = async () => {
+    if (!chatSelectedUser || !chatReplyText || processing) return;
+    setProcessing("chat");
+    try {
+      await callAdmin({ action: "send_chat_reply", target_user_id: chatSelectedUser, text: chatReplyText });
+      setChatReplyText("");
+      // Refresh messages
+      const data = await callAdmin({ action: "get_chat_messages", target_user_id: chatSelectedUser });
+      setChatMessages(data?.messages || []);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
+    { key: "chat", label: "Chat", icon: MessageCircle },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
     { key: "activity", label: "Faoliyat", icon: ScrollText },
