@@ -350,18 +350,6 @@ Deno.serve(async (req) => {
           const targetTgId = state.data?.targetTgId;
           if (targetTgId) {
             await sendMessage(targetTgId, `💬 <b>Admin javobi:</b>\n\n${text}`);
-            // Save admin reply to chat_messages
-            const { data: targetProfile } = await supabase.from("profiles")
-              .select("id")
-              .eq("telegram_id", targetTgId)
-              .single();
-            if (targetProfile?.id) {
-              await supabase.from("chat_messages").insert({
-                user_id: targetProfile.id,
-                message: text,
-                sender: "admin",
-              });
-            }
             await sendMessage(chatId, `✅ Javob yuborildi (TG ID: ${targetTgId})`);
           }
           return new Response("OK", { status: 200 });
@@ -480,54 +468,9 @@ Deno.serve(async (req) => {
       return new Response("OK", { status: 200 });
     }
 
-    // Forward user messages to admin with reply button + save to chat_messages
+    // Forward user messages to admin with reply button
     if (chatId !== ADMIN_CHAT_ID) {
       const userName = fromUser.first_name || fromUser.username || `ID:${fromUser.id}`;
-      
-      // Find user profile to get user_id
-      const { data: userProfile } = await supabase.from("profiles")
-        .select("id")
-        .eq("telegram_id", fromUser.id)
-        .single();
-
-      // Save to chat_messages DB
-      if (userProfile?.id) {
-        await supabase.from("chat_messages").insert({
-          user_id: userProfile.id,
-          telegram_id: fromUser.id,
-          username: fromUser.username || null,
-          first_name: fromUser.first_name || null,
-          message: text,
-          sender: "user",
-        });
-
-        // Check AI auto-reply setting
-        const { data: aiSetting } = await supabase.from("app_settings")
-          .select("value")
-          .eq("key", "ai_auto_reply")
-          .single();
-
-        if (aiSetting?.value && (aiSetting.value as any).enabled === true) {
-          try {
-            const aiRes = await fetch(`${SUPABASE_URL()}/functions/v1/ai-chat-reply`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${SERVICE_ROLE_KEY()}`,
-              },
-              body: JSON.stringify({ user_message: text, user_id: userProfile.id }),
-            });
-            const aiData = await aiRes.json();
-            if (aiData.reply) {
-              await sendMessage(chatId, `🤖 ${aiData.reply}`);
-            }
-          } catch (e) {
-            console.error("[bot] AI reply error:", e);
-          }
-        }
-      }
-
-      // Forward to admin
       await sendMessage(ADMIN_CHAT_ID,
         `📩 <b>Xabar</b> — ${userName} (@${fromUser.username || "noma'lum"})\n🆔 <code>${fromUser.id}</code>\n\n${text}`,
         { inline_keyboard: [[{ text: "💬 Javob berish", callback_data: `reply_to_${fromUser.id}` }]] }

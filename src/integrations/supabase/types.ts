@@ -107,42 +107,6 @@ export type Database = {
         }
         Relationships: []
       }
-      chat_messages: {
-        Row: {
-          created_at: string
-          first_name: string | null
-          id: string
-          is_read: boolean
-          message: string
-          sender: string
-          telegram_id: number | null
-          user_id: string
-          username: string | null
-        }
-        Insert: {
-          created_at?: string
-          first_name?: string | null
-          id?: string
-          is_read?: boolean
-          message: string
-          sender?: string
-          telegram_id?: number | null
-          user_id: string
-          username?: string | null
-        }
-        Update: {
-          created_at?: string
-          first_name?: string | null
-          id?: string
-          is_read?: boolean
-          message?: string
-          sender?: string
-          telegram_id?: number | null
-          user_id?: string
-          username?: string | null
-        }
-        Relationships: []
-      }
       daily_task_progress: {
         Row: {
           created_at: string

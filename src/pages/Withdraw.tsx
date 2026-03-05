@@ -35,13 +35,10 @@ export default function Withdraw() {
   const [minWithdrawal, setMinWithdrawal] = useState(20000);
   const [coinsPerSom, setCoinsPerSom] = useState(4);
 
-  const [withdrawalEnabled, setWithdrawalEnabled] = useState(true);
-  const [paymentDayText, setPaymentDayText] = useState("");
-
   const cash = profile?.cash ?? 0;
   const numAmount = parseInt(amount) || 0;
   const cardDigits = cardNumber.replace(/\D/g, "");
-  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16 && withdrawalEnabled;
+  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16;
 
   const coinsToSom = (coins: number) => Math.floor(coins / coinsPerSom).toLocaleString();
 
@@ -50,22 +47,13 @@ export default function Withdraw() {
     supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["withdrawal", "withdrawal_control", "payment_day"])
+      .eq("key", "withdrawal")
+      .single()
       .then(({ data }) => {
-        if (data) {
-          for (const row of data) {
-            const v = row.value as any;
-            if (row.key === "withdrawal" && typeof v === "object") {
-              if (v.min_amount) setMinWithdrawal(v.min_amount);
-              if (v.coins_per_som) setCoinsPerSom(v.coins_per_som);
-            }
-            if (row.key === "withdrawal_control" && typeof v === "object") {
-              setWithdrawalEnabled(v.enabled !== false);
-            }
-            if (row.key === "payment_day" && typeof v === "object") {
-              setPaymentDayText(v.text || "");
-            }
-          }
+        if (data?.value && typeof data.value === "object") {
+          const v = data.value as any;
+          if (v.min_amount) setMinWithdrawal(v.min_amount);
+          if (v.coins_per_som) setCoinsPerSom(v.coins_per_som);
         }
       });
   }, []);
@@ -85,10 +73,6 @@ export default function Withdraw() {
 
   const handleWithdraw = async () => {
     if (!isValid || loading || !profile) return;
-    if (!withdrawalEnabled) {
-      toast.error("⚠️ Hozircha to'lovlar vaqtincha yopilgan. Iltimos, kuting.");
-      return;
-    }
     setLoading(true);
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
@@ -161,24 +145,6 @@ export default function Withdraw() {
       </div>
 
       <div className="px-4 -mt-3 space-y-4 pb-4">
-        {/* Payment day banner */}
-        {paymentDayText && (
-          <div className="farm-card bg-accent/10 border-accent/20">
-            <p className="text-sm font-bold text-foreground text-center">
-              📅 {paymentDayText}
-            </p>
-          </div>
-        )}
-
-        {/* Withdrawal disabled banner */}
-        {!withdrawalEnabled && (
-          <div className="farm-card bg-destructive/10 border-destructive/20">
-            <p className="text-sm font-bold text-destructive text-center">
-              ⚠️ Hozircha to'lovlar vaqtincha yopilgan. Iltimos, kuting.
-            </p>
-          </div>
-        )}
-
         {/* Info banner */}
         <div className="farm-card bg-primary/5 border-primary/20">
           <p className="text-xs font-semibold text-foreground text-center">
