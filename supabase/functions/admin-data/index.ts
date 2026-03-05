@@ -703,7 +703,6 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(logLimit || 100);
 
-      // Also get profile info
       const { data: profile } = await adminClient
         .from("profiles")
         .select("first_name, username, telegram_id, created_at")
@@ -711,6 +710,104 @@ Deno.serve(async (req) => {
         .single();
 
       return json({ logs: logs || [], profile: profile || null });
+    }
+
+    // === GET CHAT CONVERSATIONS (unread first) ===
+    if (action === "get_chat_conversations") {
+      // Get distinct users who have sent messages
+      const { data: messages } = await adminClient
+        .from("chat_messages")
+        .select("user_id, telegram_id, username, first_name, message, sender, is_read, created_at")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+
+      if (!messages || messages.length === 0) return json({ conversations: [] });
+
+      // Group by user_id
+      const userMap = new Map<string, any>();
+      for (const msg of messages) {
+        if (!userMap.has(msg.user_id)) {
+          userMap.set(msg.user_id, {
+            user_id: msg.user_id,
+            telegram_id: msg.telegram_id,
+            username: msg.username,
+            first_name: msg.first_name,
+            last_message: msg.message,
+            last_sender: msg.sender,
+            last_time: msg.created_at,
+            unread_count: 0,
+          });
+        }
+        if (msg.sender === "user" && !msg.is_read) {
+          userMap.get(msg.user_id)!.unread_count++;
+        }
+      }
+
+      const conversations = Array.from(userMap.values());
+      // Sort: unread first, then by time
+      conversations.sort((a, b) => {
+        if (a.unread_count > 0 && b.unread_count === 0) return -1;
+        if (a.unread_count === 0 && b.unread_count > 0) return 1;
+        return new Date(b.last_time).getTime() - new Date(a.last_time).getTime();
+      });
+
+      return json({ conversations });
+    }
+
+    // === GET CHAT MESSAGES FOR USER ===
+    if (action === "get_chat_messages") {
+      const { target_user_id } = body;
+      if (!target_user_id) return json({ error: "target_user_id kerak" }, 400);
+
+      const { data: msgs } = await adminClient
+        .from("chat_messages")
+        .select("*")
+        .eq("user_id", target_user_id)
+        .order("created_at", { ascending: true })
+        .limit(200);
+
+      // Mark user messages as read
+      await adminClient
+        .from("chat_messages")
+        .update({ is_read: true })
+        .eq("user_id", target_user_id)
+        .eq("sender", "user")
+        .eq("is_read", false);
+
+      // Get profile
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("first_name, username, telegram_id")
+        .eq("id", target_user_id)
+        .single();
+
+      return json({ messages: msgs || [], profile: profile || null });
+    }
+
+    // === SEND CHAT REPLY FROM ADMIN ===
+    if (action === "send_chat_reply") {
+      const { target_user_id, text: replyText } = body;
+      if (!target_user_id || !replyText) return json({ error: "target_user_id va text kerak" }, 400);
+
+      // Save to chat_messages
+      await adminClient.from("chat_messages").insert({
+        user_id: target_user_id,
+        message: replyText,
+        sender: "admin",
+      });
+
+      // Also send via Telegram bot
+      const { data: targetProfile } = await adminClient
+        .from("profiles")
+        .select("telegram_id")
+        .eq("id", target_user_id)
+        .single();
+
+      if (targetProfile?.telegram_id) {
+        await sendTgMessage(targetProfile.telegram_id, `💬 <b>Admin javobi:</b>\n\n${replyText}`);
+      }
+
+      return json({ success: true });
     }
 
     return json({ error: "Invalid action" }, 400);
