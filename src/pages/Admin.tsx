@@ -97,6 +97,13 @@ export default function Admin() {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [activityProfile, setActivityProfile] = useState<any>(null);
   const [activityLoading, setActivityLoading] = useState(false);
+  // Chat
+  const [chatConversations, setChatConversations] = useState<any[]>([]);
+  const [chatSelectedUser, setChatSelectedUser] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatProfile, setChatProfile] = useState<any>(null);
+  const [chatReplyText, setChatReplyText] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
