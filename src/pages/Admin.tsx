@@ -3,12 +3,13 @@ import TelegramBackButton from "@/components/TelegramBackButton";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Banknote, CheckCircle, XCircle, Loader2,
-  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText
+  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText, Bot, ArrowLeft
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 interface WithdrawalRequest {
@@ -53,7 +54,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity" | "chat";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -96,6 +97,13 @@ export default function Admin() {
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
   const [activityProfile, setActivityProfile] = useState<any>(null);
   const [activityLoading, setActivityLoading] = useState(false);
+  // Chat
+  const [chatConversations, setChatConversations] = useState<any[]>([]);
+  const [chatSelectedUser, setChatSelectedUser] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatProfile, setChatProfile] = useState<any>(null);
+  const [chatReplyText, setChatReplyText] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -174,6 +182,11 @@ export default function Admin() {
       } else if (tab === "admins") {
         const data = await callAdmin({ action: "get_admins" });
         setAdminsList(data?.admins || []);
+      } else if (tab === "chat") {
+        const data = await callAdmin({ action: "get_chat_conversations" });
+        setChatConversations(data?.conversations || []);
+        setChatSelectedUser(null);
+        setChatMessages([]);
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
@@ -377,8 +390,39 @@ export default function Admin() {
     }
   };
 
+  const handleOpenChat = async (userId: string) => {
+    setChatLoading(true);
+    setChatSelectedUser(userId);
+    try {
+      const data = await callAdmin({ action: "get_chat_messages", target_user_id: userId });
+      setChatMessages(data?.messages || []);
+      setChatProfile(data?.profile || null);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleSendChatReply = async () => {
+    if (!chatSelectedUser || !chatReplyText || processing) return;
+    setProcessing("chat");
+    try {
+      await callAdmin({ action: "send_chat_reply", target_user_id: chatSelectedUser, text: chatReplyText });
+      setChatReplyText("");
+      // Refresh messages
+      const data = await callAdmin({ action: "get_chat_messages", target_user_id: chatSelectedUser });
+      setChatMessages(data?.messages || []);
+    } catch (e: any) {
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
+    { key: "chat", label: "Chat", icon: MessageCircle },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
     { key: "activity", label: "Faoliyat", icon: ScrollText },
@@ -437,6 +481,108 @@ export default function Admin() {
                   <StatBox icon={Users} label="Jami referallar" value={stats.totalReferrals} />
                   <StatBox icon={UserPlus} label="Bugungi referallar" value={stats.todayReferrals} color="text-primary" />
                 </div>
+              </div>
+            )}
+
+            {/* === CHAT === */}
+            {tab === "chat" && (
+              <div className="space-y-3">
+                {chatSelectedUser ? (
+                  // Chat detail view
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => { setChatSelectedUser(null); setChatMessages([]); setChatProfile(null); fetchData(); }}
+                      className="flex items-center gap-1.5 text-xs font-bold text-primary"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" /> Orqaga
+                    </button>
+
+                    {chatProfile && (
+                      <div className="farm-card">
+                        <p className="text-sm font-bold text-foreground">{chatProfile.first_name || "Noma'lum"}</p>
+                        <p className="text-[10px] text-muted-foreground">@{chatProfile.username || "—"} · TG: {chatProfile.telegram_id || "—"}</p>
+                      </div>
+                    )}
+
+                    {chatLoading ? (
+                      <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+                    ) : (
+                      <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                        {chatMessages.map((msg: any) => (
+                          <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-start" : "justify-end"}`}>
+                            <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs ${
+                              msg.sender === "user" 
+                                ? "bg-muted text-foreground rounded-bl-sm" 
+                                : msg.sender === "ai"
+                                ? "bg-accent/20 text-foreground rounded-br-sm"
+                                : "bg-primary text-primary-foreground rounded-br-sm"
+                            }`}>
+                              {msg.sender === "ai" && <span className="text-[9px] font-bold opacity-70">🤖 AI</span>}
+                              {msg.sender === "admin" && <span className="text-[9px] font-bold opacity-70">👤 Admin</span>}
+                              <p className="mt-0.5">{msg.message}</p>
+                              <p className={`text-[9px] mt-1 ${msg.sender === "user" ? "text-muted-foreground" : "opacity-60"}`}>
+                                {new Date(msg.created_at).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reply input */}
+                    <div className="flex gap-2">
+                      <textarea
+                        placeholder="Javob yozing..."
+                        value={chatReplyText}
+                        onChange={(e) => setChatReplyText(e.target.value)}
+                        className="flex-1 rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[40px] resize-none"
+                      />
+                      <button
+                        onClick={handleSendChatReply}
+                        disabled={!chatReplyText || processing === "chat"}
+                        className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50"
+                      >
+                        {processing === "chat" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Conversations list
+                  <>
+                    {chatConversations.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-8">Xabarlar yo'q</p>
+                    ) : (
+                      chatConversations.map((conv: any) => (
+                        <div
+                          key={conv.user_id}
+                          onClick={() => handleOpenChat(conv.user_id)}
+                          className="farm-card cursor-pointer hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-lg shrink-0">
+                              {conv.unread_count > 0 ? "🔴" : "💬"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="text-sm font-bold text-foreground truncate">{conv.first_name || "Noma'lum"}</p>
+                                {conv.unread_count > 0 && (
+                                  <span className="bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full px-1.5 py-0.5">{conv.unread_count}</span>
+                                )}
+                              </div>
+                              <p className="text-[10px] text-muted-foreground">@{conv.username || "—"} · TG: {conv.telegram_id || "—"}</p>
+                              <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                                {conv.last_sender === "admin" ? "👤 " : conv.last_sender === "ai" ? "🤖 " : ""}{conv.last_message}
+                              </p>
+                            </div>
+                            <p className="text-[9px] text-muted-foreground shrink-0">
+                              {new Date(conv.last_time).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </>
+                )}
               </div>
             )}
 
@@ -940,6 +1086,56 @@ export default function Admin() {
             {/* === SETTINGS === */}
             {tab === "settings" && (
               <div className="space-y-3">
+                {/* AI Auto-reply */}
+                <div className="farm-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                      <Bot className="h-4 w-4" /> 🤖 AI Avto Javob
+                    </h3>
+                    <Switch
+                      checked={appSettings.ai_auto_reply?.enabled === true}
+                      onCheckedChange={(checked) => {
+                        const updated = { ...appSettings.ai_auto_reply, enabled: checked };
+                        setAppSettings(prev => ({ ...prev, ai_auto_reply: updated }));
+                        callAdmin({ action: "update_settings", key: "ai_auto_reply", value: updated }).then(() => toast.success("Saqlandi"));
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Yoqilganda foydalanuvchi xabarlariga AI avtomatik javob beradi</p>
+                </div>
+
+                {/* Withdrawal Control */}
+                <div className="farm-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground">💰 Pul chiqarish</h3>
+                    <Switch
+                      checked={appSettings.withdrawal_control?.enabled !== false}
+                      onCheckedChange={(checked) => {
+                        const updated = { ...appSettings.withdrawal_control, enabled: checked };
+                        setAppSettings(prev => ({ ...prev, withdrawal_control: updated }));
+                        callAdmin({ action: "update_settings", key: "withdrawal_control", value: updated }).then(() => toast.success("Saqlandi"));
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">O'chirilganda foydalanuvchilar pul chiqara olmaydi</p>
+                </div>
+
+                {/* Payment Day */}
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-2">📅 To'lov kuni matni</h3>
+                  <Input
+                    value={appSettings.payment_day?.text ?? ""}
+                    onChange={(e) => {
+                      const updated = { ...appSettings.payment_day, text: e.target.value };
+                      setAppSettings(prev => ({ ...prev, payment_day: updated }));
+                    }}
+                    onBlur={() => callAdmin({ action: "update_settings", key: "payment_day", value: appSettings.payment_day }).then(() => toast.success("Saqlandi"))}
+                    placeholder="Masalan: To'lovlar har payshanba amalga oshiriladi"
+                    className="text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Bu matn pul chiqarish sahifasida ko'rinadi</p>
+                </div>
+
                 <div className="farm-card">
                   <h3 className="text-sm font-bold text-foreground mb-3">👥 Referal sozlamalari</h3>
                   <div className="space-y-2.5">
