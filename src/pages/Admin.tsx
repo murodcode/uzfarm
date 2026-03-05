@@ -182,6 +182,11 @@ export default function Admin() {
       } else if (tab === "admins") {
         const data = await callAdmin({ action: "get_admins" });
         setAdminsList(data?.admins || []);
+      } else if (tab === "chat") {
+        const data = await callAdmin({ action: "get_chat_conversations" });
+        setChatConversations(data?.conversations || []);
+        setChatSelectedUser(null);
+        setChatMessages([]);
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
