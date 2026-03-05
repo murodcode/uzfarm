@@ -3,7 +3,7 @@ import TelegramBackButton from "@/components/TelegramBackButton";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Banknote, CheckCircle, XCircle, Loader2,
-  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText
+  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText, Bot, ArrowLeft
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
