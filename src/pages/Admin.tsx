@@ -1086,6 +1086,56 @@ export default function Admin() {
             {/* === SETTINGS === */}
             {tab === "settings" && (
               <div className="space-y-3">
+                {/* AI Auto-reply */}
+                <div className="farm-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                      <Bot className="h-4 w-4" /> 🤖 AI Avto Javob
+                    </h3>
+                    <Switch
+                      checked={appSettings.ai_auto_reply?.enabled === true}
+                      onCheckedChange={(checked) => {
+                        const updated = { ...appSettings.ai_auto_reply, enabled: checked };
+                        setAppSettings(prev => ({ ...prev, ai_auto_reply: updated }));
+                        callAdmin({ action: "update_settings", key: "ai_auto_reply", value: updated }).then(() => toast.success("Saqlandi"));
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">Yoqilganda foydalanuvchi xabarlariga AI avtomatik javob beradi</p>
+                </div>
+
+                {/* Withdrawal Control */}
+                <div className="farm-card">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-foreground">💰 Pul chiqarish</h3>
+                    <Switch
+                      checked={appSettings.withdrawal_control?.enabled !== false}
+                      onCheckedChange={(checked) => {
+                        const updated = { ...appSettings.withdrawal_control, enabled: checked };
+                        setAppSettings(prev => ({ ...prev, withdrawal_control: updated }));
+                        callAdmin({ action: "update_settings", key: "withdrawal_control", value: updated }).then(() => toast.success("Saqlandi"));
+                      }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">O'chirilganda foydalanuvchilar pul chiqara olmaydi</p>
+                </div>
+
+                {/* Payment Day */}
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-2">📅 To'lov kuni matni</h3>
+                  <Input
+                    value={appSettings.payment_day?.text ?? ""}
+                    onChange={(e) => {
+                      const updated = { ...appSettings.payment_day, text: e.target.value };
+                      setAppSettings(prev => ({ ...prev, payment_day: updated }));
+                    }}
+                    onBlur={() => callAdmin({ action: "update_settings", key: "payment_day", value: appSettings.payment_day }).then(() => toast.success("Saqlandi"))}
+                    placeholder="Masalan: To'lovlar har payshanba amalga oshiriladi"
+                    className="text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Bu matn pul chiqarish sahifasida ko'rinadi</p>
+                </div>
+
                 <div className="farm-card">
                   <h3 className="text-sm font-bold text-foreground mb-3">👥 Referal sozlamalari</h3>
                   <div className="space-y-2.5">
