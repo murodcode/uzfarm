@@ -350,6 +350,18 @@ Deno.serve(async (req) => {
           const targetTgId = state.data?.targetTgId;
           if (targetTgId) {
             await sendMessage(targetTgId, `💬 <b>Admin javobi:</b>\n\n${text}`);
+            // Save admin reply to chat_messages
+            const { data: targetProfile } = await supabase.from("profiles")
+              .select("id")
+              .eq("telegram_id", targetTgId)
+              .single();
+            if (targetProfile?.id) {
+              await supabase.from("chat_messages").insert({
+                user_id: targetProfile.id,
+                message: text,
+                sender: "admin",
+              });
+            }
             await sendMessage(chatId, `✅ Javob yuborildi (TG ID: ${targetTgId})`);
           }
           return new Response("OK", { status: 200 });
