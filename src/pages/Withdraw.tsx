@@ -85,6 +85,10 @@ export default function Withdraw() {
 
   const handleWithdraw = async () => {
     if (!isValid || loading || !profile) return;
+    if (!withdrawalEnabled) {
+      toast.error("⚠️ Hozircha to'lovlar vaqtincha yopilgan. Iltimos, kuting.");
+      return;
+    }
     setLoading(true);
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
