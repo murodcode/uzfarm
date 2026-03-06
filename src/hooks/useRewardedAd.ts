@@ -56,6 +56,7 @@ async function recordAdView() {
 /* ── Direct link ad (for actions: feed, collect, sell, etc.) ── */
 const AD_LINK = "https://omg10.com/4/10644130";
 const WAIT_SECONDS = 5;
+const MIN_TIME_ON_AD_SITE_MS = 5000; // Must spend at least 5 seconds on ad site
 
 function openAdLink() {
   try {
@@ -72,7 +73,6 @@ function openAdLink() {
 
 function showAdOverlay(): Promise<boolean> {
   return new Promise((resolve) => {
-    // Create overlay
     const overlay = document.createElement("div");
     overlay.style.cssText =
       "position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:20px;text-align:center;";
@@ -90,9 +90,13 @@ function showAdOverlay(): Promise<boolean> {
       "background:#22c55e;color:#fff;font-size:18px;font-weight:800;border:none;border-radius:14px;padding:14px 40px;cursor:pointer;display:none;";
     btn.textContent = "📺 Reklamani ko'rish";
 
+    const statusText = document.createElement("div");
+    statusText.style.cssText = "color:#ffffff;font-size:14px;margin-top:16px;display:none;";
+
     overlay.appendChild(title);
     overlay.appendChild(timer);
     overlay.appendChild(btn);
+    overlay.appendChild(statusText);
     document.body.appendChild(overlay);
 
     let sec = WAIT_SECONDS;
@@ -107,10 +111,70 @@ function showAdOverlay(): Promise<boolean> {
     }, 1000);
 
     btn.onclick = () => {
+      // Record when user clicked to open ad
+      const adOpenTime = Date.now();
       openAdLink();
-      recordAdView();
-      document.body.removeChild(overlay);
-      resolve(true);
+
+      // Disable button, show waiting message
+      btn.style.display = "none";
+      statusText.style.display = "block";
+      statusText.textContent = "⏳ Reklama saytida 5 sekund turing...";
+
+      // Listen for when user comes back (visibility change or focus)
+      const checkReturn = () => {
+        const timeSpent = Date.now() - adOpenTime;
+        if (timeSpent >= MIN_TIME_ON_AD_SITE_MS) {
+          // User spent enough time
+          cleanup();
+          recordAdView();
+          document.body.removeChild(overlay);
+          resolve(true);
+        } else {
+          // Not enough time
+          const remaining = Math.ceil((MIN_TIME_ON_AD_SITE_MS - timeSpent) / 1000);
+          statusText.style.display = "block";
+          statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 5 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${remaining} sekund qoldi. Qaytadan urinib ko'ring.</span>`;
+          btn.textContent = "🔄 Qayta ochish";
+          btn.style.display = "block";
+          // Re-enable for retry
+          btn.onclick = () => {
+            const retryTime = Date.now();
+            openAdLink();
+            btn.style.display = "none";
+            statusText.textContent = "⏳ Reklama saytida 5 sekund turing...";
+
+            const checkRetry = () => {
+              const spent = Date.now() - retryTime;
+              if (spent >= MIN_TIME_ON_AD_SITE_MS) {
+                cleanup2();
+                recordAdView();
+                document.body.removeChild(overlay);
+                resolve(true);
+              } else {
+                const rem = Math.ceil((MIN_TIME_ON_AD_SITE_MS - spent) / 1000);
+                statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 5 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${rem} sekund qoldi.</span>`;
+                btn.textContent = "🔄 Qayta ochish";
+                btn.style.display = "block";
+              }
+            };
+            const onReturnRetry = () => { setTimeout(checkRetry, 300); };
+            const cleanup2 = () => {
+              document.removeEventListener("visibilitychange", onReturnRetry);
+              window.removeEventListener("focus", onReturnRetry);
+            };
+            document.addEventListener("visibilitychange", onReturnRetry);
+            window.addEventListener("focus", onReturnRetry);
+          };
+        }
+      };
+
+      const onReturn = () => { setTimeout(checkReturn, 300); };
+      const cleanup = () => {
+        document.removeEventListener("visibilitychange", onReturn);
+        window.removeEventListener("focus", onReturn);
+      };
+      document.addEventListener("visibilitychange", onReturn);
+      window.addEventListener("focus", onReturn);
     };
   });
 }
