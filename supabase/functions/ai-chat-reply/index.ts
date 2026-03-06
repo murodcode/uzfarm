@@ -57,6 +57,18 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Get custom instructions
+    const { data: customInstr } = await adminClient
+      .from("app_settings")
+      .select("value")
+      .eq("key", "ai_custom_instructions")
+      .single();
+
+    let systemPrompt = SYSTEM_PROMPT;
+    if (customInstr?.value && (customInstr.value as any).text) {
+      systemPrompt += `\n\nAdmin qo'shimcha ko'rsatmalari:\n${(customInstr.value as any).text}`;
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
