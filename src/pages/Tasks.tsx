@@ -220,6 +220,23 @@ export default function Tasks() {
                     {/* Action buttons */}
                     {!isClaimed && (
                       <div className="flex gap-2 mt-3">
+                        {isWatchAds && !isComplete && (
+                          <button
+                            onClick={async () => {
+                              if (!user) return;
+                              const adOk = await showAd();
+                              if (adOk) {
+                                await incrementDailyTask(user.id, "watch_ads");
+                                await loadDailyProgress();
+                                toast.success("Reklama ko'rildi! 🎥");
+                              }
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2.5 text-xs font-bold text-accent-foreground"
+                          >
+                            <Play className="h-3.5 w-3.5" />
+                            Reklama ko'rish
+                          </button>
+                        )}
                         {isComplete && (
                           <button
                             onClick={() => handleClaimDaily(def.key)}
