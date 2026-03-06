@@ -55,7 +55,7 @@ async function recordAdView() {
 
 /* ── Direct link ad (for actions: feed, collect, sell, etc.) ── */
 const AD_LINK = "https://omg10.com/4/10644130";
-const WAIT_SECONDS = 10;
+const WAIT_SECONDS = 5;
 const MIN_TIME_ON_AD_SITE_MS = 10000; // Must spend at least 10 seconds on ad site
 
 function openAdLink() {
