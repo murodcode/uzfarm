@@ -1104,6 +1104,24 @@ export default function Admin() {
                   <p className="text-[10px] text-muted-foreground mt-1">Yoqilganda foydalanuvchi xabarlariga AI avtomatik javob beradi</p>
                 </div>
 
+                {/* AI Custom Instructions */}
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-2 flex items-center gap-1.5">
+                    <Bot className="h-4 w-4" /> 📝 AI uchun qo'shimcha ko'rsatmalar
+                  </h3>
+                  <textarea
+                    value={appSettings.ai_custom_instructions?.text ?? ""}
+                    onChange={(e) => {
+                      const updated = { ...appSettings.ai_custom_instructions, text: e.target.value };
+                      setAppSettings(prev => ({ ...prev, ai_custom_instructions: updated }));
+                    }}
+                    onBlur={() => callAdmin({ action: "update_settings", key: "ai_custom_instructions", value: appSettings.ai_custom_instructions }).then(() => toast.success("Saqlandi"))}
+                    placeholder="AI ga qo'shimcha so'zlar va ko'rsatmalar yozing...&#10;Masalan: 'Foydalanuvchilarga doimo hurmat bilan murojaat qil' yoki 'Hozirda to'lovlar vaqtincha yopilgan deb ayt'"
+                    className="w-full rounded-xl border border-input bg-background px-4 py-3 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring min-h-[120px] resize-none"
+                  />
+                  <p className="text-[10px] text-muted-foreground mt-1">Bu ko'rsatmalar AI javoblariga ta'sir qiladi</p>
+                </div>
+
                 {/* Withdrawal Control */}
                 <div className="farm-card">
                   <div className="flex items-center justify-between">

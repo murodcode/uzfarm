@@ -3,9 +3,10 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useGameContext } from "@/contexts/GameStateContext";
-import { CheckCircle2, Clock, Gift, Star, ExternalLink, Loader2, Trophy } from "lucide-react";
+import { CheckCircle2, Clock, Gift, Star, ExternalLink, Loader2, Trophy, Play } from "lucide-react";
 import { toast } from "sonner";
-import { DAILY_TASK_DEFS, getDailyProgress, claimDailyReward } from "@/lib/dailyTasks";
+import { DAILY_TASK_DEFS, getDailyProgress, claimDailyReward, incrementDailyTask } from "@/lib/dailyTasks";
+import { useRewardedAd } from "@/hooks/useRewardedAd";
 
 interface GameTask {
   id: string;
@@ -31,6 +32,7 @@ interface DailyProgressItem {
 export default function Tasks() {
   const { user, refreshProfile } = useAuth();
   const { refreshFromDb } = useGameContext();
+  const { showAd } = useRewardedAd();
   const [tasks, setTasks] = useState<GameTask[]>([]);
   const [completedTaskIds, setCompletedTaskIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -218,6 +220,23 @@ export default function Tasks() {
                     {/* Action buttons */}
                     {!isClaimed && (
                       <div className="flex gap-2 mt-3">
+                        {isWatchAds && !isComplete && (
+                          <button
+                            onClick={async () => {
+                              if (!user) return;
+                              const adOk = await showAd();
+                              if (adOk) {
+                                await incrementDailyTask(user.id, "watch_ads");
+                                await loadDailyProgress();
+                                toast.success("Reklama ko'rildi! 🎥");
+                              }
+                            }}
+                            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-accent/10 py-2.5 text-xs font-bold text-accent-foreground"
+                          >
+                            <Play className="h-3.5 w-3.5" />
+                            Reklama ko'rish
+                          </button>
+                        )}
                         {isComplete && (
                           <button
                             onClick={() => handleClaimDaily(def.key)}
