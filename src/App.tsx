@@ -43,6 +43,7 @@ function AppRoutes() {
           <Route path="/admin" element={<Admin />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/referral" element={<Referral />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNav />

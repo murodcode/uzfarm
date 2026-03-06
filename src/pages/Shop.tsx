@@ -10,10 +10,11 @@ export default function Shop() {
   const { showAd } = useRewardedAd();
 
   const handleBuy = async (typeId: string) => {
+    const adOk = await showAd();
+    if (!adOk) return;
     const result = await buyAnimal(typeId);
     if (result) {
       toast.success("Hayvon sotib olindi! 🎉");
-      showAd().catch(() => {});
     } else {
       const type = ANIMAL_TYPES.find(a => a.id === typeId);
       if (type && countAnimalsByType(state.animals, typeId) >= type.maxOwned) {
