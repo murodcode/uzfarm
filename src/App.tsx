@@ -16,6 +16,7 @@ import Login from "./pages/Login";
 import Admin from "./pages/Admin";
 import Leaderboard from "./pages/Leaderboard";
 import Referral from "./pages/Referral";
+import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import LoadingScreen from "./components/LoadingScreen";
