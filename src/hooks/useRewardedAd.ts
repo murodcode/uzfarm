@@ -55,7 +55,7 @@ async function recordAdView() {
 
 /* ── Direct link ad (for actions: feed, collect, sell, etc.) ── */
 const AD_LINK = "https://omg10.com/4/10644130";
-const WAIT_SECONDS = 10;
+const WAIT_SECONDS = 5;
 const MIN_TIME_ON_AD_SITE_MS = 10000; // Must spend at least 10 seconds on ad site
 
 function openAdLink() {
@@ -79,7 +79,7 @@ function showAdOverlay(): Promise<boolean> {
 
     const title = document.createElement("div");
     title.style.cssText = "color:#ff2222;font-size:22px;font-weight:900;margin-bottom:16px;line-height:1.3;";
-    title.textContent = "⚠️ Reklama saytiga o'tib 5 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
+    title.textContent = "⚠️ Reklama saytiga o'tib 10 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
 
     const timer = document.createElement("div");
     timer.style.cssText = "color:#ffffff;font-size:48px;font-weight:900;margin-bottom:24px;";
