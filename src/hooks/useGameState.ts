@@ -301,7 +301,7 @@ export function useGameState() {
 
     if (bought && userId) {
       // Immediately sync coins to DB
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
 
       const { error: insertError } = await supabase.from("animals").insert({
         id: animalId,
