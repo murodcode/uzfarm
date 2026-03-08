@@ -301,7 +301,7 @@ export function useGameState() {
 
     if (bought && userId) {
       // Immediately sync coins to DB
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
 
       const { error: insertError } = await supabase.from("animals").insert({
         id: animalId,
@@ -374,8 +374,8 @@ export function useGameState() {
     });
 
     if (feedResult && userId) {
-      // Immediately sync coins to DB
-      if (newState) syncProfileNow(newState);
+      // Immediately sync coins to DB and wait for it
+      if (newState) await syncProfileNow(newState);
 
       const fr = feedResult as { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean };
       const updateData: any = {
@@ -426,7 +426,7 @@ export function useGameState() {
     });
 
     if (success && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
@@ -469,7 +469,7 @@ export function useGameState() {
     });
 
     if (didCollect && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
@@ -500,12 +500,12 @@ export function useGameState() {
     });
 
     if (success && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       await supabase.from("animals").delete().eq("id", animalId).eq("user_id", userId);
     }
   }, [userId, syncProfileNow]);
 
-  const sellProduct = useCallback((type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
+  const sellProduct = useCallback(async (type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
     let sold = false;
     let newState: GameState | null = null;
     setState((prev) => {
@@ -526,7 +526,7 @@ export function useGameState() {
       return result;
     });
     if (sold && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       incrementDailyTask(userId, "sell_product");
     }
   }, [userId, syncProfileNow]);
