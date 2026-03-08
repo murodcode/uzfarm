@@ -7,8 +7,10 @@ import { expRequired } from "@/lib/levelSystem";
 import { ANIMAL_TYPES, FIELD_NAMES, FIELD_EMOJIS, FIELD_PRICES, getFieldMaxOwned, countAnimalsByTypeInField } from "@/lib/gameData";
 import { Lock, ChevronRight } from "lucide-react";
 
+import { toast } from "sonner";
+
 export default function Home() {
-  const { state, levelUpEvent, dismissLevelUp } = useGameContext();
+  const { state, levelUpEvent, dismissLevelUp, unlockField } = useGameContext();
   const navigate = useNavigate();
 
   const required = expRequired(state.level);
@@ -165,7 +167,7 @@ export default function Home() {
                   </button>
                 ) : (
                   /* Locked farm card */
-                  <div className="farm-card p-4 opacity-80">
+                  <div className="farm-card p-4">
                     <div className="flex items-center gap-4">
                       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-2xl shrink-0">
                         🔒
@@ -180,7 +182,6 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
-                    {/* Capacity breakdown */}
                     <div className="mt-3 flex flex-wrap gap-1.5">
                       {ANIMAL_TYPES.map(type => (
                         <span key={type.id} className="text-[10px] font-semibold bg-muted rounded-full px-2 py-0.5 text-muted-foreground">
@@ -188,6 +189,30 @@ export default function Home() {
                         </span>
                       ))}
                     </div>
+                    <button
+                      onClick={async () => {
+                        const ok = await unlockField(f);
+                        if (ok) {
+                          toast.success(`${FIELD_NAMES[f]} sotib olindi! 🎉`);
+                        } else {
+                          toast.error("Mablag' yetarli emas");
+                        }
+                      }}
+                      disabled={state.cash < (price ?? Infinity) || f !== state.unlockedFields + 1}
+                      className={`mt-3 w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold transition-transform active:scale-95 ${
+                        state.cash >= (price ?? Infinity) && f === state.unlockedFields + 1
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground cursor-not-allowed"
+                      }`}
+                    >
+                      <Lock className="h-4 w-4" />
+                      {f !== state.unlockedFields + 1
+                        ? `Avval ${FIELD_NAMES[f - 1]} oching`
+                        : state.cash >= (price ?? Infinity)
+                          ? "💵 Sotib olish"
+                          : "Mablag' yetarli emas"
+                      }
+                    </button>
                   </div>
                 )}
               </motion.div>
