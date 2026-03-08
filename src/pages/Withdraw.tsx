@@ -125,8 +125,15 @@ export default function Withdraw() {
       return;
     }
 
+    // Deduct cash
     const newCash = cash - numAmount;
     await supabase.from("profiles").update({ cash: newCash }).eq("id", profile.id);
+
+    // Consume referrals if enabled
+    if (refEnabled && refConsume && refRequired > 0) {
+      const newRefCount = Math.max(0, referralCount - refRequired);
+      await supabase.from("profiles").update({ referral_count: newRefCount }).eq("id", profile.id);
+    }
 
     if (insertData?.id) {
       supabase.functions.invoke("process-referral-bonus", {
