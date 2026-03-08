@@ -161,6 +161,15 @@ export default function Chat() {
       .limit(100);
     setMessages((data as ChatMsg[]) || []);
     setLoading(false);
+
+    // Mark admin messages as read
+    await supabase
+      .from("chat_messages")
+      .update({ is_read: true })
+      .eq("user_id", user.id)
+      .eq("sender", "admin")
+      .eq("is_read", false);
+    setUnreadAdmin(0);
   };
 
   const handleSendAdmin = async () => {
