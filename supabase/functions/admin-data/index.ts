@@ -524,11 +524,28 @@ Deno.serve(async (req) => {
 
     if (action === "update_settings") {
       const { key, value } = body;
-      await adminClient.from("app_settings").upsert(
-        { key, value, updated_at: new Date().toISOString() },
-        { onConflict: "key" }
-      );
-      return json({ success: true });
+      if (!key || typeof key !== "string") {
+        return json({ error: "key kerak" }, 400);
+      }
+
+      const normalizedValue = key === "withdrawal_control"
+        ? { enabled: value?.enabled === true }
+        : value;
+
+      const { data: savedSetting, error: upsertError } = await adminClient
+        .from("app_settings")
+        .upsert(
+          { key, value: normalizedValue, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        )
+        .select("key, value, updated_at")
+        .single();
+
+      if (upsertError) {
+        return json({ error: upsertError.message }, 500);
+      }
+
+      return json({ success: true, setting: savedSetting });
     }
 
     // === GET REFERRAL LEADERBOARD ===
