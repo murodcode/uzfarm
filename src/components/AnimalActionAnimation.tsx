@@ -42,12 +42,7 @@ function getActionLabel(action: string): string {
 }
 
 export default function AnimalActionAnimation({ action, animalTypeId, onComplete }: AnimalActionAnimationProps) {
-  useEffect(() => {
-    if (action) {
-      const timer = setTimeout(onComplete, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [action, onComplete]);
+  // Animation lifetime is controlled by parent component
 
   return (
     <AnimatePresence>
