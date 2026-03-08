@@ -6,6 +6,7 @@ import {
   BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText, Bot, ArrowLeft, Bell
 } from "lucide-react";
 import AdminNotifications from "@/components/AdminNotifications";
+import AdminContestManager from "@/components/AdminContestManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
