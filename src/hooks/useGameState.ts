@@ -269,7 +269,7 @@ export function useGameState() {
     }
   }, [state, userId]);
 
-  const buyAnimal = useCallback(async (typeId: string) => {
+  const buyAnimal = useCallback(async (typeId: string, field: number = 1) => {
     const type = getAnimalType(typeId);
     if (!type) return false;
 
@@ -280,10 +280,12 @@ export function useGameState() {
 
     setState((prev) => {
       if (prev.coins < type.price) return prev;
+      if (field > prev.unlockedFields) return prev;
 
-      // Check max owned limit
-      const currentCount = countAnimalsByType(prev.animals, typeId);
-      if (currentCount >= type.maxOwned) return prev;
+      // Check max owned limit for this field
+      const currentCount = countAnimalsByTypeInField(prev.animals, typeId, field);
+      const maxForField = getFieldMaxOwned(type, field);
+      if (currentCount >= maxForField) return prev;
 
       bought = true;
       const animal: OwnedAnimal = {
@@ -296,6 +298,7 @@ export function useGameState() {
         boughtAt: now,
         grownAt: 0,
         feedCount: 0,
+        field,
       };
       const updated = {
         ...prev,
@@ -321,6 +324,7 @@ export function useGameState() {
         bought_at: new Date(now).toISOString(),
         grown_at: null,
         feed_count: 0,
+        field,
       });
 
       if (insertError) {
@@ -333,7 +337,7 @@ export function useGameState() {
         return false;
       }
       incrementDailyTask(userId, "buy_animal");
-      logUserAction("buy_animal", `${type.name} sotib olindi, narxi: ${type.price} tanga`);
+      logUserAction("buy_animal", `${type.name} sotib olindi (maydon ${field}), narxi: ${type.price} tanga`);
     }
 
     return bought;
