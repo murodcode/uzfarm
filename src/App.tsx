@@ -23,10 +23,28 @@ import LoadingScreen from "./components/LoadingScreen";
 
 const queryClient = new QueryClient();
 
+function BlockedScreen() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-6">
+      <div className="text-center space-y-4">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-destructive/15">
+          <span className="text-4xl">🚫</span>
+        </div>
+        <h1 className="text-2xl font-black text-destructive">Siz blocklangansiz!</h1>
+        <p className="text-base font-semibold text-destructive/80">
+          Agar blockdan chiqmoqchi bo'lsangiz, admin bilan bog'laning.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function AppRoutes() {
-  const { loading } = useAuth();
+  const { loading, profile } = useAuth();
 
   if (loading) return <LoadingScreen />;
+
+  if (profile?.is_blocked) return <BlockedScreen />;
 
   return (
     <GameStateProvider>

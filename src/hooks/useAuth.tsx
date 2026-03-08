@@ -16,6 +16,7 @@ interface Profile {
   referral_earnings: number;
   referral_level: number;
   referred_by: string | null;
+  is_blocked: boolean;
 }
 
 interface TelegramUser {
