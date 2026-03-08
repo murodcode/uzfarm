@@ -42,6 +42,8 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
       await fn();
     } finally {
       setBusyAction(null);
+      // Keep animation visible for 3 more seconds after action completes
+      setTimeout(() => setActiveAnimation(null), 3000);
     }
   }, [busyAction]);
 
