@@ -136,7 +136,7 @@ function showAdOverlay(): Promise<boolean> {
           // Not enough time
           const remaining = Math.ceil((MIN_TIME_ON_AD_SITE_MS - timeSpent) / 1000);
           statusText.style.display = "block";
-          statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 5 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${remaining} sekund qoldi. Qaytadan urinib ko'ring.</span>`;
+          statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 7 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${remaining} sekund qoldi. Qaytadan urinib ko'ring.</span>`;
           btn.textContent = "🔄 Qayta ochish";
           btn.style.display = "block";
           // Re-enable for retry
