@@ -121,17 +121,33 @@ export default function Withdraw() {
     const liveRefVal = liveRef?.value as any;
     const liveRefEnabled = liveRefVal?.enabled === true;
     const liveRefRequired = liveRefVal?.required_count || 0;
+    const liveRefConsume = liveRefVal?.consume_referrals === true;
 
-    if (liveRefEnabled && referralCount < liveRefRequired) {
-      setRefEnabled(true);
-      setRefRequired(liveRefRequired);
-      toast.error(`❌ Pul chiqarish uchun sizga yana ${liveRefRequired - referralCount} ta referal kerak`);
+    // Get fresh profile for accurate referral_count
+    const { data: freshProfile } = await supabase
+      .from("profiles")
+      .select("referral_count, cash")
+      .eq("id", profile.id)
+      .single();
+
+    const freshReferralCount = freshProfile?.referral_count ?? 0;
+    const freshCash = freshProfile?.cash ?? 0;
+
+    if (numAmount > freshCash) {
+      setLoading(false);
+      toast.error(`💰 Mablag' yetarli emas. Sizda: ${freshCash.toLocaleString()}`);
       return;
     }
 
-    setLoading(true);
+    if (liveRefEnabled && freshReferralCount < liveRefRequired) {
+      setRefEnabled(true);
+      setRefRequired(liveRefRequired);
+      setLoading(false);
+      toast.error(`❌ Pul chiqarish uchun sizga yana ${liveRefRequired - freshReferralCount} ta referal kerak`);
+      return;
+    }
 
-    const consumedReferrals = (refEnabled && refConsume && refRequired > 0) ? refRequired : 0;
+    const consumedReferrals = (liveRefEnabled && liveRefConsume && liveRefRequired > 0) ? liveRefRequired : 0;
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
       user_id: profile.id,
@@ -147,12 +163,12 @@ export default function Withdraw() {
     }
 
     // Deduct cash
-    const newCash = cash - numAmount;
+    const newCash = freshCash - numAmount;
     await supabase.from("profiles").update({ cash: newCash }).eq("id", profile.id);
 
     // Consume referrals if enabled
     if (consumedReferrals > 0) {
-      const newRefCount = Math.max(0, referralCount - consumedReferrals);
+      const newRefCount = Math.max(0, freshReferralCount - consumedReferrals);
       await supabase.from("profiles").update({ referral_count: newRefCount }).eq("id", profile.id);
     }
 
