@@ -45,15 +45,15 @@ export default function FieldView({
         </p>
         <button
           onClick={onUnlock}
-          disabled={coins < (price ?? Infinity)}
+          disabled={cash < (price ?? Infinity)}
           className={`flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-transform active:scale-95 ${
-            coins >= (price ?? Infinity)
+            cash >= (price ?? Infinity)
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground cursor-not-allowed"
           }`}
         >
           <Lock className="h-4 w-4" />
-          {coins >= (price ?? Infinity) ? "Ochish" : "Mablag' yetarli emas"}
+          {cash >= (price ?? Infinity) ? "Ochish" : "Mablag' yetarli emas"}
         </button>
       </motion.div>
     );
