@@ -123,36 +123,37 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden relative"
+      className="farm-card overflow-hidden relative"
     >
       {/* Action animation overlay */}
       <AnimalActionAnimation action={activeAnimation} animalTypeId={animal.typeId} onComplete={() => setActiveAnimation(null)} />
       {/* Big Animal Illustration */}
       <div
-        className="relative flex items-center justify-center pt-5 pb-3"
+        className="relative flex items-center justify-center pt-5 pb-3 -mx-4 -mt-4 rounded-t-2xl"
         style={{ background: animalAnim.color }}
       >
         {/* Status badge */}
-        <div className="absolute top-2 right-3">
+        <div className="absolute top-2.5 right-3">
           {isGrown ? (
-            <span className="text-[10px] font-bold text-primary bg-card rounded-full px-2 py-0.5 shadow-sm">
+            <span className="text-[10px] font-bold bg-primary text-primary-foreground rounded-full px-2.5 py-1 shadow-md"
+              style={{ boxShadow: '0 2px 8px hsl(142 50% 36% / 0.3)' }}>
               ✓ Tayyor
             </span>
           ) : (
-            <span className="text-[10px] font-bold text-muted-foreground bg-card rounded-full px-2 py-0.5 shadow-sm">
+            <span className="text-[10px] font-bold text-muted-foreground bg-card rounded-full px-2.5 py-1 shadow-sm border border-border">
               🌱 O'smoqda
             </span>
           )}
         </div>
         {/* Hunger dot */}
-        <div className="absolute top-2 left-3 flex items-center gap-1">
+        <div className="absolute top-2.5 left-3 flex items-center gap-1 bg-card/80 rounded-full px-2 py-0.5 border border-border">
           <span className={`inline-block h-2 w-2 rounded-full ${isHungry ? 'bg-destructive' : 'bg-primary'}`} />
-          <span className="text-[10px] font-semibold text-muted-foreground">{isHungry ? "Och" : "To'q"}</span>
+          <span className="text-[10px] font-bold text-foreground">{isHungry ? "Och" : "To'q"}</span>
         </div>
 
         {/* Animated animal emoji */}
         <motion.div
-          animate={{ y: [0, -6, 0] }}
+          animate={{ y: [0, -8, 0] }}
           transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
           className="text-7xl select-none drop-shadow-lg"
         >
@@ -162,7 +163,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
         {/* Feed cost */}
         {!isGrown && (
           <div className="absolute bottom-2 right-3">
-            <span className="text-[10px] font-bold text-muted-foreground bg-card/80 rounded-lg px-2 py-0.5">
+            <span className="text-[10px] font-bold text-foreground bg-card/90 rounded-lg px-2 py-0.5 border border-border">
               🪙 {type.feedCost}
             </span>
           </div>
