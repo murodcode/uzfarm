@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { getAnimalType, OwnedAnimal, DEATH_HOURS, isAnimalDead } from "@/lib/gameData";
 import { Utensils, Egg, Scissors, Clock, Droplets, Loader2, Skull, Heart } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import AnimalActionAnimation from "./AnimalActionAnimation";
 
 const FEED_COOLDOWN_MS = 15 * 60 * 1000;
 
