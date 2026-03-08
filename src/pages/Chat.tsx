@@ -33,6 +33,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [unreadAdmin, setUnreadAdmin] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // General chat state
@@ -45,15 +46,68 @@ export default function Chat() {
   const [chatLockMessage, setChatLockMessage] = useState("");
   const generalScrollRef = useRef<HTMLDivElement>(null);
 
+  // Load data on tab change
   useEffect(() => {
     if (!user) return;
     if (tab === "admin") {
       loadAdminMessages();
+      setUnreadAdmin(0); // Clear unread when viewing
     } else {
       loadGeneralMessages();
       checkBanStatus();
       checkChatLock();
     }
+  }, [user, tab]);
+
+  // Check unread admin messages on mount
+  useEffect(() => {
+    if (!user) return;
+    checkUnreadAdmin();
+  }, [user]);
+
+  const checkUnreadAdmin = async () => {
+    if (!user) return;
+    const { count } = await supabase
+      .from("chat_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .in("sender", ["admin"])
+      .eq("is_read", false);
+    setUnreadAdmin(count || 0);
+  };
+
+  // Realtime for admin chat (to catch admin replies)
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel("admin-chat-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "chat_messages", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const newMsg = payload.new as any;
+          if (newMsg.sender === "admin") {
+            if (tab === "admin") {
+              // Add message directly if viewing admin tab
+              setMessages((prev) => [...prev, {
+                id: newMsg.id,
+                message: newMsg.message,
+                sender: newMsg.sender,
+                created_at: newMsg.created_at,
+              }]);
+            } else {
+              // Increment unread count
+              setUnreadAdmin((prev) => prev + 1);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, tab]);
 
   // Realtime for general chat
@@ -107,6 +161,15 @@ export default function Chat() {
       .limit(100);
     setMessages((data as ChatMsg[]) || []);
     setLoading(false);
+
+    // Mark admin messages as read
+    await supabase
+      .from("chat_messages")
+      .update({ is_read: true })
+      .eq("user_id", user.id)
+      .eq("sender", "admin")
+      .eq("is_read", false);
+    setUnreadAdmin(0);
   };
 
   const handleSendAdmin = async () => {
@@ -219,7 +282,7 @@ export default function Chat() {
         <div className="flex gap-2">
           <button
             onClick={() => setTab("admin")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all relative ${
               tab === "admin"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground"
@@ -227,6 +290,11 @@ export default function Chat() {
           >
             <Shield className="h-3.5 w-3.5" />
             Admin bilan bog'lanish
+            {unreadAdmin > 0 && tab !== "admin" && (
+              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full h-4 min-w-4 flex items-center justify-center px-1">
+                {unreadAdmin}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setTab("general")}
