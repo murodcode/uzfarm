@@ -528,7 +528,7 @@ export function useGameState() {
       if (newState) syncProfileNow(newState);
       incrementDailyTask(userId, "sell_product");
     }
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const exchangeCurrency = useCallback((from: "coins" | "cash", amount: number) => {
     setState((prev) => {
