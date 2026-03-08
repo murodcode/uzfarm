@@ -81,6 +81,7 @@ async function handleAdminPanel(chatId: number) {
       [{ text: "📢 Umumiy xabar yuborish", callback_data: "admin_broadcast" }],
       [{ text: "🏆 Referal reyting", callback_data: "admin_referral_ranking" }],
       [{ text: "👥 Foydalanuvchilar soni", callback_data: "admin_user_count" }],
+      [{ text: "🔗 Majburiy azolik sozlamalari", callback_data: "admin_subscription" }],
     ],
   });
 }
