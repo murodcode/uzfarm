@@ -526,7 +526,7 @@ export function useGameState() {
       return result;
     });
     if (sold && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       incrementDailyTask(userId, "sell_product");
     }
   }, [userId, syncProfileNow]);
