@@ -86,9 +86,23 @@ async function handleAdminPanel(chatId: number) {
   });
 }
 
+// Fetch all rows bypassing 1000-row limit
+async function fetchAllProfiles(supabase: any, columns: string) {
+  const allRows: any[] = [];
+  const PAGE_SIZE = 1000;
+  let from = 0;
+  while (true) {
+    const { data } = await supabase.from("profiles").select(columns).range(from, from + PAGE_SIZE - 1);
+    if (!data || data.length === 0) break;
+    allRows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return allRows;
+}
+
 async function handleAdminStats(supabase: any, chatId: number) {
-  const { data: profiles } = await supabase.from("profiles").select("id, coins, cash, ad_views, is_blocked, created_at, referral_count");
-  const all = profiles || [];
+  const all = await fetchAllProfiles(supabase, "id, coins, cash, ad_views, is_blocked, created_at, referral_count");
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString();
 
