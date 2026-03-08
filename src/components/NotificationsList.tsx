@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, ExternalLink, X, CheckCheck } from "lucide-react";
+import { Bell, ExternalLink, X, Check, CheckCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -20,7 +20,7 @@ export default function NotificationsList() {
   const { session } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
+  const [expanded, setExpanded] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -31,6 +31,7 @@ export default function NotificationsList() {
 
   const fetchNotifications = async () => {
     try {
+      // Get all notifications
       const { data: allNotifs } = await supabase
         .from("notifications")
         .select("*")
@@ -39,6 +40,7 @@ export default function NotificationsList() {
 
       if (!allNotifs) { setNotifications([]); setLoading(false); return; }
 
+      // Get user's read status
       const { data: readStatus } = await supabase
         .from("user_notifications")
         .select("id, notification_id, is_read");
@@ -66,6 +68,7 @@ export default function NotificationsList() {
 
   const markAsRead = async (notif: Notification) => {
     if (notif.is_read) return;
+
     try {
       if (notif.user_notification_id) {
         await supabase
@@ -80,6 +83,7 @@ export default function NotificationsList() {
           read_at: new Date().toISOString(),
         });
       }
+
       setNotifications(prev =>
         prev.map(n => n.id === notif.id ? { ...n, is_read: true } : n)
       );
@@ -91,6 +95,7 @@ export default function NotificationsList() {
   const markAllRead = async () => {
     const unread = notifications.filter(n => !n.is_read);
     if (unread.length === 0) return;
+
     try {
       for (const n of unread) {
         if (n.user_notification_id) {
@@ -113,11 +118,6 @@ export default function NotificationsList() {
     }
   };
 
-  const openNotif = (notif: Notification) => {
-    markAsRead(notif);
-    setSelectedNotif(notif);
-  };
-
   const timeAgo = (dateStr: string) => {
     const diff = Date.now() - new Date(dateStr).getTime();
     const mins = Math.floor(diff / 60000);
@@ -132,162 +132,123 @@ export default function NotificationsList() {
   if (!session) return null;
 
   return (
-    <>
-      <div className="mb-4">
-        {/* Main button */}
-        <button
-          onClick={() => {
-            // If there are notifications, open the first unread or just show list
-            setSelectedNotif(null);
-          }}
-          className="farm-card w-full flex items-center gap-3 py-3 transition-transform active:scale-[0.98]"
-        >
-          <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
-            <Bell className="h-4 w-4 text-primary" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
-                {unreadCount}
-              </span>
-            )}
-          </div>
-          <div className="text-left flex-1">
-            <p className="text-xs font-bold text-foreground">Bildirishnomalar</p>
-            <p className="text-[10px] text-muted-foreground">
-              {loading ? "Yuklanmoqda..." : unreadCount > 0 ? `${unreadCount} ta yangi` : "Barcha o'qilgan"}
-            </p>
-          </div>
-        </button>
-
-        {/* Notification cards */}
-        <div className="mt-2 space-y-2">
+    <div className="mb-4">
+      {/* Toggle button */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="farm-card w-full flex items-center gap-3 py-3 transition-transform active:scale-[0.98]"
+      >
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15">
+          <Bell className="h-4 w-4 text-primary" />
           {unreadCount > 0 && (
-            <button
-              onClick={markAllRead}
-              className="flex items-center gap-1.5 text-[10px] font-bold text-primary px-1"
-            >
-              <CheckCheck className="h-3 w-3" />
-              Hammasini o'qish
-            </button>
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+              {unreadCount}
+            </span>
           )}
-
-          {notifications.length === 0 && !loading && (
-            <div className="farm-card py-6 text-center">
-              <Bell className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
-              <p className="text-xs text-muted-foreground">Hozircha bildirishnomalar yo'q</p>
-            </div>
-          )}
-
-          {notifications.map((notif, i) => (
-            <motion.div
-              key={notif.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03 }}
-              onClick={() => openNotif(notif)}
-              className={`farm-card overflow-hidden cursor-pointer transition-all active:scale-[0.98] ${
-                !notif.is_read ? "border-primary/30 bg-primary/5" : ""
-              }`}
-            >
-              <div className="flex items-start gap-2">
-                {!notif.is_read && (
-                  <div className="mt-1.5 h-2 w-2 rounded-full bg-primary flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-foreground line-clamp-1">{notif.title}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
-                    {notif.message}
-                  </p>
-                  <p className="text-[9px] text-muted-foreground/60 mt-1">
-                    {timeAgo(notif.created_at)}
-                  </p>
-                </div>
-                {notif.image_url && (
-                  <img
-                    src={notif.image_url}
-                    alt=""
-                    className="h-12 w-12 rounded-lg object-cover flex-shrink-0"
-                    loading="lazy"
-                  />
-                )}
-              </div>
-            </motion.div>
-          ))}
         </div>
-      </div>
+        <div className="text-left flex-1">
+          <p className="text-xs font-bold text-foreground">Bildirishnomalar</p>
+          <p className="text-[10px] text-muted-foreground">
+            {loading ? "Yuklanmoqda..." : unreadCount > 0 ? `${unreadCount} ta yangi` : "Barcha o'qilgan"}
+          </p>
+        </div>
+        <motion.div
+          animate={{ rotate: expanded ? 180 : 0 }}
+          transition={{ duration: 0.2 }}
+          className="text-muted-foreground"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </motion.div>
+      </button>
 
-      {/* Detail modal */}
+      {/* Notifications list */}
       <AnimatePresence>
-        {selectedNotif && (
+        {expanded && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedNotif(null)}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
           >
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl bg-background border-t border-border shadow-2xl"
-            >
-              {/* Handle bar */}
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-              </div>
-
-              {/* Close button */}
-              <div className="flex justify-end px-4">
+            <div className="mt-2 space-y-2">
+              {/* Mark all read */}
+              {unreadCount > 0 && (
                 <button
-                  onClick={() => setSelectedNotif(null)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-muted transition-colors"
+                  onClick={markAllRead}
+                  className="flex items-center gap-1.5 text-[10px] font-bold text-primary px-1"
                 >
-                  <X className="h-4 w-4 text-muted-foreground" />
+                  <CheckCheck className="h-3 w-3" />
+                  Barchasini o'qilgan deb belgilash
                 </button>
-              </div>
+              )}
 
-              {/* Image */}
-              {selectedNotif.image_url && (
-                <div className="px-4 mt-2">
-                  <img
-                    src={selectedNotif.image_url}
-                    alt={selectedNotif.title}
-                    className="w-full rounded-2xl object-cover max-h-52"
-                  />
+              {notifications.length === 0 && !loading && (
+                <div className="farm-card py-6 text-center">
+                  <Bell className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+                  <p className="text-xs text-muted-foreground">Hozircha bildirishnomalar yo'q</p>
                 </div>
               )}
 
-              {/* Content */}
-              <div className="px-5 pt-4 pb-8">
-                <h2 className="text-base font-extrabold text-foreground">
-                  {selectedNotif.title}
-                </h2>
-                <p className="text-[10px] text-muted-foreground/60 mt-1">
-                  {timeAgo(selectedNotif.created_at)}
-                </p>
-                <p className="text-sm text-muted-foreground mt-3 whitespace-pre-wrap leading-relaxed">
-                  {selectedNotif.message}
-                </p>
+              {notifications.map((notif, i) => (
+                <motion.div
+                  key={notif.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                  onClick={() => markAsRead(notif)}
+                  className={`farm-card overflow-hidden cursor-pointer transition-all ${
+                    !notif.is_read ? "border-primary/30 bg-primary/5" : ""
+                  }`}
+                >
+                  {/* Image */}
+                  {notif.image_url && (
+                    <div className="-mx-4 -mt-4 mb-3">
+                      <img
+                        src={notif.image_url}
+                        alt={notif.title}
+                        className="w-full h-36 object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
 
-                {/* Button */}
-                {selectedNotif.button_text && selectedNotif.button_url && (
-                  <a
-                    href={selectedNotif.button_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-5 flex items-center justify-center gap-2 rounded-2xl bg-primary py-3 text-sm font-bold text-primary-foreground transition-transform active:scale-95 shadow-lg"
-                  >
-                    {selectedNotif.button_text}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                )}
-              </div>
-            </motion.div>
+                  <div className="flex items-start gap-2">
+                    {!notif.is_read && (
+                      <div className="mt-1 h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-foreground">{notif.title}</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 whitespace-pre-wrap">
+                        {notif.message}
+                      </p>
+                      <p className="text-[9px] text-muted-foreground/60 mt-1">
+                        {timeAgo(notif.created_at)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Button */}
+                  {notif.button_text && notif.button_url && (
+                    <a
+                      href={notif.button_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-primary py-2 text-[11px] font-bold text-primary-foreground transition-transform active:scale-95"
+                    >
+                      {notif.button_text}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
 }
