@@ -38,6 +38,7 @@ export interface GameState {
   level: number;
   exp: number;
   registeredAt: number;
+  unlockedFields: number; // 1, 2, or 3
 }
 
 export const SELL_SPLIT = { coinPercent: 70, cashPercent: 30 };
