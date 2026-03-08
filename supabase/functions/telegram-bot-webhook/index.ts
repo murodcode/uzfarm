@@ -425,6 +425,30 @@ Deno.serve(async (req) => {
           }
           return new Response("OK", { status: 200 });
         }
+
+        if (state.action === "sub_set_channel") {
+          const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+          const sub = subSetting?.value as any || {};
+          sub.channel_id = text;
+          await supabase.from("app_settings").upsert(
+            { key: "mandatory_subscription", value: sub, updated_at: new Date().toISOString() },
+            { onConflict: "key" }
+          );
+          await sendMessage(chatId, `✅ Kanal ID yangilandi: <code>${text}</code>`);
+          return new Response("OK", { status: 200 });
+        }
+
+        if (state.action === "sub_set_url") {
+          const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+          const sub = subSetting?.value as any || {};
+          sub.channel_url = text;
+          await supabase.from("app_settings").upsert(
+            { key: "mandatory_subscription", value: sub, updated_at: new Date().toISOString() },
+            { onConflict: "key" }
+          );
+          await sendMessage(chatId, `✅ Kanal URL yangilandi: ${text}`);
+          return new Response("OK", { status: 200 });
+        }
       }
     }
 
