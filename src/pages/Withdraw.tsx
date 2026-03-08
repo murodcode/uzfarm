@@ -38,10 +38,17 @@ export default function Withdraw() {
   const [withdrawalEnabled, setWithdrawalEnabled] = useState(true);
   const [paymentDayText, setPaymentDayText] = useState("");
 
+  // Referral requirement
+  const [refRequired, setRefRequired] = useState(0);
+  const [refEnabled, setRefEnabled] = useState(false);
+  const [refConsume, setRefConsume] = useState(false);
+
   const cash = profile?.cash ?? 0;
+  const referralCount = profile?.referral_count ?? 0;
   const numAmount = parseInt(amount) || 0;
   const cardDigits = cardNumber.replace(/\D/g, "");
-  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16 && withdrawalEnabled;
+  const refSufficient = !refEnabled || referralCount >= refRequired;
+  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16 && withdrawalEnabled && refSufficient;
 
   const coinsToSom = (coins: number) => Math.floor(coins / coinsPerSom).toLocaleString();
 
