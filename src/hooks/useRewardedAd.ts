@@ -328,20 +328,10 @@ export function useRewardedAd() {
     return new Promise((resolve) => {
       const tryShow = (attempts: number) => {
         if (window.show_10612725) {
-          const startedAt = Date.now();
-
           const finish = (ok: boolean) => {
-            const elapsed = Date.now() - startedAt;
-            const minWaitMs = 5500; // timeout:5 bo'lgani uchun actionni reklama chiqmaguncha kutamiz
-            const remaining = Math.max(0, minWaitMs - elapsed);
-
-            setTimeout(() => {
-              showingRef.current = false;
-              setTimeout(() => {
-                adFlowActive = false;
-              }, 3000);
-              resolve(ok);
-            }, remaining);
+            showingRef.current = false;
+            setTimeout(() => { adFlowActive = false; }, 3000);
+            resolve(ok);
           };
 
           try {
@@ -361,16 +351,16 @@ export function useRewardedAd() {
                 recordAdView();
                 finish(true);
               })
-              .catch(() => finish(false));
+              .catch(() => finish(true)); // reklama chiqmasa ham davom etsin
           } catch {
-            finish(false);
+            finish(true); // xatolikda ham davom etsin
           }
         } else if (attempts < 10) {
           setTimeout(() => tryShow(attempts + 1), 500);
         } else {
           showingRef.current = false;
           adFlowActive = false;
-          resolve(false);
+          resolve(true); // SDK topilmasa ham davom etsin
         }
       };
 
