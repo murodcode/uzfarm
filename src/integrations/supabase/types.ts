@@ -167,6 +167,109 @@ export type Database = {
         }
         Relationships: []
       }
+      contest_prizes: {
+        Row: {
+          contest_id: string
+          id: string
+          place: number
+          reward_coins: number
+          reward_description: string
+        }
+        Insert: {
+          contest_id: string
+          id?: string
+          place: number
+          reward_coins?: number
+          reward_description?: string
+        }
+        Update: {
+          contest_id?: string
+          id?: string
+          place?: number
+          reward_coins?: number
+          reward_description?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_prizes_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contest_referrals: {
+        Row: {
+          contest_id: string
+          created_at: string
+          id: string
+          referred_id: string
+          referrer_id: string
+        }
+        Insert: {
+          contest_id: string
+          created_at?: string
+          id?: string
+          referred_id: string
+          referrer_id: string
+        }
+        Update: {
+          contest_id?: string
+          created_at?: string
+          id?: string
+          referred_id?: string
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contest_referrals_contest_id_fkey"
+            columns: ["contest_id"]
+            isOneToOne: false
+            referencedRelation: "contests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contests: {
+        Row: {
+          channel_id: string
+          created_at: string
+          created_by: string
+          description: string
+          end_time: string
+          id: string
+          name: string
+          start_time: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id?: string
+          created_at?: string
+          created_by: string
+          description?: string
+          end_time: string
+          id?: string
+          name: string
+          start_time: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          end_time?: string
+          id?: string
+          name?: string
+          start_time?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_task_progress: {
         Row: {
           created_at: string

@@ -6,6 +6,7 @@ import {
   BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText, Bot, ArrowLeft, Bell
 } from "lucide-react";
 import AdminNotifications from "@/components/AdminNotifications";
+import AdminContestManager from "@/components/AdminContestManager";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,7 +55,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity" | "chat" | "notifications";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity" | "chat" | "notifications" | "contest";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -479,6 +480,7 @@ export default function Admin() {
     { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
     { key: "messaging", label: "Xabarlar", icon: MessageCircle },
+    { key: "contest", label: "Konkurs", icon: Trophy },
     { key: "admins", label: "Adminlar", icon: Shield },
     { key: "settings", label: "Sozlamalar", icon: Settings },
   ];
@@ -536,6 +538,9 @@ export default function Admin() {
 
             {/* === NOTIFICATIONS === */}
             {tab === "notifications" && <AdminNotifications />}
+
+            {/* === CONTEST === */}
+            {tab === "contest" && <AdminContestManager />}
 
             {/* === CHAT === */}
             {tab === "chat" && (
