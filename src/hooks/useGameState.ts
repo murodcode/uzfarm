@@ -7,6 +7,9 @@ import {
   SELL_SPLIT,
   isAnimalDead,
   countAnimalsByType,
+  countAnimalsByTypeInField,
+  getFieldMaxOwned,
+  FIELD_PRICES,
 } from "@/lib/gameData";
 import { supabase } from "@/integrations/supabase/client";
 import { incrementDailyTask } from "@/lib/dailyTasks";
