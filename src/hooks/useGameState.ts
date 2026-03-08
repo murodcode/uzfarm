@@ -7,6 +7,9 @@ import {
   SELL_SPLIT,
   isAnimalDead,
   countAnimalsByType,
+  countAnimalsByTypeInField,
+  getFieldMaxOwned,
+  FIELD_PRICES,
 } from "@/lib/gameData";
 import { supabase } from "@/integrations/supabase/client";
 import { incrementDailyTask } from "@/lib/dailyTasks";
@@ -33,9 +36,10 @@ function loadState(): GameState {
           level: parsed.level ?? 1,
           exp: parsed.exp ?? 0,
           registeredAt: parsed.registeredAt ?? Date.now(),
+          unlockedFields: parsed.unlockedFields ?? 1,
         };
       }
-      return parsed;
+      return { ...parsed, unlockedFields: parsed.unlockedFields ?? 1 };
     }
   } catch {}
   return createDefaultGameState();
@@ -56,6 +60,7 @@ function mapDbAnimal(a: any): OwnedAnimal {
     boughtAt: new Date(a.bought_at).getTime(),
     grownAt: a.grown_at ? new Date(a.grown_at).getTime() : 0,
     feedCount: a.feed_count || 0,
+    field: a.field || 1,
   };
 }
 
@@ -107,7 +112,7 @@ export function useGameState() {
         const [profileRes, animalsRes] = await Promise.all([
           supabase
             .from("profiles")
-            .select("coins, cash, eggs, meat, milk, level, exp")
+            .select("coins, cash, eggs, meat, milk, level, exp, unlocked_fields")
             .eq("id", session.user.id)
             .single(),
           supabase
@@ -130,6 +135,7 @@ export function useGameState() {
             milk: (profileRes.data as any).milk ?? 0,
             level: profileRes.data.level,
             exp: profileRes.data.exp,
+            unlockedFields: (profileRes.data as any).unlocked_fields ?? 1,
             animals: aliveAnimals,
           }));
         }
@@ -162,7 +168,7 @@ export function useGameState() {
         initializedFromDb.current = false;
         const reload = async () => {
           const [profileRes, animalsRes] = await Promise.all([
-            supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
+            supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp, unlocked_fields").eq("id", userId).single(),
             supabase.from("animals").select("*").eq("user_id", userId),
           ]);
           if (profileRes.data) {
@@ -178,6 +184,7 @@ export function useGameState() {
               milk: (profileRes.data as any).milk ?? 0,
               level: profileRes.data.level,
               exp: profileRes.data.exp,
+              unlockedFields: (profileRes.data as any).unlocked_fields ?? 1,
               animals: aliveAnimals,
             }));
           } else {
@@ -262,7 +269,7 @@ export function useGameState() {
     }
   }, [state, userId]);
 
-  const buyAnimal = useCallback(async (typeId: string) => {
+  const buyAnimal = useCallback(async (typeId: string, field: number = 1) => {
     const type = getAnimalType(typeId);
     if (!type) return false;
 
@@ -273,10 +280,12 @@ export function useGameState() {
 
     setState((prev) => {
       if (prev.coins < type.price) return prev;
+      if (field > prev.unlockedFields) return prev;
 
-      // Check max owned limit
-      const currentCount = countAnimalsByType(prev.animals, typeId);
-      if (currentCount >= type.maxOwned) return prev;
+      // Check max owned limit for this field
+      const currentCount = countAnimalsByTypeInField(prev.animals, typeId, field);
+      const maxForField = getFieldMaxOwned(type, field);
+      if (currentCount >= maxForField) return prev;
 
       bought = true;
       const animal: OwnedAnimal = {
@@ -289,6 +298,7 @@ export function useGameState() {
         boughtAt: now,
         grownAt: 0,
         feedCount: 0,
+        field,
       };
       const updated = {
         ...prev,
@@ -314,6 +324,7 @@ export function useGameState() {
         bought_at: new Date(now).toISOString(),
         grown_at: null,
         feed_count: 0,
+        field,
       });
 
       if (insertError) {
@@ -326,7 +337,7 @@ export function useGameState() {
         return false;
       }
       incrementDailyTask(userId, "buy_animal");
-      logUserAction("buy_animal", `${type.name} sotib olindi, narxi: ${type.price} tanga`);
+      logUserAction("buy_animal", `${type.name} sotib olindi (maydon ${field}), narxi: ${type.price} tanga`);
     }
 
     return bought;
@@ -559,7 +570,7 @@ export function useGameState() {
   const refreshFromDb = useCallback(async () => {
     if (!userId) return;
     const [profileRes, animalsRes] = await Promise.all([
-      supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
+      supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp, unlocked_fields").eq("id", userId).single(),
       supabase.from("animals").select("*").eq("user_id", userId),
     ]);
 
@@ -576,10 +587,36 @@ export function useGameState() {
         milk: (profileRes.data as any).milk ?? 0,
         level: profileRes.data.level,
         exp: profileRes.data.exp,
+        unlockedFields: (profileRes.data as any).unlocked_fields ?? 1,
         animals: aliveAnimals,
       }));
     }
   }, [userId, filterDeadAnimals]);
+
+  const unlockField = useCallback(async (fieldNumber: number): Promise<boolean> => {
+    const price = FIELD_PRICES[fieldNumber];
+    if (!price) return false;
+    
+    let success = false;
+    let newState: GameState | null = null;
+
+    setState(prev => {
+      if (prev.unlockedFields >= fieldNumber) return prev;
+      if (prev.unlockedFields !== fieldNumber - 1) return prev; // must unlock in order
+      if (prev.coins < price) return prev;
+      success = true;
+      const result = { ...prev, coins: prev.coins - price, unlockedFields: fieldNumber };
+      newState = result;
+      return result;
+    });
+
+    if (success && userId) {
+      if (newState) await syncProfileNow(newState);
+      await supabase.from("profiles").update({ unlocked_fields: fieldNumber }).eq("id", userId);
+      logUserAction("unlock_field", `${fieldNumber}-maydon ochildi, narxi: ${price} tanga`);
+    }
+    return success;
+  }, [userId, syncProfileNow]);
 
   const gainExp = useCallback((amount: number) => {
     setState(prev => {
@@ -614,5 +651,6 @@ export function useGameState() {
     refreshFromDb,
     gainExp,
     dismissLevelUp,
+    unlockField,
   };
 }

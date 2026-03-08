@@ -54,6 +54,7 @@ export type Database = {
         Row: {
           bought_at: string
           feed_count: number
+          field: number
           grown_at: string | null
           growth_percent: number
           hunger: number
@@ -66,6 +67,7 @@ export type Database = {
         Insert: {
           bought_at?: string
           feed_count?: number
+          field?: number
           grown_at?: string | null
           growth_percent?: number
           hunger?: number
@@ -78,6 +80,7 @@ export type Database = {
         Update: {
           bought_at?: string
           feed_count?: number
+          field?: number
           grown_at?: string | null
           growth_percent?: number
           hunger?: number
@@ -431,6 +434,7 @@ export type Database = {
           referral_level: number
           referred_by: string | null
           telegram_id: number | null
+          unlocked_fields: number
           updated_at: string
           username: string | null
         }
@@ -453,6 +457,7 @@ export type Database = {
           referral_level?: number
           referred_by?: string | null
           telegram_id?: number | null
+          unlocked_fields?: number
           updated_at?: string
           username?: string | null
         }
@@ -475,6 +480,7 @@ export type Database = {
           referral_level?: number
           referred_by?: string | null
           telegram_id?: number | null
+          unlocked_fields?: number
           updated_at?: string
           username?: string | null
         }
