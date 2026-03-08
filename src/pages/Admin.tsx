@@ -194,30 +194,37 @@ export default function Admin() {
     setLoading(false);
   };
 
-  const saveBooleanSetting = async (
-    key: "withdrawal_control" | "ai_auto_reply",
-    enabled: boolean,
-    processingKey: "withdrawal-toggle" | "ai-toggle",
-    successOn: string,
-    successOff: string,
-  ) => {
-    if (processing === processingKey) return;
-
-    const prevSettings = { ...appSettings };
-    const nextValue = { ...(appSettings[key] || {}), enabled };
-    setAppSettings((prev) => ({ ...prev, [key]: nextValue }));
-    setProcessing(processingKey);
-
+  const directToggleSetting = async (key: string, enabled: boolean) => {
+    const toastId = toast.loading(enabled ? "Yoqilmoqda..." : "O'chirilmoqda...");
     try {
-      await callAdmin({ action: "update_settings", key, value: nextValue });
-      const refreshed = await callAdmin({ action: "get_settings" });
-      setAppSettings(refreshed?.settings || {});
-      toast.success(enabled ? successOn : successOff);
+      const newValue = { enabled };
+      const { error } = await supabase
+        .from("app_settings")
+        .upsert(
+          { key, value: newValue, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+
+      if (error) throw error;
+
+      // Read back to confirm
+      const { data: verify } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", key)
+        .single();
+
+      const actualEnabled = (verify?.value as any)?.enabled === true;
+      setAppSettings(prev => ({ ...prev, [key]: { enabled: actualEnabled } }));
+
+      toast.success(actualEnabled ? "✅ Yoqildi" : "❌ O'chirildi", { id: toastId });
     } catch (e: any) {
-      setAppSettings(prevSettings);
-      toast.error("Xatolik: " + e.message);
-    } finally {
-      setProcessing(null);
+      toast.error("Xatolik: " + (e.message || "Noma'lum"), { id: toastId });
+      // Re-fetch real state
+      try {
+        const { data } = await supabase.from("app_settings").select("value").eq("key", key).single();
+        setAppSettings(prev => ({ ...prev, [key]: data?.value || {} }));
+      } catch {}
     }
   };
 
@@ -1120,16 +1127,16 @@ export default function Admin() {
                     </h3>
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => saveBooleanSetting("ai_auto_reply", true, "ai-toggle", "AI avto javob yoqildi", "AI avto javob o'chirildi")}
-                        disabled={processing === "ai-toggle" || appSettings.ai_auto_reply?.enabled === true}
+                        onClick={() => directToggleSetting("ai_auto_reply", true)}
+                        disabled={appSettings.ai_auto_reply?.enabled === true}
                         className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground disabled:opacity-50"
                       >
                         Yoqish
                       </button>
                       <button
-                        onClick={() => saveBooleanSetting("ai_auto_reply", false, "ai-toggle", "AI avto javob yoqildi", "AI avto javob o'chirildi")}
-                        disabled={processing === "ai-toggle" || appSettings.ai_auto_reply?.enabled !== true}
-                        className="rounded-lg bg-muted px-3 py-1.5 text-[10px] font-bold text-foreground disabled:opacity-50"
+                        onClick={() => directToggleSetting("ai_auto_reply", false)}
+                        disabled={appSettings.ai_auto_reply?.enabled !== true}
+                        className="rounded-lg bg-destructive px-3 py-1.5 text-[10px] font-bold text-destructive-foreground disabled:opacity-50"
                       >
                         O'chirish
                       </button>
@@ -1162,16 +1169,16 @@ export default function Admin() {
                     <h3 className="text-sm font-bold text-foreground">💰 Pul chiqarish</h3>
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => saveBooleanSetting("withdrawal_control", true, "withdrawal-toggle", "Pul chiqarish yoqildi", "Pul chiqarish o'chirildi")}
-                        disabled={processing === "withdrawal-toggle" || appSettings.withdrawal_control?.enabled === true}
+                        onClick={() => directToggleSetting("withdrawal_control", true)}
+                        disabled={appSettings.withdrawal_control?.enabled === true}
                         className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground disabled:opacity-50"
                       >
                         Yoqish
                       </button>
                       <button
-                        onClick={() => saveBooleanSetting("withdrawal_control", false, "withdrawal-toggle", "Pul chiqarish yoqildi", "Pul chiqarish o'chirildi")}
-                        disabled={processing === "withdrawal-toggle" || appSettings.withdrawal_control?.enabled !== true}
-                        className="rounded-lg bg-muted px-3 py-1.5 text-[10px] font-bold text-foreground disabled:opacity-50"
+                        onClick={() => directToggleSetting("withdrawal_control", false)}
+                        disabled={appSettings.withdrawal_control?.enabled !== true}
+                        className="rounded-lg bg-destructive px-3 py-1.5 text-[10px] font-bold text-destructive-foreground disabled:opacity-50"
                       >
                         O'chirish
                       </button>
