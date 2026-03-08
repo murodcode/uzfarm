@@ -38,10 +38,17 @@ export default function Withdraw() {
   const [withdrawalEnabled, setWithdrawalEnabled] = useState(true);
   const [paymentDayText, setPaymentDayText] = useState("");
 
+  // Referral requirement
+  const [refRequired, setRefRequired] = useState(0);
+  const [refEnabled, setRefEnabled] = useState(false);
+  const [refConsume, setRefConsume] = useState(false);
+
   const cash = profile?.cash ?? 0;
+  const referralCount = profile?.referral_count ?? 0;
   const numAmount = parseInt(amount) || 0;
   const cardDigits = cardNumber.replace(/\D/g, "");
-  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16 && withdrawalEnabled;
+  const refSufficient = !refEnabled || referralCount >= refRequired;
+  const isValid = numAmount >= minWithdrawal && numAmount <= cash && cardDigits.length === 16 && withdrawalEnabled && refSufficient;
 
   const coinsToSom = (coins: number) => Math.floor(coins / coinsPerSom).toLocaleString();
 
@@ -50,7 +57,7 @@ export default function Withdraw() {
     supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["withdrawal", "withdrawal_control", "payment_day"])
+      .in("key", ["withdrawal", "withdrawal_control", "payment_day", "withdrawal_referral"])
       .then(({ data }) => {
         if (data) {
           for (const row of data) {
@@ -64,6 +71,11 @@ export default function Withdraw() {
             }
             if (row.key === "payment_day" && typeof v === "object") {
               setPaymentDayText(v.text || "");
+            }
+            if (row.key === "withdrawal_referral" && typeof v === "object") {
+              setRefEnabled(v.enabled === true);
+              setRefRequired(v.required_count || 0);
+              setRefConsume(v.consume_referrals === true);
             }
           }
         }
@@ -113,8 +125,15 @@ export default function Withdraw() {
       return;
     }
 
+    // Deduct cash
     const newCash = cash - numAmount;
     await supabase.from("profiles").update({ cash: newCash }).eq("id", profile.id);
+
+    // Consume referrals if enabled
+    if (refEnabled && refConsume && refRequired > 0) {
+      const newRefCount = Math.max(0, referralCount - refRequired);
+      await supabase.from("profiles").update({ referral_count: newRefCount }).eq("id", profile.id);
+    }
 
     if (insertData?.id) {
       supabase.functions.invoke("process-referral-bonus", {
@@ -186,6 +205,28 @@ export default function Withdraw() {
             <p className="text-sm font-bold text-destructive text-center">
               ⚠️ Hozircha to'lovlar vaqtincha yopilgan. Iltimos, kuting.
             </p>
+          </div>
+        )}
+
+        {/* Referral requirement banner */}
+        {refEnabled && (
+          <div className={`farm-card ${refSufficient ? 'bg-primary/5 border-primary/20' : 'bg-destructive/10 border-destructive/20'}`}>
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold text-foreground">
+                👤 Sizning referallaringiz: <span className="text-primary">{referralCount} ta</span>
+                {' · '}💸 Pul chiqarish uchun kerak: <span className={refSufficient ? 'text-primary' : 'text-destructive'}>{refRequired} ta</span>
+              </p>
+              {!refSufficient && (
+                <p className="text-[11px] text-destructive font-semibold">
+                  ❌ Pul chiqarish uchun sizga yana {refRequired - referralCount} ta referal kerak
+                </p>
+              )}
+              {refConsume && refSufficient && (
+                <p className="text-[10px] text-muted-foreground">
+                  ⚠️ Har payout uchun {refRequired} ta referal ishlatiladi
+                </p>
+              )}
+            </div>
           </div>
         )}
 
