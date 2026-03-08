@@ -123,7 +123,7 @@ export default function Withdraw() {
     const liveRefVal = liveRef?.value as any;
     const liveRefEnabled = liveRefVal?.enabled === true;
     const liveRefRequired = liveRefVal?.required_count || 0;
-    const liveRefConsume = liveRefVal?.consume_referrals === true;
+    
 
     // Get fresh profile for accurate referral_count
     const { data: freshProfile } = await supabase
