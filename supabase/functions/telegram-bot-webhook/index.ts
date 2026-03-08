@@ -455,8 +455,8 @@ Deno.serve(async (req) => {
         `O'yinni boshlash uchun quyidagi tugmani bosing 👇`,
         {
           inline_keyboard: [
-            [miniAppButton, { text: "📞 Admin bilan bog'lanish", url: "https://t.me/Boglanish_mazkazi_Bot" }],
-            [{ text: "📢 Rasmiy kanal", url: "https://t.me/farm_market_news" }],
+            [miniAppButton],
+            [{ text: "📢 Rasmiy kanal", url: "https://t.me/farm_market_news" }, { text: "📞 Aloqa", url: "https://t.me/Boglanish_mazkazi_Bot" }],
           ],
         }
       );
