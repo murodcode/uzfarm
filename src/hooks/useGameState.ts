@@ -374,8 +374,8 @@ export function useGameState() {
     });
 
     if (feedResult && userId) {
-      // Immediately sync coins to DB
-      if (newState) syncProfileNow(newState);
+      // Immediately sync coins to DB and wait for it
+      if (newState) await syncProfileNow(newState);
 
       const fr = feedResult as { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean };
       const updateData: any = {
