@@ -289,6 +289,17 @@ export default function Withdraw() {
             <p className="text-xs text-destructive mt-1">16 xonali karta raqamini kiriting</p>
           )}
 
+          {!isValid && numAmount > 0 && cardDigits.length === 16 && withdrawalEnabled && (
+            <div className="mt-2 space-y-1">
+              {numAmount > cash && (
+                <p className="text-xs font-semibold text-destructive">💰 Mablag' yetarli emas. Sizda: {cash.toLocaleString()}, kerak: {numAmount.toLocaleString()}</p>
+              )}
+              {numAmount <= cash && !refSufficient && (
+                <p className="text-xs font-semibold text-destructive">👤 Referal yetarli emas. Sizda: {referralCount} ta, kerak: {refRequired} ta</p>
+              )}
+            </div>
+          )}
+
           <button
             onClick={handleWithdraw}
             disabled={!isValid || loading}
