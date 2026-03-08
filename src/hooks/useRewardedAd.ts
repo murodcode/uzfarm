@@ -20,6 +20,9 @@ declare global {
 }
 
 let adsgramController: AdController | null = null;
+let monetagInFlight: Promise<boolean> | null = null;
+let lastMonetagSuccessAt = 0;
+const MONETAG_COOLDOWN_MS = 15000;
 
 // Global flag to prevent DB reload during ad flow
 export let adFlowActive = false;
