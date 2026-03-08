@@ -479,6 +479,7 @@ export function useGameState() {
 
   const slaughterAnimal = useCallback(async (animalId: string) => {
     let success = false;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -488,20 +489,24 @@ export function useGameState() {
       if (!type || animal.growthPercent < 100) return prev;
 
       success = true;
-      return {
+      const result = {
         ...prev,
         animals: prev.animals.filter((a) => a.id !== animalId),
         meat: prev.meat + type.meatYield,
       };
+      newState = result;
+      return result;
     });
 
     if (success && userId) {
+      if (newState) syncProfileNow(newState);
       await supabase.from("animals").delete().eq("id", animalId).eq("user_id", userId);
     }
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const sellProduct = useCallback((type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
     let sold = false;
+    let newState: GameState | null = null;
     setState((prev) => {
       const available = type === "egg" ? prev.eggs : type === "meat" ? prev.meat : prev.milk;
       if (quantity > available || quantity <= 0) return prev;
@@ -510,14 +515,17 @@ export function useGameState() {
       const coinShare = Math.floor(total * SELL_SPLIT.coinPercent / 100);
       const cashShare = total - coinShare;
       const fieldKey = type === "egg" ? "eggs" : type === "meat" ? "meat" : "milk";
-      return {
+      const result = {
         ...prev,
         [fieldKey]: available - quantity,
         coins: prev.coins + coinShare,
         cash: prev.cash + cashShare,
       };
+      newState = result;
+      return result;
     });
     if (sold && userId) {
+      if (newState) syncProfileNow(newState);
       incrementDailyTask(userId, "sell_product");
     }
   }, [userId]);
