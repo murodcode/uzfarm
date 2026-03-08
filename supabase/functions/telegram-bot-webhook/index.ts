@@ -274,13 +274,18 @@ Deno.serve(async (req) => {
       } else if (data.startsWith("reject_wd_")) {
         const wdId = data.replace("reject_wd_", "");
         await supabase.from("withdrawal_requests").update({ status: "rejected", processed_at: new Date().toISOString() }).eq("id", wdId);
-        const { data: wd } = await supabase.from("withdrawal_requests").select("user_id, amount").eq("id", wdId).single();
+        const { data: wd } = await supabase.from("withdrawal_requests").select("user_id, amount, referrals_consumed").eq("id", wdId).single();
         if (wd) {
-          const { data: userProfile } = await supabase.from("profiles").select("telegram_id, cash").eq("id", wd.user_id).single();
+          const { data: userProfile } = await supabase.from("profiles").select("telegram_id, cash, referral_count").eq("id", wd.user_id).single();
           if (userProfile) {
-            await supabase.from("profiles").update({ cash: (userProfile.cash || 0) + wd.amount }).eq("id", wd.user_id);
+            const updates: any = { cash: (userProfile.cash || 0) + wd.amount };
+            if (wd.referrals_consumed > 0) {
+              updates.referral_count = (userProfile.referral_count || 0) + wd.referrals_consumed;
+            }
+            await supabase.from("profiles").update(updates).eq("id", wd.user_id);
             if (userProfile.telegram_id) {
-              await sendMessage(userProfile.telegram_id, `❌ Sizning 💵 ${wd.amount.toLocaleString()} pullik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.`);
+              const refText = wd.referrals_consumed > 0 ? `\n👤 ${wd.referrals_consumed} ta referal qaytarildi.` : "";
+              await sendMessage(userProfile.telegram_id, `❌ Sizning 💵 ${wd.amount.toLocaleString()} pullik pul chiqarish so'rovingiz <b>rad etildi</b>. Pul balansingizga qaytarildi.${refText}`);
             }
           }
         }

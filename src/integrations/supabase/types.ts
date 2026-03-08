@@ -448,6 +448,7 @@ export type Database = {
           card_number: string | null
           id: string
           processed_at: string | null
+          referrals_consumed: number
           requested_at: string
           status: string
           user_id: string
@@ -457,6 +458,7 @@ export type Database = {
           card_number?: string | null
           id?: string
           processed_at?: string | null
+          referrals_consumed?: number
           requested_at?: string
           status?: string
           user_id: string
@@ -466,6 +468,7 @@ export type Database = {
           card_number?: string | null
           id?: string
           processed_at?: string | null
+          referrals_consumed?: number
           requested_at?: string
           status?: string
           user_id?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.withdrawal_requests ADD COLUMN referrals_consumed integer NOT NULL DEFAULT 0;

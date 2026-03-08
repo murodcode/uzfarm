@@ -131,10 +131,13 @@ export default function Withdraw() {
 
     setLoading(true);
 
+    const consumedReferrals = (refEnabled && refConsume && refRequired > 0) ? refRequired : 0;
+
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
       user_id: profile.id,
       amount: numAmount,
       card_number: cardDigits,
+      referrals_consumed: consumedReferrals,
     }).select("id").single();
 
     if (error) {
@@ -148,8 +151,8 @@ export default function Withdraw() {
     await supabase.from("profiles").update({ cash: newCash }).eq("id", profile.id);
 
     // Consume referrals if enabled
-    if (refEnabled && refConsume && refRequired > 0) {
-      const newRefCount = Math.max(0, referralCount - refRequired);
+    if (consumedReferrals > 0) {
+      const newRefCount = Math.max(0, referralCount - consumedReferrals);
       await supabase.from("profiles").update({ referral_count: newRefCount }).eq("id", profile.id);
     }
 
