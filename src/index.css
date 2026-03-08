@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 120 25% 95%;
-    --foreground: 30 20% 15%;
+    --background: 95 30% 92%;
+    --foreground: 30 25% 12%;
 
-    --card: 40 30% 96%;
-    --card-foreground: 30 20% 15%;
+    --card: 35 35% 92%;
+    --card-foreground: 30 25% 12%;
 
-    --popover: 40 25% 98%;
-    --popover-foreground: 30 20% 15%;
+    --popover: 38 30% 94%;
+    --popover-foreground: 30 25% 12%;
 
-    --primary: 142 45% 38%;
-    --primary-foreground: 40 30% 98%;
+    --primary: 142 50% 36%;
+    --primary-foreground: 50 100% 97%;
 
-    --secondary: 32 55% 50%;
-    --secondary-foreground: 40 30% 98%;
+    --secondary: 32 60% 48%;
+    --secondary-foreground: 50 100% 97%;
 
-    --muted: 40 20% 90%;
-    --muted-foreground: 30 10% 45%;
+    --muted: 40 25% 85%;
+    --muted-foreground: 30 15% 42%;
 
-    --accent: 45 85% 55%;
-    --accent-foreground: 30 20% 15%;
+    --accent: 45 90% 52%;
+    --accent-foreground: 30 25% 12%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 40 30% 98%;
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 50 100% 97%;
 
-    --border: 33 30% 78%;
-    --input: 40 20% 88%;
-    --ring: 142 45% 38%;
+    --border: 33 35% 72%;
+    --input: 40 25% 82%;
+    --ring: 142 50% 36%;
 
     --radius: 1rem;
 
@@ -45,59 +45,88 @@
     --sidebar-border: 142 20% 30%;
     --sidebar-ring: 142 45% 38%;
 
-    /* Farm nature tokens */
-    --farm-green: 142 45% 38%;
-    --farm-green-light: 130 35% 88%;
-    --farm-green-soft: 135 30% 70%;
-    --farm-brown: 30 40% 35%;
-    --farm-brown-light: 32 35% 82%;
-    --farm-brown-warm: 28 50% 45%;
-    --farm-gold: 42 90% 52%;
-    --farm-gold-light: 45 70% 88%;
-    --farm-sky-top: 160 35% 72%;
+    /* Farm game tokens */
+    --farm-green: 142 50% 36%;
+    --farm-green-light: 130 35% 85%;
+    --farm-green-soft: 135 30% 68%;
+    --farm-brown: 28 45% 28%;
+    --farm-brown-light: 32 38% 75%;
+    --farm-brown-warm: 28 55% 42%;
+    --farm-gold: 42 92% 50%;
+    --farm-gold-light: 45 75% 85%;
+    --farm-sky-top: 200 60% 75%;
     --farm-sky-bottom: 130 30% 85%;
-    --farm-red: 0 72% 51%;
-    --farm-red-light: 0 60% 92%;
-    --farm-wood: 28 45% 30%;
-    --farm-wood-light: 30 40% 65%;
-    --farm-cream: 40 40% 94%;
-    --farm-river: 200 50% 65%;
+    --farm-red: 0 72% 48%;
+    --farm-red-light: 0 60% 90%;
+    --farm-wood: 28 50% 28%;
+    --farm-wood-light: 30 42% 62%;
+    --farm-wood-mid: 28 48% 38%;
+    --farm-cream: 40 45% 92%;
+    --farm-river: 200 55% 62%;
+    --farm-hay: 42 70% 65%;
 
-    --gradient-hero: linear-gradient(180deg, hsl(160 35% 72%), hsl(130 30% 85%));
-    --gradient-gold: linear-gradient(135deg, hsl(42 90% 52%), hsl(32 55% 50%));
-    --gradient-card: linear-gradient(145deg, hsl(40 30% 96%), hsl(40 20% 92%));
-    --gradient-wood: linear-gradient(180deg, hsl(28 45% 42%), hsl(28 45% 30%));
-    --gradient-grass: linear-gradient(180deg, hsl(120 35% 45%), hsl(130 40% 35%));
-    --shadow-card: 0 4px 16px -4px hsl(30 20% 15% / 0.1);
-    --shadow-card-hover: 0 8px 24px -4px hsl(30 20% 15% / 0.15);
-    --shadow-wood: 0 4px 12px -2px hsl(28 45% 20% / 0.3);
-    --shadow-glow: 0 0 20px hsl(42 90% 52% / 0.2);
+    --gradient-hero: linear-gradient(180deg, hsl(200 55% 78%), hsl(130 30% 88%));
+    --gradient-gold: linear-gradient(135deg, hsl(42 92% 50%), hsl(32 60% 48%));
+    --gradient-card: linear-gradient(145deg, hsl(35 40% 94%), hsl(35 30% 88%));
+    --gradient-wood: linear-gradient(180deg, hsl(28 48% 44%), hsl(28 50% 28%));
+    --gradient-wood-light: linear-gradient(180deg, hsl(28 42% 52%), hsl(28 48% 38%));
+    --gradient-grass: linear-gradient(180deg, hsl(120 38% 42%), hsl(130 42% 32%));
+    --gradient-nav: linear-gradient(180deg, hsl(28 48% 38%), hsl(28 55% 25%));
+
+    --shadow-card: 0 4px 16px -4px hsl(30 25% 12% / 0.12), 0 2px 4px hsl(30 25% 12% / 0.06);
+    --shadow-card-hover: 0 8px 28px -4px hsl(30 25% 12% / 0.18);
+    --shadow-wood: 0 4px 14px -2px hsl(28 50% 15% / 0.35);
+    --shadow-glow: 0 0 20px hsl(42 92% 50% / 0.25);
+    --shadow-btn: 0 4px 12px hsl(142 50% 20% / 0.3);
   }
 
   .dark {
-    --background: 0 0% 7%;
-    --foreground: 0 0% 95%;
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 142 45% 45%;
-    --primary-foreground: 0 0% 95%;
-    --secondary: 32 55% 45%;
-    --secondary-foreground: 0 0% 95%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 45 85% 55%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 62% 40%;
-    --destructive-foreground: 0 0% 95%;
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 142 45% 45%;
+    --background: 220 25% 8%;
+    --foreground: 45 20% 92%;
 
-    --gradient-hero: linear-gradient(180deg, hsl(0 0% 10%), hsl(0 0% 7%));
-    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.3);
-    --shadow-card-hover: 0 8px 24px -4px hsl(0 0% 0% / 0.4);
+    --card: 220 20% 12%;
+    --card-foreground: 45 20% 92%;
+
+    --popover: 220 20% 12%;
+    --popover-foreground: 45 20% 92%;
+
+    --primary: 142 50% 42%;
+    --primary-foreground: 45 20% 95%;
+
+    --secondary: 32 55% 45%;
+    --secondary-foreground: 45 20% 95%;
+
+    --muted: 220 15% 18%;
+    --muted-foreground: 45 10% 58%;
+
+    --accent: 45 88% 52%;
+    --accent-foreground: 45 20% 95%;
+
+    --destructive: 0 62% 42%;
+    --destructive-foreground: 45 20% 95%;
+
+    --border: 220 12% 22%;
+    --input: 220 12% 22%;
+    --ring: 142 50% 42%;
+
+    --farm-green: 142 45% 35%;
+    --farm-brown: 28 40% 22%;
+    --farm-brown-light: 32 30% 40%;
+    --farm-wood: 28 45% 18%;
+    --farm-wood-light: 30 35% 35%;
+    --farm-wood-mid: 28 42% 28%;
+    --farm-gold: 42 85% 48%;
+    --farm-cream: 40 20% 15%;
+
+    --gradient-hero: linear-gradient(180deg, hsl(220 30% 12%), hsl(220 25% 8%));
+    --gradient-wood: linear-gradient(180deg, hsl(28 42% 28%), hsl(28 45% 18%));
+    --gradient-wood-light: linear-gradient(180deg, hsl(28 38% 32%), hsl(28 42% 22%));
+    --gradient-nav: linear-gradient(180deg, hsl(28 42% 22%), hsl(28 48% 14%));
+    --gradient-card: linear-gradient(145deg, hsl(220 20% 14%), hsl(220 18% 10%));
+
+    --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.4), 0 2px 4px hsl(0 0% 0% / 0.2);
+    --shadow-card-hover: 0 8px 28px -4px hsl(0 0% 0% / 0.5);
+    --shadow-wood: 0 4px 14px -2px hsl(0 0% 0% / 0.5);
   }
 }
 
@@ -115,10 +144,11 @@
 }
 
 @layer utilities {
+  /* ===== Farm Card ===== */
   .farm-card {
-    @apply rounded-2xl border-2 p-4;
-    background: hsl(var(--card));
-    border-color: hsl(var(--border));
+    @apply rounded-2xl p-4;
+    background: var(--gradient-card);
+    border: 2.5px solid hsl(var(--border));
     box-shadow: var(--shadow-card);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
@@ -127,84 +157,81 @@
     box-shadow: var(--shadow-card-hover);
   }
 
+  /* ===== Wood Panel ===== */
   .wood-panel {
     background: var(--gradient-wood);
-    border: 3px solid hsl(var(--farm-brown) / 0.5);
-    box-shadow: var(--shadow-wood), inset 0 1px 0 hsl(var(--farm-wood-light) / 0.4);
-    border-radius: 1rem;
-  }
-
-  .wood-sign {
-    background: linear-gradient(180deg, hsl(28 40% 50%), hsl(28 45% 35%));
-    border: 3px solid hsl(var(--farm-brown));
-    box-shadow: var(--shadow-wood), inset 0 2px 4px hsl(var(--farm-wood-light) / 0.3);
+    border: 3px solid hsl(var(--farm-brown) / 0.6);
+    box-shadow: var(--shadow-wood), inset 0 1px 0 hsl(var(--farm-wood-light) / 0.5);
     border-radius: 1.2rem;
     position: relative;
+    overflow: hidden;
   }
 
-  .wood-sign::before,
-  .wood-sign::after {
+  .wood-panel::before {
     content: '';
     position: absolute;
-    bottom: -12px;
-    width: 8px;
-    height: 16px;
-    background: hsl(var(--farm-brown));
-    border-radius: 0 0 3px 3px;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 8px,
+      hsl(var(--farm-wood-light) / 0.08) 8px,
+      hsl(var(--farm-wood-light) / 0.08) 9px
+    );
+    pointer-events: none;
   }
 
-  .wood-sign::before { left: 20%; }
-  .wood-sign::after { right: 20%; }
+  /* ===== Wood Sign ===== */
+  .wood-sign {
+    background: var(--gradient-wood-light);
+    border: 3px solid hsl(var(--farm-brown));
+    box-shadow: var(--shadow-wood), inset 0 2px 6px hsl(var(--farm-wood-light) / 0.35);
+    border-radius: 1.2rem;
+    position: relative;
+    overflow: hidden;
+  }
 
+  .wood-sign::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 6px,
+      hsl(var(--farm-wood-light) / 0.1) 6px,
+      hsl(var(--farm-wood-light) / 0.1) 7px
+    );
+    pointer-events: none;
+  }
+
+  /* ===== Resource Card ===== */
   .resource-card {
-    @apply rounded-xl px-3 py-2.5;
-    background: hsl(var(--card));
-    border: 2px solid hsl(var(--border));
-    box-shadow: 0 2px 8px hsl(30 20% 15% / 0.08);
-  }
-
-  .gradient-hero {
-    background: var(--gradient-hero);
-  }
-
-  .gradient-gold {
-    background: var(--gradient-gold);
-  }
-
-  .gradient-card {
+    @apply rounded-2xl px-3 py-2.5;
     background: var(--gradient-card);
+    border: 2px solid hsl(var(--border));
+    box-shadow: 0 3px 10px hsl(30 25% 12% / 0.08);
   }
+
+  /* ===== Gradients ===== */
+  .gradient-hero { background: var(--gradient-hero); }
+  .gradient-gold { background: var(--gradient-gold); }
+  .gradient-card { background: var(--gradient-card); }
 
   .safe-bottom {
-    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
   }
 
+  /* ===== Nature BG ===== */
   .nature-bg {
     background: linear-gradient(
       180deg,
-      hsl(160 35% 72%) 0%,
-      hsl(140 30% 80%) 30%,
-      hsl(130 25% 88%) 60%,
-      hsl(120 25% 95%) 100%
+      hsl(200 55% 78%) 0%,
+      hsl(160 40% 82%) 30%,
+      hsl(130 30% 88%) 60%,
+      hsl(var(--background)) 100%
     );
     position: relative;
-  }
-
-  .grass-bottom {
-    position: relative;
-  }
-
-  .grass-bottom::after {
-    content: '🌿🌱🌼🌿🌱🌻🌿🌱🌼🌿';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-size: 14px;
-    letter-spacing: 4px;
-    opacity: 0.5;
-    pointer-events: none;
   }
 
   .wooden-divider {
@@ -214,32 +241,48 @@
     margin: 0.75rem 0;
   }
 
+  /* ===== Farm Buttons ===== */
   .btn-farm {
     @apply rounded-2xl px-5 py-2.5 text-sm font-extrabold transition-all active:scale-95;
-    background: linear-gradient(180deg, hsl(142 50% 45%), hsl(142 45% 35%));
-    color: hsl(40 30% 98%);
-    border: 2px solid hsl(142 40% 28%);
-    box-shadow: 0 4px 12px hsl(142 45% 25% / 0.3), inset 0 1px 0 hsl(142 40% 60% / 0.4);
-    text-shadow: 0 1px 2px hsl(142 45% 15% / 0.3);
+    background: linear-gradient(180deg, hsl(142 55% 42%), hsl(142 50% 32%));
+    color: hsl(50 100% 97%);
+    border: 2.5px solid hsl(142 45% 25%);
+    box-shadow: var(--shadow-btn), inset 0 1px 0 hsl(142 45% 58% / 0.45);
+    text-shadow: 0 1px 2px hsl(142 50% 12% / 0.3);
   }
 
   .btn-farm:active {
-    box-shadow: 0 2px 6px hsl(142 45% 25% / 0.2), inset 0 1px 0 hsl(142 40% 60% / 0.2);
+    box-shadow: 0 2px 6px hsl(142 50% 20% / 0.2), inset 0 1px 0 hsl(142 45% 58% / 0.2);
+  }
+
+  .btn-farm-gold {
+    @apply rounded-2xl px-5 py-2.5 text-sm font-extrabold transition-all active:scale-95;
+    background: linear-gradient(180deg, hsl(42 92% 55%), hsl(42 85% 42%));
+    color: hsl(30 25% 12%);
+    border: 2.5px solid hsl(42 70% 35%);
+    box-shadow: 0 4px 12px hsl(42 80% 30% / 0.3), inset 0 1px 0 hsl(42 90% 70% / 0.5);
+    text-shadow: 0 1px 2px hsl(42 80% 80% / 0.3);
+  }
+
+  .btn-farm-red {
+    @apply rounded-2xl px-5 py-2.5 text-sm font-extrabold transition-all active:scale-95;
+    background: linear-gradient(180deg, hsl(0 65% 52%), hsl(0 62% 40%));
+    color: hsl(50 100% 97%);
+    border: 2.5px solid hsl(0 55% 32%);
+    box-shadow: 0 4px 12px hsl(0 60% 25% / 0.3), inset 0 1px 0 hsl(0 60% 65% / 0.4);
+  }
+
+  .btn-farm-brown {
+    @apply rounded-2xl px-5 py-2.5 text-sm font-extrabold transition-all active:scale-95;
+    background: var(--gradient-wood-light);
+    color: hsl(50 100% 97%);
+    border: 2.5px solid hsl(var(--farm-brown));
+    box-shadow: var(--shadow-wood), inset 0 1px 0 hsl(var(--farm-wood-light) / 0.4);
   }
 
   .progress-gold {
-    background: linear-gradient(90deg, hsl(42 90% 52%), hsl(38 85% 58%));
-    box-shadow: 0 0 8px hsl(42 90% 52% / 0.4);
-  }
-
-  .fence-bg {
-    background-image: repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 28px,
-      hsl(var(--farm-brown-light) / 0.4) 28px,
-      hsl(var(--farm-brown-light) / 0.4) 30px
-    );
+    background: linear-gradient(90deg, hsl(42 92% 50%), hsl(38 88% 56%));
+    box-shadow: 0 0 10px hsl(42 92% 50% / 0.45);
   }
 
   /* ===== Farm Scene Background ===== */
@@ -256,101 +299,72 @@
     inset: 0;
     background: linear-gradient(
       180deg,
-      hsl(200 55% 78%) 0%,
-      hsl(190 40% 82%) 20%,
-      hsl(160 35% 85%) 40%,
-      hsl(140 30% 88%) 60%,
-      hsl(120 25% 92%) 100%
-    );
-  }
-
-  .farm-horizon {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 45%;
-    height: 40px;
-  }
-
-  .farm-sunlight {
-    position: absolute;
-    top: -20%;
-    right: -10%;
-    width: 60%;
-    height: 60%;
-    background: radial-gradient(circle, hsl(45 80% 90% / 0.25), transparent 70%);
-    pointer-events: none;
-  }
-
-  .farm-river {
-    position: absolute;
-    right: 5%;
-    bottom: 42%;
-    z-index: 1;
-  }
-
-  .farm-ground {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 42%;
-    background: linear-gradient(
-      180deg,
-      hsl(120 30% 65%) 0%,
-      hsl(125 35% 55%) 30%,
-      hsl(130 40% 45%) 70%,
-      hsl(135 42% 38%) 100%
-    );
-    border-top: 3px solid hsl(120 25% 60% / 0.5);
-  }
-
-  .farm-fence-left,
-  .farm-fence-right {
-    position: absolute;
-    bottom: 38%;
-    width: 30px;
-    height: 50px;
-    z-index: 2;
-    opacity: 0.25;
-  }
-
-  .farm-fence-left {
-    left: 2%;
-    background: repeating-linear-gradient(
-      90deg,
-      hsl(var(--farm-brown)) 0px,
-      hsl(var(--farm-brown)) 4px,
-      transparent 4px,
-      transparent 10px
-    );
-  }
-
-  .farm-fence-right {
-    right: 2%;
-    background: repeating-linear-gradient(
-      90deg,
-      hsl(var(--farm-brown)) 0px,
-      hsl(var(--farm-brown)) 4px,
-      transparent 4px,
-      transparent 10px
+      hsl(200 60% 75%) 0%,
+      hsl(190 45% 80%) 20%,
+      hsl(160 38% 83%) 40%,
+      hsl(140 32% 86%) 60%,
+      hsl(120 28% 90%) 100%
     );
   }
 
   .farm-center-glow {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center 40%, hsl(40 30% 96% / 0.15), transparent 60%);
+    background: radial-gradient(ellipse at center 35%, hsl(45 80% 90% / 0.18), transparent 65%);
+    pointer-events: none;
+  }
+
+  /* ===== Bottom Nav ===== */
+  .nav-farm {
+    background: var(--gradient-nav);
+    border-top: 3px solid hsl(var(--farm-brown-light) / 0.5);
+    box-shadow: 0 -4px 20px hsl(28 50% 12% / 0.25);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-farm::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 30px,
+      hsl(var(--farm-wood-light) / 0.06) 30px,
+      hsl(var(--farm-wood-light) / 0.06) 31px
+    );
     pointer-events: none;
   }
 
   /* Level card glow animation */
   @keyframes level-glow {
-    0%, 100% { box-shadow: var(--shadow-wood), 0 0 0px hsl(42 90% 52% / 0); }
-    50% { box-shadow: var(--shadow-wood), 0 0 20px hsl(42 90% 52% / 0.4); }
+    0%, 100% { box-shadow: var(--shadow-wood), 0 0 0px hsl(42 92% 50% / 0); }
+    50% { box-shadow: var(--shadow-wood), 0 0 24px hsl(42 92% 50% / 0.5); }
   }
 
   .level-glow {
     animation: level-glow 1.5s ease-in-out 3;
+  }
+
+  /* Glow on active buttons */
+  @keyframes btn-glow {
+    0%, 100% { box-shadow: var(--shadow-btn); }
+    50% { box-shadow: var(--shadow-btn), 0 0 16px hsl(142 50% 40% / 0.35); }
+  }
+
+  .btn-glow {
+    animation: btn-glow 2s ease-in-out infinite;
+  }
+
+  /* Grass sway */
+  @keyframes grass-sway {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+  }
+
+  .grass-sway {
+    animation: grass-sway 3s ease-in-out infinite;
+    transform-origin: bottom center;
   }
 }
