@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { getAnimalType, OwnedAnimal, DEATH_HOURS, isAnimalDead } from "@/lib/gameData";
 import { Utensils, Egg, Scissors, Clock, Droplets, Loader2, Skull, Heart } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
+import AnimalActionAnimation from "./AnimalActionAnimation";
 
 const FEED_COOLDOWN_MS = 15 * 60 * 1000;
 
@@ -25,6 +26,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
   const type = getAnimalType(animal.typeId);
   const [now, setNow] = useState(Date.now());
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [activeAnimation, setActiveAnimation] = useState<"feed" | "collect" | "milk" | "slaughter" | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
@@ -33,6 +35,8 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
 
   const handleAction = useCallback(async (actionName: string, fn: () => void | Promise<void>) => {
     if (busyAction) return;
+    const animName = actionName as "feed" | "collect" | "milk" | "slaughter";
+    setActiveAnimation(animName);
     setBusyAction(actionName);
     try {
       await fn();
@@ -117,8 +121,10 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
+      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden relative"
     >
+      {/* Action animation overlay */}
+      <AnimalActionAnimation action={activeAnimation} onComplete={() => setActiveAnimation(null)} />
       {/* Big Animal Illustration */}
       <div
         className="relative flex items-center justify-center pt-5 pb-3"
