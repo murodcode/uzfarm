@@ -48,7 +48,8 @@ export default function Market() {
       return;
     }
 
-    await showMonetag();
+    const adOk = await showMonetag();
+    if (!adOk) return;
 
     sellProduct(type, qty, price);
     const total = qty * price;
