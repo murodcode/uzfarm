@@ -15,7 +15,7 @@ export default function FarmDetail() {
   const farmNumber = parseInt(id || "1");
   const navigate = useNavigate();
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, unlockField } = useGameContext();
-  const { showAd, showFeedAd } = useRewardedAd();
+  const { showFeedAd } = useRewardedAd();
 
   const isUnlocked = farmNumber <= state.unlockedFields;
   const farmAnimals = state.animals.filter(a => a.field === farmNumber);
@@ -36,7 +36,7 @@ export default function FarmDetail() {
   };
 
   const handleCollect = async (id: string) => {
-    const adOk = await showAd();
+    const adOk = await showFeedAd();
     if (!adOk) return;
     const eggs = await collectEggs(id);
     if (eggs > 0) {
@@ -49,7 +49,7 @@ export default function FarmDetail() {
   };
 
   const handleCollectMilk = async (id: string) => {
-    const adOk = await showAd();
+    const adOk = await showFeedAd();
     if (!adOk) return;
     const milk = await collectMilk(id);
     if (milk > 0) {
@@ -61,7 +61,7 @@ export default function FarmDetail() {
   };
 
   const handleSlaughter = async (id: string) => {
-    const adOk = await showAd();
+    const adOk = await showFeedAd();
     if (!adOk) return;
     const animal = state.animals.find(a => a.id === id);
     const type = animal ? getAnimalType(animal.typeId) : null;
