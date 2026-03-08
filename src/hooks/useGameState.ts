@@ -13,6 +13,7 @@ import { incrementDailyTask } from "@/lib/dailyTasks";
 import { EXP_SOURCES, LEVEL_UP_COIN_REWARD, processLevelUp } from "@/lib/levelSystem";
 import { toast } from "sonner";
 import { logUserAction } from "@/lib/userLogger";
+import { adFlowActive } from "@/hooks/useRewardedAd";
 
 const STORAGE_KEY = "farm_empire_state";
 
