@@ -1572,6 +1572,7 @@ export default function Admin() {
                       {appSettings.withdrawal_referral?.enabled ? "✅ Yoqilgan" : "❌ O'chirilgan"} — {appSettings.withdrawal_referral?.consume_referrals ? "Har payoutda referal kamayadi" : "Referal faqat tekshiriladi"}
                     </p>
                   </div>
+                </div>
 
                 {/* Mandatory channel */}
                 <div className="farm-card">
