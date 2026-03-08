@@ -212,33 +212,18 @@ export default function Admin() {
   const directToggleSetting = async (key: string, enabled: boolean) => {
     const toastId = toast.loading(enabled ? "Yoqilmoqda..." : "O'chirilmoqda...");
     try {
-      const newValue = { enabled };
-      const { error } = await supabase
-        .from("app_settings")
-        .upsert(
-          { key, value: newValue, updated_at: new Date().toISOString() },
-          { onConflict: "key" }
-        );
+      // Merge with existing value to preserve other fields
+      const updated = { ...appSettings[key], enabled };
+      await callAdmin({ action: "update_settings", key, value: updated });
 
-      if (error) throw error;
-
-      // Read back to confirm
-      const { data: verify } = await supabase
-        .from("app_settings")
-        .select("value")
-        .eq("key", key)
-        .single();
-
-      const actualEnabled = (verify?.value as any)?.enabled === true;
-      setAppSettings(prev => ({ ...prev, [key]: { enabled: actualEnabled } }));
-
-      toast.success(actualEnabled ? "✅ Yoqildi" : "❌ O'chirildi", { id: toastId });
+      setAppSettings(prev => ({ ...prev, [key]: updated }));
+      toast.success(enabled ? "✅ Yoqildi" : "❌ O'chirildi", { id: toastId });
     } catch (e: any) {
       toast.error("Xatolik: " + (e.message || "Noma'lum"), { id: toastId });
       // Re-fetch real state
       try {
-        const { data } = await supabase.from("app_settings").select("value").eq("key", key).single();
-        setAppSettings(prev => ({ ...prev, [key]: data?.value || {} }));
+        const data = await callAdmin({ action: "get_settings" });
+        setAppSettings(data?.settings || {});
       } catch {}
     }
   };
