@@ -57,6 +57,7 @@ function mapDbAnimal(a: any): OwnedAnimal {
     boughtAt: new Date(a.bought_at).getTime(),
     grownAt: a.grown_at ? new Date(a.grown_at).getTime() : 0,
     feedCount: a.feed_count || 0,
+    field: a.field || 1,
   };
 }
 
