@@ -21,6 +21,9 @@ declare global {
 
 let adsgramController: AdController | null = null;
 
+// Global flag to prevent DB reload during ad flow
+export let adFlowActive = false;
+
 function getAdsgramController(): AdController | null {
   if (adsgramController) return adsgramController;
   if (window.Adsgram) {
