@@ -189,10 +189,18 @@ export default function Admin() {
         const data = await callAdmin({ action: "get_admins" });
         setAdminsList(data?.admins || []);
       } else if (tab === "chat") {
-        const data = await callAdmin({ action: "get_chat_conversations" });
-        setChatConversations(data?.conversations || []);
-        setChatSelectedUser(null);
-        setChatMessages([]);
+        if (chatSubTab === "private") {
+          const data = await callAdmin({ action: "get_chat_conversations" });
+          setChatConversations(data?.conversations || []);
+          setChatSelectedUser(null);
+          setChatMessages([]);
+        } else {
+          const data = await callAdmin({ action: "get_general_chat_data" });
+          setGeneralChatMsgs(data?.messages || []);
+          setChatBans(data?.bans || []);
+          setGeneralChatEnabled(data?.chat_enabled !== false);
+          setGeneralChatLockMsg(data?.lock_message || "");
+        }
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
