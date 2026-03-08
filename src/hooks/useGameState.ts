@@ -33,9 +33,10 @@ function loadState(): GameState {
           level: parsed.level ?? 1,
           exp: parsed.exp ?? 0,
           registeredAt: parsed.registeredAt ?? Date.now(),
+          unlockedFields: parsed.unlockedFields ?? 1,
         };
       }
-      return parsed;
+      return { ...parsed, unlockedFields: parsed.unlockedFields ?? 1 };
     }
   } catch {}
   return createDefaultGameState();
