@@ -57,7 +57,7 @@ export default function Withdraw() {
     supabase
       .from("app_settings")
       .select("key, value")
-      .in("key", ["withdrawal", "withdrawal_control", "payment_day"])
+      .in("key", ["withdrawal", "withdrawal_control", "payment_day", "withdrawal_referral"])
       .then(({ data }) => {
         if (data) {
           for (const row of data) {
@@ -71,6 +71,11 @@ export default function Withdraw() {
             }
             if (row.key === "payment_day" && typeof v === "object") {
               setPaymentDayText(v.text || "");
+            }
+            if (row.key === "withdrawal_referral" && typeof v === "object") {
+              setRefEnabled(v.enabled === true);
+              setRefRequired(v.required_count || 0);
+              setRefConsume(v.consume_referrals === true);
             }
           }
         }
