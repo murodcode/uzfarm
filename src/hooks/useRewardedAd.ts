@@ -328,9 +328,13 @@ export function useRewardedAd() {
     return new Promise((resolve) => {
       const tryShow = (attempts: number) => {
         if (window.show_10612725) {
+          let settled = false;
+
           const finish = (ok: boolean) => {
+            if (settled) return;
+            settled = true;
             showingRef.current = false;
-            setTimeout(() => { adFlowActive = false; }, 3000);
+            setTimeout(() => { adFlowActive = false; }, 300);
             resolve(ok);
           };
 
@@ -341,26 +345,38 @@ export function useRewardedAd() {
                 frequency: 2,
                 capping: 0.1,
                 interval: 30,
-                timeout: 5,
+                timeout: 0,
                 everyPage: false,
               },
             });
 
+            const safetyTimer = setTimeout(() => {
+              toast.error("Reklama ochilmadi, qayta urinib ko'ring");
+              finish(false);
+            }, 12000);
+
             Promise.resolve(result)
               .then(() => {
+                clearTimeout(safetyTimer);
                 recordAdView();
                 finish(true);
               })
-              .catch(() => finish(true)); // reklama chiqmasa ham davom etsin
+              .catch(() => {
+                clearTimeout(safetyTimer);
+                toast.error("Reklamani ko'rmasdan davom etib bo'lmaydi");
+                finish(false);
+              });
           } catch {
-            finish(true); // xatolikda ham davom etsin
+            toast.error("Reklama ishga tushmadi");
+            finish(false);
           }
         } else if (attempts < 10) {
           setTimeout(() => tryShow(attempts + 1), 500);
         } else {
           showingRef.current = false;
           adFlowActive = false;
-          resolve(true); // SDK topilmasa ham davom etsin
+          toast.error("Reklama SDK topilmadi");
+          resolve(false);
         }
       };
 
