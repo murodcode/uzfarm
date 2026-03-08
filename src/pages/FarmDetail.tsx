@@ -61,7 +61,7 @@ export default function FarmDetail() {
   };
 
   const handleSlaughter = async (id: string) => {
-    const adOk = await showAd();
+    const adOk = await showFeedAd();
     if (!adOk) return;
     const animal = state.animals.find(a => a.id === id);
     const type = animal ? getAnimalType(animal.typeId) : null;
