@@ -149,7 +149,7 @@ export default function Withdraw() {
       return;
     }
 
-    const consumedReferrals = (liveRefEnabled && liveRefConsume && liveRefRequired > 0) ? liveRefRequired : 0;
+    const consumedReferrals = (liveRefEnabled && liveRefRequired > 0) ? liveRefRequired : 0;
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
       user_id: profile.id,
