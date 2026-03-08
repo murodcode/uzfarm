@@ -117,12 +117,15 @@ export default function Chat() {
               <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
                 msg.sender === "user"
                   ? "bg-primary text-primary-foreground rounded-br-sm"
-                  : msg.sender === "ai"
-                  ? "bg-muted text-foreground rounded-bl-sm"
-                  : "bg-accent/20 text-foreground rounded-bl-sm"
+                  : msg.sender === "admin"
+                  ? "bg-emerald-500/15 border border-emerald-500/30 text-foreground rounded-bl-sm"
+                  : "bg-muted text-foreground rounded-bl-sm"
               }`}>
-                {msg.sender !== "user" && (
-                  <span className="text-[9px] font-bold opacity-60">{msg.sender === "ai" ? "🤖 AI" : "👤 Admin"}</span>
+                {msg.sender === "admin" && (
+                  <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">👨‍💼 Admin</span>
+                )}
+                {msg.sender === "ai" && (
+                  <span className="text-[9px] font-bold opacity-60">🤖 AI</span>
                 )}
                 <p className="mt-0.5 whitespace-pre-wrap">{msg.message}</p>
                 <p className={`text-[9px] mt-1 ${msg.sender === "user" ? "opacity-60" : "text-muted-foreground"}`}>
