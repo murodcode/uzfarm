@@ -121,8 +121,10 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
+      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden relative"
     >
+      {/* Action animation overlay */}
+      <AnimalActionAnimation action={activeAnimation} onComplete={() => setActiveAnimation(null)} />
       {/* Big Animal Illustration */}
       <div
         className="relative flex items-center justify-center pt-5 pb-3"
