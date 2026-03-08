@@ -195,6 +195,33 @@ export default function Admin() {
     setLoading(false);
   };
 
+  const saveToggleSetting = async (
+    key: "withdrawal_control" | "ai_auto_reply",
+    checked: boolean,
+    processingKey: string,
+    successOn: string,
+    successOff: string,
+  ) => {
+    if (processing === processingKey) return;
+
+    const prevSettings = { ...appSettings };
+    const optimisticValue = { ...(appSettings[key] || {}), enabled: checked };
+    setAppSettings((prev) => ({ ...prev, [key]: optimisticValue }));
+    setProcessing(processingKey);
+
+    try {
+      await callAdmin({ action: "update_settings", key, value: optimisticValue });
+      const refreshed = await callAdmin({ action: "get_settings" });
+      setAppSettings(refreshed?.settings || {});
+      toast.success(checked ? successOn : successOff);
+    } catch (e: any) {
+      setAppSettings(prevSettings);
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const handleWithdrawal = async (id: string, action: "approved" | "rejected") => {
     if (processing) return;
     setProcessing("withdrawal");
