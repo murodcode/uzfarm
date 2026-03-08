@@ -15,7 +15,7 @@ declare global {
     Adsgram?: {
       init: (config: { blockId: string; debug?: boolean }) => AdController;
     };
-    show_10612725?: () => Promise<void>;
+    show_10612725?: (config?: any) => Promise<void>;
   }
 }
 
