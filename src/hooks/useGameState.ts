@@ -152,10 +152,13 @@ export function useGameState() {
     return () => subscription.unsubscribe();
   }, [filterDeadAnimals]);
 
-  // Refresh from DB when user returns to the app
+  // Refresh from DB when user returns to the app (skip during ad flow)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible" && userId && initializedFromDb.current) {
+        // Skip reload if ad flow is active to prevent overwriting local state
+        if (adFlowActive) return;
+
         initializedFromDb.current = false;
         const reload = async () => {
           const [profileRes, animalsRes] = await Promise.all([
