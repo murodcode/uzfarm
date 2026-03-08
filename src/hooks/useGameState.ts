@@ -570,7 +570,7 @@ export function useGameState() {
   const refreshFromDb = useCallback(async () => {
     if (!userId) return;
     const [profileRes, animalsRes] = await Promise.all([
-      supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp").eq("id", userId).single(),
+      supabase.from("profiles").select("coins, cash, eggs, meat, milk, level, exp, unlocked_fields").eq("id", userId).single(),
       supabase.from("animals").select("*").eq("user_id", userId),
     ]);
 
@@ -587,10 +587,36 @@ export function useGameState() {
         milk: (profileRes.data as any).milk ?? 0,
         level: profileRes.data.level,
         exp: profileRes.data.exp,
+        unlockedFields: (profileRes.data as any).unlocked_fields ?? 1,
         animals: aliveAnimals,
       }));
     }
   }, [userId, filterDeadAnimals]);
+
+  const unlockField = useCallback(async (fieldNumber: number): Promise<boolean> => {
+    const price = FIELD_PRICES[fieldNumber];
+    if (!price) return false;
+    
+    let success = false;
+    let newState: GameState | null = null;
+
+    setState(prev => {
+      if (prev.unlockedFields >= fieldNumber) return prev;
+      if (prev.unlockedFields !== fieldNumber - 1) return prev; // must unlock in order
+      if (prev.coins < price) return prev;
+      success = true;
+      const result = { ...prev, coins: prev.coins - price, unlockedFields: fieldNumber };
+      newState = result;
+      return result;
+    });
+
+    if (success && userId) {
+      if (newState) await syncProfileNow(newState);
+      await supabase.from("profiles").update({ unlocked_fields: fieldNumber }).eq("id", userId);
+      logUserAction("unlock_field", `${fieldNumber}-maydon ochildi, narxi: ${price} tanga`);
+    }
+    return success;
+  }, [userId, syncProfileNow]);
 
   const gainExp = useCallback((amount: number) => {
     setState(prev => {
@@ -625,5 +651,6 @@ export function useGameState() {
     refreshFromDb,
     gainExp,
     dismissLevelUp,
+    unlockField,
   };
 }
