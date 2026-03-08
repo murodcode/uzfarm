@@ -9,7 +9,7 @@ interface FieldViewProps {
   animals: OwnedAnimal[];
   allAnimals: OwnedAnimal[];
   isUnlocked: boolean;
-  coins: number;
+  cash: number;
   onUnlock: () => void;
   onFeed: (id: string) => void;
   onCollect: (id: string) => void;
