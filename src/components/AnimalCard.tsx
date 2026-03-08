@@ -35,6 +35,8 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
 
   const handleAction = useCallback(async (actionName: string, fn: () => void | Promise<void>) => {
     if (busyAction) return;
+    const animName = actionName as "feed" | "collect" | "milk" | "slaughter";
+    setActiveAnimation(animName);
     setBusyAction(actionName);
     try {
       await fn();
