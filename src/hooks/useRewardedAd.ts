@@ -326,55 +326,34 @@ export function useRewardedAd() {
     adFlowActive = true;
 
     return new Promise((resolve) => {
-      const tryShow = (attempts: number) => {
-        if (window.show_10612725) {
-          const startedAt = Date.now();
-
-          const finish = (ok: boolean) => {
-            const elapsed = Date.now() - startedAt;
-            const minWaitMs = 5500; // timeout:5 bo'lgani uchun actionni reklama chiqmaguncha kutamiz
-            const remaining = Math.max(0, minWaitMs - elapsed);
-
-            setTimeout(() => {
-              showingRef.current = false;
-              setTimeout(() => {
-                adFlowActive = false;
-              }, 3000);
-              resolve(ok);
-            }, remaining);
-          };
-
-          try {
-            const result = window.show_10612725({
-              type: "inApp",
-              inAppSettings: {
-                frequency: 2,
-                capping: 0.1,
-                interval: 30,
-                timeout: 5,
-                everyPage: false,
-              },
-            });
-
-            Promise.resolve(result)
-              .then(() => {
-                recordAdView();
-                finish(true);
-              })
-              .catch(() => finish(false));
-          } catch {
-            finish(false);
-          }
-        } else if (attempts < 10) {
-          setTimeout(() => tryShow(attempts + 1), 500);
-        } else {
-          showingRef.current = false;
-          adFlowActive = false;
-          resolve(false);
-        }
+      const cleanup = (ok: boolean) => {
+        showingRef.current = false;
+        setTimeout(() => { adFlowActive = false; }, 1000);
+        resolve(ok);
       };
 
-      tryShow(0);
+      if (window.show_10612725) {
+        try {
+          const result = window.show_10612725({
+            type: "inApp",
+            inAppSettings: {
+              frequency: 2,
+              capping: 0.1,
+              interval: 30,
+              timeout: 5,
+              everyPage: false,
+            },
+          });
+          Promise.resolve(result)
+            .then(() => { recordAdView(); cleanup(true); })
+            .catch(() => cleanup(true));
+        } catch {
+          cleanup(true);
+        }
+      } else {
+        // Monetag not loaded, allow action
+        cleanup(true);
+      }
     });
   }, []);
 
