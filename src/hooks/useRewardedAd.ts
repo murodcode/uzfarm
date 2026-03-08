@@ -320,6 +320,39 @@ export function useRewardedAd() {
     }
   }, []);
 
+  const showMonetag = useCallback(async (): Promise<boolean> => {
+    if (showingRef.current) return false;
+    showingRef.current = true;
+    adFlowActive = true;
+    try {
+      if (window.show_10612725) {
+        await window.show_10612725({
+          type: 'inApp',
+          inAppSettings: {
+            frequency: 2,
+            capping: 0.1,
+            interval: 30,
+            timeout: 5,
+            everyPage: false
+          }
+        });
+        recordAdView();
+        showingRef.current = false;
+        setTimeout(() => { adFlowActive = false; }, 3000);
+        return true;
+      } else {
+        // Fallback: skip ad if Monetag not loaded
+        showingRef.current = false;
+        setTimeout(() => { adFlowActive = false; }, 1000);
+        return true;
+      }
+    } catch {
+      showingRef.current = false;
+      adFlowActive = false;
+      return true; // Allow action even if ad fails
+    }
+  }, []);
+
   const withAd = useCallback(
     (action: () => void) => {
       showAd().then((success) => {
@@ -329,7 +362,7 @@ export function useRewardedAd() {
     [showAd]
   );
 
-  return { showAd, showFeedAd, withAd };
+  return { showAd, showFeedAd, showMonetag, withAd };
 }
 
 /* ── Adsgram entry ad (shown once on app load) ── */
