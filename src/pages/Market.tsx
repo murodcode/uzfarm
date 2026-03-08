@@ -5,11 +5,13 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { SELL_SPLIT } from "@/lib/gameData";
+import { useRewardedAd } from "@/hooks/useRewardedAd";
 import { supabase } from "@/integrations/supabase/client";
 import { logUserAction } from "@/lib/userLogger";
 
 export default function Market() {
   const { state, sellProduct } = useGameContext();
+  const { showFeedAd } = useRewardedAd();
   const [eggPrice, setEggPrice] = useState(50);
   const [meatPrice, setMeatPrice] = useState(300);
   const [milkPrice, setMilkPrice] = useState(150);
@@ -45,6 +47,9 @@ export default function Market() {
       toast.error("Yetarli mahsulot yo'q");
       return;
     }
+
+    const adOk = await showFeedAd();
+    if (!adOk) return;
 
     sellProduct(type, qty, price);
     const total = qty * price;

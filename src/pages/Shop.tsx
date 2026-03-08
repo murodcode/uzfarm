@@ -3,11 +3,15 @@ import { ANIMAL_TYPES, countAnimalsByType } from "@/lib/gameData";
 import ShopCard from "@/components/ShopCard";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { toast } from "sonner";
+import { useRewardedAd } from "@/hooks/useRewardedAd";
 
 export default function Shop() {
   const { state, buyAnimal } = useGameContext();
+  const { showFeedAd } = useRewardedAd();
 
   const handleBuy = async (typeId: string) => {
+    const adOk = await showFeedAd();
+    if (!adOk) return;
     const result = await buyAnimal(typeId);
     if (result) {
       toast.success("Hayvon sotib olindi! 🎉");
