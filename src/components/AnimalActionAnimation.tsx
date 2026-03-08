@@ -44,7 +44,7 @@ function getActionLabel(action: string): string {
 export default function AnimalActionAnimation({ action, animalTypeId, onComplete }: AnimalActionAnimationProps) {
   useEffect(() => {
     if (action) {
-      const timer = setTimeout(onComplete, 2200);
+      const timer = setTimeout(onComplete, 5000);
       return () => clearTimeout(timer);
     }
   }, [action, onComplete]);
@@ -55,7 +55,7 @@ export default function AnimalActionAnimation({ action, animalTypeId, onComplete
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          exit={{ opacity: 0, transition: { duration: 1.5 } }}
           transition={{ duration: 0.25 }}
           className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-card/90 backdrop-blur-sm rounded-2xl overflow-hidden"
         >
