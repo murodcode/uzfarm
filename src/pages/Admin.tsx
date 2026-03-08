@@ -534,6 +534,9 @@ export default function Admin() {
               </div>
             )}
 
+            {/* === NOTIFICATIONS === */}
+            {tab === "notifications" && <AdminNotifications />}
+
             {/* === CHAT === */}
             {tab === "chat" && (
               <div className="space-y-3">
