@@ -1161,19 +1161,22 @@ export default function Admin() {
                 <div className="farm-card">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-foreground">💰 Pul chiqarish</h3>
-                    <Switch
-                      checked={appSettings.withdrawal_control?.enabled === true}
-                      onCheckedChange={async (checked) => {
-                        await saveToggleSetting(
-                          "withdrawal_control",
-                          checked,
-                          "withdrawal-toggle",
-                          "Pul chiqarish yoqildi",
-                          "Pul chiqarish o'chirildi"
-                        );
-                      }}
-                      disabled={processing === "withdrawal-toggle"}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => saveBooleanSetting("withdrawal_control", true, "withdrawal-toggle", "Pul chiqarish yoqildi", "Pul chiqarish o'chirildi")}
+                        disabled={processing === "withdrawal-toggle" || appSettings.withdrawal_control?.enabled === true}
+                        className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground disabled:opacity-50"
+                      >
+                        Yoqish
+                      </button>
+                      <button
+                        onClick={() => saveBooleanSetting("withdrawal_control", false, "withdrawal-toggle", "Pul chiqarish yoqildi", "Pul chiqarish o'chirildi")}
+                        disabled={processing === "withdrawal-toggle" || appSettings.withdrawal_control?.enabled !== true}
+                        className="rounded-lg bg-muted px-3 py-1.5 text-[10px] font-bold text-foreground disabled:opacity-50"
+                      >
+                        O'chirish
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">
                     {appSettings.withdrawal_control?.enabled === true ? "✅ Yoqilgan" : "❌ O'chirilgan"} — O'chirilganda foydalanuvchilar pul chiqara olmaydi
