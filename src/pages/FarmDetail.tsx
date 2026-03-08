@@ -83,24 +83,24 @@ export default function FarmDetail() {
     <>
       <FarmBackground />
       <div className="relative z-10 min-h-screen safe-bottom">
-        {/* Top bar */}
-        <div className="px-4 pt-6 pb-3">
+        {/* Top bar - wooden style */}
+        <div className="px-4 pt-5 pb-3">
           <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-3"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="wood-sign px-4 py-3 flex items-center gap-3"
           >
             <button
               onClick={() => navigate("/")}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-card border border-border active:scale-95 transition-transform"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-card/20 border border-white/10 active:scale-95 transition-transform"
             >
-              <ArrowLeft className="h-5 w-5 text-foreground" />
+              <ArrowLeft className="h-5 w-5" style={{ color: 'hsl(45 90% 85%)' }} />
             </button>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-1">
               <span className="text-2xl">{FIELD_EMOJIS[farmNumber]}</span>
               <div>
-                <h1 className="text-lg font-black text-foreground">{FIELD_NAMES[farmNumber]}</h1>
-                <p className="text-[10px] font-bold text-muted-foreground">
+                <h1 className="text-lg font-black" style={{ color: 'hsl(45 90% 85%)' }}>{FIELD_NAMES[farmNumber]}</h1>
+                <p className="text-[10px] font-bold" style={{ color: 'hsl(45 60% 70%)' }}>
                   🪙 {state.coins.toLocaleString()} • 💵 {state.cash.toLocaleString()}
                 </p>
               </div>
