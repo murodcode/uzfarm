@@ -896,37 +896,6 @@ Deno.serve(async (req) => {
       return json({ success: true });
     }
 
-    // === GET SETTINGS ===
-    if (action === "get_settings") {
-      const { data: rows } = await adminClient.from("app_settings").select("key, value");
-      const settings: Record<string, any> = {};
-      if (rows) {
-        for (const row of rows) {
-          settings[row.key] = row.value;
-        }
-      }
-      return json({ settings });
-    }
-
-    // === UPDATE SETTINGS ===
-    if (action === "update_settings") {
-      const { key, value } = body;
-      if (!key) return json({ error: "key kerak" }, 400);
-      
-      // Merge with existing value to preserve fields
-      const { data: existing } = await adminClient.from("app_settings").select("value").eq("key", key).single();
-      const mergedValue = existing?.value && typeof existing.value === "object" && typeof value === "object"
-        ? { ...(existing.value as any), ...value }
-        : value;
-      
-      const { error: upsertErr } = await adminClient.from("app_settings").upsert(
-        { key, value: mergedValue, updated_at: new Date().toISOString() },
-        { onConflict: "key" }
-      );
-      if (upsertErr) return json({ error: upsertErr.message }, 500);
-      return json({ success: true });
-    }
-
     return json({ error: "Invalid action" }, 400);
   } catch (error) {
     console.error("Admin data error:", error);
