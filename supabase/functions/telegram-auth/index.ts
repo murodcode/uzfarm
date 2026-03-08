@@ -179,6 +179,36 @@ async function processReferral(
     }
   }
 
+  // 4. Track contest referral if active contest exists
+  try {
+    const now = new Date().toISOString();
+    const { data: activeContest } = await supabase
+      .from("contests")
+      .select("id")
+      .eq("status", "active")
+      .lte("start_time", now)
+      .gte("end_time", now)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (activeContest) {
+      // Check if this referred user is already tracked
+      const { error: crErr } = await supabase.from("contest_referrals").insert({
+        contest_id: activeContest.id,
+        referrer_id: referrerUserId,
+        referred_id: newUserId,
+      });
+      if (crErr && !crErr.message.includes("duplicate")) {
+        console.error("[referral] Contest referral insert error:", crErr.message);
+      } else {
+        console.log("[referral] ✅ Contest referral tracked for contest:", activeContest.id);
+      }
+    }
+  } catch (e) {
+    console.error("[referral] Contest referral tracking error:", e);
+  }
+
   console.log(`[referral] ✅ COMPLETE: ${newUserId} referred by ${referrerUserId}`);
   return { processed: true, referrerTelegramId, referrerBonus };
 }
