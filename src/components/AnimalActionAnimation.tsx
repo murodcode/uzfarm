@@ -44,7 +44,7 @@ function getActionLabel(action: string): string {
 export default function AnimalActionAnimation({ action, animalTypeId, onComplete }: AnimalActionAnimationProps) {
   useEffect(() => {
     if (action) {
-      const timer = setTimeout(onComplete, 2200);
+      const timer = setTimeout(onComplete, 5000);
       return () => clearTimeout(timer);
     }
   }, [action, onComplete]);
