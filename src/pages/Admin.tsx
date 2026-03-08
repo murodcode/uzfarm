@@ -1169,16 +1169,16 @@ export default function Admin() {
                     <h3 className="text-sm font-bold text-foreground">💰 Pul chiqarish</h3>
                     <div className="flex items-center gap-1.5">
                       <button
-                        onClick={() => saveBooleanSetting("withdrawal_control", true, "withdrawal-toggle", "Pul chiqarish yoqildi", "Pul chiqarish o'chirildi")}
-                        disabled={processing === "withdrawal-toggle" || appSettings.withdrawal_control?.enabled === true}
+                        onClick={() => directToggleSetting("withdrawal_control", true)}
+                        disabled={appSettings.withdrawal_control?.enabled === true}
                         className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground disabled:opacity-50"
                       >
                         Yoqish
                       </button>
                       <button
-                        onClick={() => saveBooleanSetting("withdrawal_control", false, "withdrawal-toggle", "Pul chiqarish yoqildi", "Pul chiqarish o'chirildi")}
-                        disabled={processing === "withdrawal-toggle" || appSettings.withdrawal_control?.enabled !== true}
-                        className="rounded-lg bg-muted px-3 py-1.5 text-[10px] font-bold text-foreground disabled:opacity-50"
+                        onClick={() => directToggleSetting("withdrawal_control", false)}
+                        disabled={appSettings.withdrawal_control?.enabled !== true}
+                        className="rounded-lg bg-destructive px-3 py-1.5 text-[10px] font-bold text-destructive-foreground disabled:opacity-50"
                       >
                         O'chirish
                       </button>
