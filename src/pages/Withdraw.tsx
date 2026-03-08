@@ -123,7 +123,7 @@ export default function Withdraw() {
     const liveRefVal = liveRef?.value as any;
     const liveRefEnabled = liveRefVal?.enabled === true;
     const liveRefRequired = liveRefVal?.required_count || 0;
-    const liveRefConsume = liveRefVal?.consume_referrals === true;
+    
 
     // Get fresh profile for accurate referral_count
     const { data: freshProfile } = await supabase
@@ -149,7 +149,7 @@ export default function Withdraw() {
       return;
     }
 
-    const consumedReferrals = (liveRefEnabled && liveRefConsume && liveRefRequired > 0) ? liveRefRequired : 0;
+    const consumedReferrals = (liveRefEnabled && liveRefRequired > 0) ? liveRefRequired : 0;
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
       user_id: profile.id,
