@@ -1127,22 +1127,23 @@ export default function Admin() {
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-bold text-foreground">💰 Pul chiqarish</h3>
                     <Switch
-                      checked={!!appSettings.withdrawal_control?.enabled}
+                      checked={appSettings.withdrawal_control?.enabled === true}
                       onCheckedChange={async (checked) => {
-                        const updated = { enabled: checked };
+                        const oldSettings = { ...appSettings };
+                        const updated = { ...appSettings.withdrawal_control, enabled: checked };
                         setAppSettings(prev => ({ ...prev, withdrawal_control: updated }));
                         try {
                           await callAdmin({ action: "update_settings", key: "withdrawal_control", value: updated });
-                          toast.success(checked ? "✅ Pul chiqarish yoqildi" : "❌ Pul chiqarish o'chirildi");
+                          toast.success(checked ? "Pul chiqarish yoqildi" : "Pul chiqarish o'chirildi");
                         } catch (e: any) {
-                          setAppSettings(prev => ({ ...prev, withdrawal_control: { enabled: !checked } }));
+                          setAppSettings(oldSettings);
                           toast.error("Xatolik: " + e.message);
                         }
                       }}
                     />
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    {appSettings.withdrawal_control?.enabled ? "✅ Yoqilgan" : "❌ O'chirilgan"} — O'chirilganda foydalanuvchilar pul chiqara olmaydi
+                    {appSettings.withdrawal_control?.enabled === true ? "✅ Yoqilgan" : "❌ O'chirilgan"} — O'chirilganda foydalanuvchilar pul chiqara olmaydi
                   </p>
                 </div>
 
