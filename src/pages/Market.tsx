@@ -48,6 +48,9 @@ export default function Market() {
       return;
     }
 
+    const adOk = await showFeedAd();
+    if (!adOk) return;
+
     sellProduct(type, qty, price);
     const total = qty * price;
     const coinShare = Math.floor(total * SELL_SPLIT.coinPercent / 100);
