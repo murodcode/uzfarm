@@ -58,8 +58,8 @@ async function recordAdView() {
 
 /* ── Direct link ad (for actions: feed, collect, sell, etc.) ── */
 const AD_LINK = "https://omg10.com/4/10644130";
-const WAIT_SECONDS = 5;
-const MIN_TIME_ON_AD_SITE_MS = 10000; // Must spend at least 10 seconds on ad site
+const WAIT_SECONDS = 7;
+const MIN_TIME_ON_AD_SITE_MS = 7000; // Must spend at least 7 seconds on ad site
 
 function openAdLink() {
   try {
@@ -82,7 +82,7 @@ function showAdOverlay(): Promise<boolean> {
 
     const title = document.createElement("div");
     title.style.cssText = "color:#ff2222;font-size:22px;font-weight:900;margin-bottom:16px;line-height:1.3;";
-    title.textContent = "⚠️ Reklama saytiga o'tib 10 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
+    title.textContent = "⚠️ Reklama saytiga o'tib 7 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
 
     const timer = document.createElement("div");
     timer.style.cssText = "color:#ffffff;font-size:48px;font-weight:900;margin-bottom:24px;";
@@ -121,7 +121,7 @@ function showAdOverlay(): Promise<boolean> {
       // Disable button, show waiting message
       btn.style.display = "none";
       statusText.style.display = "block";
-      statusText.textContent = "⏳ Reklama saytida 5 sekund turing...";
+      statusText.textContent = "⏳ Reklama saytida 7 sekund turing...";
 
       // Listen for when user comes back (visibility change or focus)
       const checkReturn = () => {
@@ -136,7 +136,7 @@ function showAdOverlay(): Promise<boolean> {
           // Not enough time
           const remaining = Math.ceil((MIN_TIME_ON_AD_SITE_MS - timeSpent) / 1000);
           statusText.style.display = "block";
-          statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 5 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${remaining} sekund qoldi. Qaytadan urinib ko'ring.</span>`;
+          statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 7 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${remaining} sekund qoldi. Qaytadan urinib ko'ring.</span>`;
           btn.textContent = "🔄 Qayta ochish";
           btn.style.display = "block";
           // Re-enable for retry
@@ -144,7 +144,7 @@ function showAdOverlay(): Promise<boolean> {
             const retryTime = Date.now();
             openAdLink();
             btn.style.display = "none";
-            statusText.textContent = "⏳ Reklama saytida 5 sekund turing...";
+            statusText.textContent = "⏳ Reklama saytida 7 sekund turing...";
 
             const checkRetry = () => {
               const spent = Date.now() - retryTime;
@@ -155,7 +155,7 @@ function showAdOverlay(): Promise<boolean> {
                 resolve(true);
               } else {
                 const rem = Math.ceil((MIN_TIME_ON_AD_SITE_MS - spent) / 1000);
-                statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 5 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${rem} sekund qoldi.</span>`;
+                statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 7 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${rem} sekund qoldi.</span>`;
                 btn.textContent = "🔄 Qayta ochish";
                 btn.style.display = "block";
               }
