@@ -500,7 +500,7 @@ export function useGameState() {
     });
 
     if (success && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       await supabase.from("animals").delete().eq("id", animalId).eq("user_id", userId);
     }
   }, [userId, syncProfileNow]);
