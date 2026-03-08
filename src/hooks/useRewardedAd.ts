@@ -182,6 +182,109 @@ function showAdOverlay(): Promise<boolean> {
   });
 }
 
+/* ── Feed-specific ad overlay with new link ── */
+const FEED_AD_LINK = "https://crn77.com/4/10644130";
+const FEED_AD_TIME_MS = 7000;
+
+function openFeedAdLink() {
+  try {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.openLink) {
+      tg.openLink(FEED_AD_LINK);
+    } else {
+      window.open(FEED_AD_LINK, "_blank");
+    }
+  } catch {
+    window.open(FEED_AD_LINK, "_blank");
+  }
+}
+
+function showFeedAdOverlay(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.style.cssText =
+      "position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);padding:20px;text-align:center;";
+
+    const title = document.createElement("div");
+    title.style.cssText = "color:#ff2222;font-size:22px;font-weight:900;margin-bottom:12px;line-height:1.4;";
+    title.textContent = "⚠️ Reklama saytga o'tib 7 sekund o'sha yerda qoling va qaytib keling!";
+
+    const subtitle = document.createElement("div");
+    subtitle.style.cssText = "color:#ff4444;font-size:16px;font-weight:800;margin-bottom:24px;line-height:1.4;";
+    subtitle.textContent = "❌ Agar 7 sekunddan kam qaytib kelsangiz boqish amalga oshirilmaydi!";
+
+    const adBtn = document.createElement("button");
+    adBtn.style.cssText =
+      "background:#22c55e;color:#fff;font-size:18px;font-weight:800;border:none;border-radius:14px;padding:14px 40px;cursor:pointer;";
+    adBtn.textContent = "📺 Reklama ko'rish";
+
+    const statusText = document.createElement("div");
+    statusText.style.cssText = "color:#ffffff;font-size:14px;margin-top:16px;display:none;";
+
+    const feedBtn = document.createElement("button");
+    feedBtn.style.cssText =
+      "background:#f59e0b;color:#fff;font-size:18px;font-weight:800;border:none;border-radius:14px;padding:14px 40px;cursor:pointer;display:none;margin-top:16px;";
+    feedBtn.textContent = "🌾 Boqish";
+
+    overlay.appendChild(title);
+    overlay.appendChild(subtitle);
+    overlay.appendChild(adBtn);
+    overlay.appendChild(statusText);
+    overlay.appendChild(feedBtn);
+    document.body.appendChild(overlay);
+
+    const tryAd = (isRetry = false) => {
+      const adOpenTime = Date.now();
+      openFeedAdLink();
+
+      adBtn.style.display = "none";
+      statusText.style.display = "block";
+      statusText.textContent = "⏳ Reklama saytida 7 sekund turing...";
+      feedBtn.style.display = "none";
+
+      const onReturn = () => {
+        setTimeout(() => {
+          const timeSpent = Date.now() - adOpenTime;
+          if (timeSpent >= FEED_AD_TIME_MS) {
+            // Success
+            cleanupListeners();
+            recordAdView();
+            title.style.color = "#22c55e";
+            title.textContent = "✅ Siz muvaffaqiyatli reklama ko'rdingiz!";
+            subtitle.textContent = "Endi pastdagi tugmani bosing";
+            subtitle.style.color = "#22c55e";
+            statusText.style.display = "none";
+            adBtn.style.display = "none";
+            feedBtn.style.display = "block";
+          } else {
+            const remaining = Math.ceil((FEED_AD_TIME_MS - timeSpent) / 1000);
+            statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 7 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${remaining} sekund qoldi. Qaytadan urinib ko'ring.</span>`;
+            adBtn.textContent = "🔄 Qayta ochish";
+            adBtn.style.display = "block";
+          }
+        }, 300);
+      };
+
+      const cleanupListeners = () => {
+        document.removeEventListener("visibilitychange", onReturn);
+        window.removeEventListener("focus", onReturn);
+      };
+      document.addEventListener("visibilitychange", onReturn);
+      window.addEventListener("focus", onReturn);
+
+      // For retry clicks, rebind
+      adBtn.onclick = () => tryAd(true);
+    };
+
+    adBtn.onclick = () => tryAd();
+
+    feedBtn.onclick = () => {
+      document.body.removeChild(overlay);
+      resolve(true);
+    };
+  });
+}
+
 export function useRewardedAd() {
   const showingRef = useRef(false);
 
@@ -192,7 +295,22 @@ export function useRewardedAd() {
     try {
       const ok = await showAdOverlay();
       showingRef.current = false;
-      // Keep adFlowActive true for a short period to let the action complete & sync
+      setTimeout(() => { adFlowActive = false; }, 3000);
+      return ok;
+    } catch {
+      showingRef.current = false;
+      adFlowActive = false;
+      return false;
+    }
+  }, []);
+
+  const showFeedAd = useCallback(async (): Promise<boolean> => {
+    if (showingRef.current) return false;
+    showingRef.current = true;
+    adFlowActive = true;
+    try {
+      const ok = await showFeedAdOverlay();
+      showingRef.current = false;
       setTimeout(() => { adFlowActive = false; }, 3000);
       return ok;
     } catch {
@@ -211,7 +329,7 @@ export function useRewardedAd() {
     [showAd]
   );
 
-  return { showAd, withAd };
+  return { showAd, showFeedAd, withAd };
 }
 
 /* ── Adsgram entry ad (shown once on app load) ── */
