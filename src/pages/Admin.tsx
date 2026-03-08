@@ -1129,15 +1129,14 @@ export default function Admin() {
                     <Switch
                       checked={appSettings.withdrawal_control?.enabled === true}
                       onCheckedChange={async (checked) => {
-                        const oldSettings = { ...appSettings };
-                        const updated = { ...appSettings.withdrawal_control, enabled: checked };
-                        setAppSettings(prev => ({ ...prev, withdrawal_control: updated }));
+                        const newValue = { enabled: checked };
+                        setAppSettings(prev => ({ ...prev, withdrawal_control: newValue }));
                         try {
-                          await callAdmin({ action: "update_settings", key: "withdrawal_control", value: updated });
-                          toast.success(checked ? "Pul chiqarish yoqildi" : "Pul chiqarish o'chirildi");
+                          await callAdmin({ action: "update_settings", key: "withdrawal_control", value: newValue });
+                          toast.success(checked ? "✅ Pul chiqarish yoqildi" : "❌ Pul chiqarish o'chirildi");
                         } catch (e: any) {
-                          setAppSettings(oldSettings);
-                          toast.error("Xatolik: " + e.message);
+                          setAppSettings(prev => ({ ...prev, withdrawal_control: { enabled: !checked } }));
+                          toast.error("Xatolik: " + (e?.message || "Noma'lum xato"));
                         }
                       }}
                     />
