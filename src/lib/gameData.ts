@@ -145,10 +145,10 @@ export function getMarketPrice(type: "egg" | "meat" | "milk"): number {
   return base + Math.floor(Math.random() * variance * 2 - variance);
 }
 
-// Field system
+// Field system — prices in CASH (💵), not coins
 export const FIELD_PRICES: Record<number, number> = {
-  2: 50000,
-  3: 150000,
+  2: 150000,
+  3: 500000,
 };
 
 export const FIELD_NAMES: Record<number, string> = {
