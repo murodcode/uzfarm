@@ -10,7 +10,8 @@ export default function Shop() {
   const { showMonetag } = useRewardedAd();
 
   const handleBuy = async (typeId: string) => {
-    await showMonetag();
+    const adOk = await showMonetag();
+    if (!adOk) return;
     const result = await buyAnimal(typeId);
     if (result) {
       toast.success("Hayvon sotib olindi! 🎉");
