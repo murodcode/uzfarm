@@ -9,7 +9,7 @@ interface FieldViewProps {
   animals: OwnedAnimal[];
   allAnimals: OwnedAnimal[];
   isUnlocked: boolean;
-  coins: number;
+  cash: number;
   onUnlock: () => void;
   onFeed: (id: string) => void;
   onCollect: (id: string) => void;
@@ -18,7 +18,7 @@ interface FieldViewProps {
 }
 
 export default function FieldView({
-  fieldNumber, animals, allAnimals, isUnlocked, coins, onUnlock,
+  fieldNumber, animals, allAnimals, isUnlocked, cash, onUnlock,
   onFeed, onCollect, onCollectMilk, onSlaughter,
 }: FieldViewProps) {
   const navigate = useNavigate();
@@ -41,19 +41,19 @@ export default function FieldView({
           {fieldNumber}x hayvon sig'imi
         </p>
         <p className="text-sm font-bold text-primary mb-4">
-          🪙 {price?.toLocaleString()} tanga
+          💵 {price?.toLocaleString()} pul
         </p>
         <button
           onClick={onUnlock}
-          disabled={coins < (price ?? Infinity)}
+          disabled={cash < (price ?? Infinity)}
           className={`flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-bold transition-transform active:scale-95 ${
-            coins >= (price ?? Infinity)
+            cash >= (price ?? Infinity)
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground cursor-not-allowed"
           }`}
         >
           <Lock className="h-4 w-4" />
-          {coins >= (price ?? Infinity) ? "Ochish" : "Mablag' yetarli emas"}
+          {cash >= (price ?? Infinity) ? "Ochish" : "Mablag' yetarli emas"}
         </button>
       </motion.div>
     );

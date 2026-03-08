@@ -603,9 +603,9 @@ export function useGameState() {
     setState(prev => {
       if (prev.unlockedFields >= fieldNumber) return prev;
       if (prev.unlockedFields !== fieldNumber - 1) return prev; // must unlock in order
-      if (prev.coins < price) return prev;
+      if (prev.cash < price) return prev;
       success = true;
-      const result = { ...prev, coins: prev.coins - price, unlockedFields: fieldNumber };
+      const result = { ...prev, cash: prev.cash - price, unlockedFields: fieldNumber };
       newState = result;
       return result;
     });
