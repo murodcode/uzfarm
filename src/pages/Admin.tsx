@@ -3,8 +3,9 @@ import TelegramBackButton from "@/components/TelegramBackButton";
 import { motion } from "framer-motion";
 import {
   Shield, Users, Banknote, CheckCircle, XCircle, Loader2,
-  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText, Bot, ArrowLeft
+  BarChart3, Ban, Plus, Trash2, Eye, UserPlus, Coins, DollarSign, MinusCircle, PlusCircle, Settings, CreditCard, Trophy, Send, MessageCircle, ScrollText, Bot, ArrowLeft, Bell
 } from "lucide-react";
+import AdminNotifications from "@/components/AdminNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,7 +54,7 @@ interface UserDetail {
   animal_count?: number;
 }
 
-type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity" | "chat";
+type Tab = "stats" | "withdrawals" | "users" | "tasks" | "settings" | "referral_rank" | "messaging" | "admins" | "activity" | "chat" | "notifications";
 
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth();
@@ -470,6 +471,7 @@ export default function Admin() {
 
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
+    { key: "notifications", label: "Bildirishnoma", icon: Bell },
     { key: "chat", label: "Chat", icon: MessageCircle },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
@@ -531,6 +533,9 @@ export default function Admin() {
                 </div>
               </div>
             )}
+
+            {/* === NOTIFICATIONS === */}
+            {tab === "notifications" && <AdminNotifications />}
 
             {/* === CHAT === */}
             {tab === "chat" && (

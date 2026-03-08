@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Dog, Egg, Beef, Wallet, ArrowLeftRight, LogIn, LogOut, Shield, Trophy, Users } from "lucide-react";
+import NotificationsList from "@/components/NotificationsList";
 import StatCard from "@/components/StatCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useGameContext } from "@/contexts/GameStateContext";
@@ -175,6 +176,9 @@ export default function Profile() {
             </div>
           </button>
         </motion.div>
+
+        {/* Notifications */}
+        {!!session && <NotificationsList />}
 
         {/* Admin panel link */}
         {isAdmin && (
