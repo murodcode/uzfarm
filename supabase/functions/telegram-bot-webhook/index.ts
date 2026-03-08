@@ -81,13 +81,28 @@ async function handleAdminPanel(chatId: number) {
       [{ text: "📢 Umumiy xabar yuborish", callback_data: "admin_broadcast" }],
       [{ text: "🏆 Referal reyting", callback_data: "admin_referral_ranking" }],
       [{ text: "👥 Foydalanuvchilar soni", callback_data: "admin_user_count" }],
+      [{ text: "🔗 Majburiy azolik sozlamalari", callback_data: "admin_subscription" }],
     ],
   });
 }
 
+// Fetch all rows bypassing 1000-row limit
+async function fetchAllProfiles(supabase: any, columns: string) {
+  const allRows: any[] = [];
+  const PAGE_SIZE = 1000;
+  let from = 0;
+  while (true) {
+    const { data } = await supabase.from("profiles").select(columns).range(from, from + PAGE_SIZE - 1);
+    if (!data || data.length === 0) break;
+    allRows.push(...data);
+    if (data.length < PAGE_SIZE) break;
+    from += PAGE_SIZE;
+  }
+  return allRows;
+}
+
 async function handleAdminStats(supabase: any, chatId: number) {
-  const { data: profiles } = await supabase.from("profiles").select("id, coins, cash, ad_views, is_blocked, created_at, referral_count");
-  const all = profiles || [];
+  const all = await fetchAllProfiles(supabase, "id, coins, cash, ad_views, is_blocked, created_at, referral_count");
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayStr = today.toISOString();
 
@@ -248,6 +263,45 @@ Deno.serve(async (req) => {
       } else if (data === "admin_user_count") {
         const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true });
         await sendMessage(chatId, `👥 Jami foydalanuvchilar: <b>${count || 0}</b>`);
+      } else if (data === "admin_subscription") {
+        // Show current subscription settings
+        const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+        const sub = subSetting?.value as any || {};
+        const enabled = sub.enabled === true;
+        const channelId = sub.channel_id || "—";
+        const channelUrl = sub.channel_url || "—";
+
+        await sendMessage(chatId,
+          `🔗 <b>Majburiy azolik sozlamalari</b>\n\n` +
+          `📌 Holat: <b>${enabled ? "✅ Yoqilgan" : "❌ O'chirilgan"}</b>\n` +
+          `📢 Kanal ID: <code>${channelId}</code>\n` +
+          `🔗 Kanal URL: ${channelUrl}\n`,
+          {
+            inline_keyboard: [
+              [{ text: enabled ? "❌ O'chirish" : "✅ Yoqish", callback_data: enabled ? "sub_disable" : "sub_enable" }],
+              [{ text: "📝 Kanal ID o'zgartirish", callback_data: "sub_set_channel" }],
+              [{ text: "🔗 Kanal URL o'zgartirish", callback_data: "sub_set_url" }],
+              [{ text: "🔙 Admin panel", callback_data: "back_admin" }],
+            ],
+          }
+        );
+      } else if (data === "sub_enable" || data === "sub_disable") {
+        const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+        const sub = subSetting?.value as any || {};
+        sub.enabled = data === "sub_enable";
+        await supabase.from("app_settings").upsert(
+          { key: "mandatory_subscription", value: sub, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+        await sendMessage(chatId, data === "sub_enable" ? "✅ Majburiy azolik yoqildi!" : "❌ Majburiy azolik o'chirildi!");
+      } else if (data === "sub_set_channel") {
+        await setAdminState(supabase, { action: "sub_set_channel" });
+        await sendMessage(chatId, "📝 Kanal ID ni kiriting (masalan: <code>-1001234567890</code> yoki <code>@kanal_nomi</code>).\n\nBekor qilish: /cancel");
+      } else if (data === "sub_set_url") {
+        await setAdminState(supabase, { action: "sub_set_url" });
+        await sendMessage(chatId, "🔗 Kanal havolasini kiriting (masalan: <code>https://t.me/kanal_nomi</code>).\n\nBekor qilish: /cancel");
+      } else if (data === "back_admin") {
+        await handleAdminPanel(chatId);
       } else if (data.startsWith("approve_wd_")) {
         const wdId = data.replace("approve_wd_", "");
         await supabase.from("withdrawal_requests").update({ status: "approved", processed_at: new Date().toISOString() }).eq("id", wdId);
@@ -369,6 +423,30 @@ Deno.serve(async (req) => {
             }
             await sendMessage(chatId, `✅ Javob yuborildi (TG ID: ${targetTgId})`);
           }
+          return new Response("OK", { status: 200 });
+        }
+
+        if (state.action === "sub_set_channel") {
+          const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+          const sub = subSetting?.value as any || {};
+          sub.channel_id = text;
+          await supabase.from("app_settings").upsert(
+            { key: "mandatory_subscription", value: sub, updated_at: new Date().toISOString() },
+            { onConflict: "key" }
+          );
+          await sendMessage(chatId, `✅ Kanal ID yangilandi: <code>${text}</code>`);
+          return new Response("OK", { status: 200 });
+        }
+
+        if (state.action === "sub_set_url") {
+          const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+          const sub = subSetting?.value as any || {};
+          sub.channel_url = text;
+          await supabase.from("app_settings").upsert(
+            { key: "mandatory_subscription", value: sub, updated_at: new Date().toISOString() },
+            { onConflict: "key" }
+          );
+          await sendMessage(chatId, `✅ Kanal URL yangilandi: ${text}`);
           return new Response("OK", { status: 200 });
         }
       }
