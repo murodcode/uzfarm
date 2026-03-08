@@ -471,6 +471,7 @@ export default function Admin() {
 
   const tabs: { key: Tab; label: string; icon: any }[] = [
     { key: "stats", label: "Statistika", icon: BarChart3 },
+    { key: "notifications", label: "Bildirishnoma", icon: Bell },
     { key: "chat", label: "Chat", icon: MessageCircle },
     { key: "withdrawals", label: "So'rovlar", icon: Banknote },
     { key: "users", label: "Foydalanuvchilar", icon: Users },
