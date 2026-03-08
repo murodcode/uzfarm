@@ -82,7 +82,7 @@ function showAdOverlay(): Promise<boolean> {
 
     const title = document.createElement("div");
     title.style.cssText = "color:#ff2222;font-size:22px;font-weight:900;margin-bottom:16px;line-height:1.3;";
-    title.textContent = "⚠️ Reklama saytiga o'tib 10 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
+    title.textContent = "⚠️ Reklama saytiga o'tib 7 sekund o'sha yerda qoling, keyin qaytib bot kiring!";
 
     const timer = document.createElement("div");
     timer.style.cssText = "color:#ffffff;font-size:48px;font-weight:900;margin-bottom:24px;";
