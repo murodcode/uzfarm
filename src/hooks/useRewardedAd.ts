@@ -144,7 +144,7 @@ function showAdOverlay(): Promise<boolean> {
             const retryTime = Date.now();
             openAdLink();
             btn.style.display = "none";
-            statusText.textContent = "⏳ Reklama saytida 5 sekund turing...";
+            statusText.textContent = "⏳ Reklama saytida 7 sekund turing...";
 
             const checkRetry = () => {
               const spent = Date.now() - retryTime;
