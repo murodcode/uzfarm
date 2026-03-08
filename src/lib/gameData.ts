@@ -25,6 +25,7 @@ export interface OwnedAnimal {
   boughtAt: number;
   grownAt: number; // timestamp when growth reached 100%, 0 if not grown
   feedCount: number; // number of times fed (ads watched)
+  field: number; // 1, 2, or 3 — which field this animal belongs to
 }
 
 export interface GameState {
