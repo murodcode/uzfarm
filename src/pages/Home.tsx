@@ -224,7 +224,7 @@ export default function Home() {
             animals={fieldAnimals}
             allAnimals={state.animals}
             isUnlocked={activeField <= state.unlockedFields}
-            coins={state.coins}
+            cash={state.cash}
             onUnlock={() => handleUnlockField(activeField)}
             onFeed={handleFeed}
             onCollect={handleCollect}
