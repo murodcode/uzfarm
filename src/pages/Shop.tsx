@@ -1,24 +1,28 @@
 import { motion } from "framer-motion";
-import { ANIMAL_TYPES, countAnimalsByType } from "@/lib/gameData";
+import { ANIMAL_TYPES, countAnimalsByTypeInField, getFieldMaxOwned, FIELD_NAMES, FIELD_EMOJIS } from "@/lib/gameData";
 import ShopCard from "@/components/ShopCard";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { toast } from "sonner";
 import { useRewardedAd } from "@/hooks/useRewardedAd";
+import { useSearchParams } from "react-router-dom";
 
 export default function Shop() {
   const { state, buyAnimal } = useGameContext();
   const { showFeedAd } = useRewardedAd();
+  const [searchParams] = useSearchParams();
+  const fieldParam = parseInt(searchParams.get("field") || "1");
+  const activeField = Math.min(fieldParam, state.unlockedFields);
 
   const handleBuy = async (typeId: string) => {
     const adOk = await showFeedAd("🛒 Sotib olish", "sotib olish");
     if (!adOk) return;
-    const result = await buyAnimal(typeId);
+    const result = await buyAnimal(typeId, activeField);
     if (result) {
-      toast.success("Hayvon sotib olindi! 🎉");
+      toast.success(`Hayvon ${FIELD_NAMES[activeField]}ga qo'shildi! 🎉`);
     } else {
       const type = ANIMAL_TYPES.find(a => a.id === typeId);
-      if (type && countAnimalsByType(state.animals, typeId) >= type.maxOwned) {
-        toast.error(`Maksimal ${type.maxOwned} ta ${type.name} sotib olish mumkin!`);
+      if (type && countAnimalsByTypeInField(state.animals, typeId, activeField) >= getFieldMaxOwned(type, activeField)) {
+        toast.error(`Bu maydonda maksimal ${getFieldMaxOwned(type, activeField)} ta ${type.name} sotib olish mumkin!`);
       } else {
         toast.error("Mablag' yetarli emas");
       }
@@ -33,6 +37,11 @@ export default function Shop() {
           <p className="text-sm text-muted-foreground mt-1">
             Balans: <span className="font-bold text-primary">🪙 {state.coins.toLocaleString()}</span>
           </p>
+          <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+            <span>{FIELD_EMOJIS[activeField]}</span>
+            <span>{FIELD_NAMES[activeField]} uchun xarid</span>
+            <span className="text-[10px] opacity-60">({activeField}x sig'im)</span>
+          </div>
         </motion.div>
       </div>
 
@@ -47,7 +56,8 @@ export default function Shop() {
             <ShopCard
               animal={animal}
               balance={state.coins}
-              currentCount={countAnimalsByType(state.animals, animal.id)}
+              currentCount={countAnimalsByTypeInField(state.animals, animal.id, activeField)}
+              maxCount={getFieldMaxOwned(animal, activeField)}
               onBuy={() => handleBuy(animal.id)}
             />
           </motion.div>

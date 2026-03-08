@@ -1,21 +1,19 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import AnimalCard from "@/components/AnimalCard";
 import FarmBackground from "@/components/FarmBackground";
 import LevelUpEffect from "@/components/LevelUpEffect";
+import FieldView from "@/components/FieldView";
 import { useGameContext } from "@/contexts/GameStateContext";
 import { toast } from "sonner";
-import { ShoppingBag } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { useRewardedAd } from "@/hooks/useRewardedAd";
-import { expRequired } from "@/lib/levelSystem";
-import { EXP_SOURCES } from "@/lib/levelSystem";
-import { ANIMAL_TYPES, getAnimalType } from "@/lib/gameData";
+import { expRequired, EXP_SOURCES } from "@/lib/levelSystem";
+import { getAnimalType, FIELD_NAMES, FIELD_EMOJIS } from "@/lib/gameData";
 import { logUserAction } from "@/lib/userLogger";
 
 export default function Home() {
-  const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
-  const navigate = useNavigate();
+  const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp, unlockField } = useGameContext();
   const { showAd, showFeedAd } = useRewardedAd();
+  const [activeField, setActiveField] = useState(1);
 
   const handleFeed = async (id: string) => {
     const adOk = await showFeedAd();
@@ -67,16 +65,20 @@ export default function Home() {
     toast.success("Go'sht inventarga qo'shildi! 🥩");
   };
 
+  const handleUnlockField = async (fieldNumber: number) => {
+    const success = await unlockField(fieldNumber);
+    if (success) {
+      toast.success(`${FIELD_NAMES[fieldNumber]} ochildi! 🎉`);
+      setActiveField(fieldNumber);
+    } else {
+      toast.error("Mablag' yetarli emas");
+    }
+  };
+
   const required = expRequired(state.level);
   const levelProgress = Math.min(100, Math.round((state.exp / required) * 100));
 
-  // Group animals by type
-  const groupedAnimals = ANIMAL_TYPES
-    .map(type => ({
-      type,
-      animals: state.animals.filter(a => a.typeId === type.id),
-    }))
-    .filter(group => group.animals.length > 0);
+  const fieldAnimals = state.animals.filter(a => a.field === activeField);
 
   return (
     <>
@@ -187,92 +189,48 @@ export default function Home() {
           <div className="wooden-divider" />
         </div>
 
-        {/* Animals section */}
+        {/* Field tabs */}
+        <div className="px-4 mt-3 mb-3">
+          <div className="flex gap-2">
+            {[1, 2, 3].map(f => {
+              const isActive = activeField === f;
+              const isLocked = f > state.unlockedFields;
+              const animalCount = state.animals.filter(a => a.field === f).length;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setActiveField(f)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : isLocked
+                        ? "bg-muted/60 text-muted-foreground border border-border"
+                        : "bg-card text-foreground border border-border"
+                  }`}
+                >
+                  <span>{isLocked ? "🔒" : FIELD_EMOJIS[f]}</span>
+                  <span>{FIELD_NAMES[f]}</span>
+                  {!isLocked && <span className="text-[10px] opacity-70">({animalCount})</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Active field content */}
         <div className="px-4 space-y-4 pb-4">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="flex items-center justify-between"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">🏠</span>
-              <h2 className="text-sm font-black text-foreground">Hayvonlaringiz</h2>
-              <span className="text-xs font-bold text-muted-foreground">({state.animals.length})</span>
-            </div>
-            <button
-              onClick={() => navigate("/shop")}
-              className="flex items-center gap-1.5 rounded-xl bg-secondary/15 border border-secondary/30 px-3 py-1.5 text-xs font-bold text-secondary transition-transform active:scale-95"
-            >
-              <ShoppingBag className="h-3.5 w-3.5" />
-              Do'kon
-            </button>
-          </motion.div>
-
-          {state.animals.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="farm-card flex flex-col items-center py-10 text-center"
-            >
-              <span className="text-5xl mb-3">🌾</span>
-              <h3 className="text-lg font-black text-foreground mb-1">Ferma bo'sh</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Do'kondan hayvon sotib oling va fermangizni boshlang!
-              </p>
-              <button onClick={() => navigate("/shop")} className="btn-farm">
-                🛒 Do'konga o'tish
-              </button>
-            </motion.div>
-          ) : (
-            groupedAnimals.map((group, gi) => (
-              <motion.div
-                key={group.type.id}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + gi * 0.07 }}
-              >
-                {/* Group header */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">{group.type.emoji}</span>
-                  <h3 className="text-sm font-black text-foreground">{group.type.name}</h3>
-                  <span className="text-xs font-bold bg-primary/10 text-primary rounded-full px-2 py-0.5">
-                    {group.animals.length} ta
-                  </span>
-                </div>
-
-                {/* Horizontal scroll if multiple */}
-                {group.animals.length === 1 ? (
-                  <AnimalCard
-                    animal={group.animals[0]}
-                    onFeed={() => handleFeed(group.animals[0].id)}
-                    onCollect={() => handleCollect(group.animals[0].id)}
-                    onCollectMilk={() => handleCollectMilk(group.animals[0].id)}
-                    onSlaughter={() => handleSlaughter(group.animals[0].id)}
-                  />
-                ) : (
-                  <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollSnapType: 'x mandatory' }}>
-                    {group.animals.map((animal) => (
-                      <div
-                        key={animal.id}
-                        className="flex-shrink-0 w-[85vw] max-w-[320px]"
-                        style={{ scrollSnapAlign: 'start' }}
-                      >
-                        <AnimalCard
-                          animal={animal}
-                          onFeed={() => handleFeed(animal.id)}
-                          onCollect={() => handleCollect(animal.id)}
-                          onCollectMilk={() => handleCollectMilk(animal.id)}
-                          onSlaughter={() => handleSlaughter(animal.id)}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ))
-          )}
+          <FieldView
+            fieldNumber={activeField}
+            animals={fieldAnimals}
+            allAnimals={state.animals}
+            isUnlocked={activeField <= state.unlockedFields}
+            coins={state.coins}
+            onUnlock={() => handleUnlockField(activeField)}
+            onFeed={handleFeed}
+            onCollect={handleCollect}
+            onCollectMilk={handleCollectMilk}
+            onSlaughter={handleSlaughter}
+          />
         </div>
       </div>
     </>
