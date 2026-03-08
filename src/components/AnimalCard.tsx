@@ -263,12 +263,12 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-1">
           {canFeed ? (
             <button
               onClick={() => handleAction("feed", onFeed)}
               disabled={!!busyAction}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-60"
+              className="btn-farm flex flex-1 items-center justify-center gap-1.5 py-3 text-xs disabled:opacity-60"
             >
               {busyAction === "feed" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Utensils className="h-3.5 w-3.5" />}
               Boqish
@@ -284,7 +284,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             <button
               onClick={() => handleAction("collect", onCollect)}
               disabled={accumulatedEggs === 0 || !!busyAction}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary disabled:opacity-50"
+              className="btn-farm-gold flex flex-1 items-center justify-center gap-1.5 py-3 text-xs disabled:opacity-50"
             >
               {busyAction === "collect" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Egg className="h-3.5 w-3.5" />}
               Yig'ish ({accumulatedEggs})
@@ -295,8 +295,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             <button
               onClick={() => handleAction("milk", onCollectMilk)}
               disabled={accumulatedMilk === 0 || !!busyAction}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
-              style={{ background: 'hsl(210 70% 55%)' }}
+              className="btn-farm-gold flex flex-1 items-center justify-center gap-1.5 py-3 text-xs disabled:opacity-50"
             >
               {busyAction === "milk" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Droplets className="h-3.5 w-3.5" />}
               Sut ({accumulatedMilk})
@@ -307,10 +306,10 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             <button
               onClick={() => handleAction("slaughter", onSlaughter)}
               disabled={!!busyAction}
-              className={`flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold active:scale-95 transition-transform disabled:opacity-60 ${
+              className={`flex items-center justify-center gap-1 text-xs font-bold active:scale-95 transition-transform disabled:opacity-60 ${
                 !isEggType && !isMilkType
-                  ? "flex-1 rounded-2xl text-destructive-foreground bg-destructive"
-                  : "text-destructive border border-destructive/30 bg-destructive/5"
+                  ? "btn-farm-red flex-1 py-3"
+                  : "rounded-2xl px-3 py-3 text-destructive border-2 border-destructive/30 bg-destructive/10"
               }`}
             >
               {busyAction === "slaughter" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Scissors className="h-3.5 w-3.5" />}
