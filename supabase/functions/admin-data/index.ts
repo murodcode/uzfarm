@@ -306,19 +306,21 @@ Deno.serve(async (req) => {
       if (status === "rejected") {
         const { data: wd } = await adminClient
           .from("withdrawal_requests")
-          .select("user_id, amount")
+          .select("user_id, amount, referrals_consumed")
           .eq("id", withdrawal_id)
           .single();
         if (wd) {
           const { data: userProfile } = await adminClient
             .from("profiles")
-            .select("cash")
+            .select("cash, referral_count")
             .eq("id", wd.user_id)
             .single();
           if (userProfile) {
-            await adminClient.from("profiles").update({
-              cash: (userProfile.cash || 0) + wd.amount,
-            }).eq("id", wd.user_id);
+            const updates: any = { cash: (userProfile.cash || 0) + wd.amount };
+            if (wd.referrals_consumed > 0) {
+              updates.referral_count = (userProfile.referral_count || 0) + wd.referrals_consumed;
+            }
+            await adminClient.from("profiles").update(updates).eq("id", wd.user_id);
           }
         }
       }
