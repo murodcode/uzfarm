@@ -49,7 +49,7 @@ export default function FarmDetail() {
   };
 
   const handleCollectMilk = async (id: string) => {
-    const adOk = await showAd();
+    const adOk = await showFeedAd();
     if (!adOk) return;
     const milk = await collectMilk(id);
     if (milk > 0) {
