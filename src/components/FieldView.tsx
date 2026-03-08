@@ -86,7 +86,7 @@ export default function FieldView({
         </div>
         <button
           onClick={() => navigate(`/shop?field=${fieldNumber}`)}
-          className="btn-farm-brown flex items-center gap-1.5 px-3 py-1.5 text-xs"
+          className="flex items-center gap-1.5 rounded-xl bg-secondary/15 border border-secondary/30 px-3 py-1.5 text-xs font-bold text-secondary transition-transform active:scale-95"
         >
           <ShoppingBag className="h-3.5 w-3.5" />
           Do'kon

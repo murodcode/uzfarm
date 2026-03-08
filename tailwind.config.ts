@@ -57,11 +57,10 @@ export default {
           "brown-light": "hsl(var(--farm-brown-light))",
           gold: "hsl(var(--farm-gold))",
           "gold-light": "hsl(var(--farm-gold-light))",
-          wood: "hsl(var(--farm-wood))",
-          "wood-light": "hsl(var(--farm-wood-light))",
+          sky: "hsl(var(--farm-sky))",
+          "sky-light": "hsl(var(--farm-sky-light))",
           red: "hsl(var(--farm-red))",
           "red-light": "hsl(var(--farm-red-light))",
-          hay: "hsl(var(--farm-hay))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

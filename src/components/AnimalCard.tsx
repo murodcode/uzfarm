@@ -123,37 +123,36 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="farm-card overflow-hidden relative"
+      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden relative"
     >
       {/* Action animation overlay */}
       <AnimalActionAnimation action={activeAnimation} animalTypeId={animal.typeId} onComplete={() => setActiveAnimation(null)} />
       {/* Big Animal Illustration */}
       <div
-        className="relative flex items-center justify-center pt-5 pb-3 -mx-4 -mt-4 rounded-t-2xl"
+        className="relative flex items-center justify-center pt-5 pb-3"
         style={{ background: animalAnim.color }}
       >
         {/* Status badge */}
-        <div className="absolute top-2.5 right-3">
+        <div className="absolute top-2 right-3">
           {isGrown ? (
-            <span className="text-[10px] font-bold bg-primary text-primary-foreground rounded-full px-2.5 py-1 shadow-md"
-              style={{ boxShadow: '0 2px 8px hsl(142 50% 36% / 0.3)' }}>
+            <span className="text-[10px] font-bold text-primary bg-card rounded-full px-2 py-0.5 shadow-sm">
               ✓ Tayyor
             </span>
           ) : (
-            <span className="text-[10px] font-bold text-muted-foreground bg-card rounded-full px-2.5 py-1 shadow-sm border border-border">
+            <span className="text-[10px] font-bold text-muted-foreground bg-card rounded-full px-2 py-0.5 shadow-sm">
               🌱 O'smoqda
             </span>
           )}
         </div>
         {/* Hunger dot */}
-        <div className="absolute top-2.5 left-3 flex items-center gap-1 bg-card/80 rounded-full px-2 py-0.5 border border-border">
+        <div className="absolute top-2 left-3 flex items-center gap-1">
           <span className={`inline-block h-2 w-2 rounded-full ${isHungry ? 'bg-destructive' : 'bg-primary'}`} />
-          <span className="text-[10px] font-bold text-foreground">{isHungry ? "Och" : "To'q"}</span>
+          <span className="text-[10px] font-semibold text-muted-foreground">{isHungry ? "Och" : "To'q"}</span>
         </div>
 
         {/* Animated animal emoji */}
         <motion.div
-          animate={{ y: [0, -8, 0] }}
+          animate={{ y: [0, -6, 0] }}
           transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
           className="text-7xl select-none drop-shadow-lg"
         >
@@ -163,7 +162,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
         {/* Feed cost */}
         {!isGrown && (
           <div className="absolute bottom-2 right-3">
-            <span className="text-[10px] font-bold text-foreground bg-card/90 rounded-lg px-2 py-0.5 border border-border">
+            <span className="text-[10px] font-bold text-muted-foreground bg-card/80 rounded-lg px-2 py-0.5">
               🪙 {type.feedCost}
             </span>
           </div>
@@ -263,12 +262,12 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2">
           {canFeed ? (
             <button
               onClick={() => handleAction("feed", onFeed)}
               disabled={!!busyAction}
-              className="btn-farm flex flex-1 items-center justify-center gap-1.5 py-3 text-xs disabled:opacity-60"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-primary py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-60"
             >
               {busyAction === "feed" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Utensils className="h-3.5 w-3.5" />}
               Boqish
@@ -284,7 +283,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             <button
               onClick={() => handleAction("collect", onCollect)}
               disabled={accumulatedEggs === 0 || !!busyAction}
-              className="btn-farm-gold flex flex-1 items-center justify-center gap-1.5 py-3 text-xs disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform bg-secondary disabled:opacity-50"
             >
               {busyAction === "collect" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Egg className="h-3.5 w-3.5" />}
               Yig'ish ({accumulatedEggs})
@@ -295,7 +294,8 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             <button
               onClick={() => handleAction("milk", onCollectMilk)}
               disabled={accumulatedMilk === 0 || !!busyAction}
-              className="btn-farm-gold flex flex-1 items-center justify-center gap-1.5 py-3 text-xs disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl py-3 text-xs font-bold text-primary-foreground active:scale-95 transition-transform disabled:opacity-50"
+              style={{ background: 'hsl(210 70% 55%)' }}
             >
               {busyAction === "milk" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Droplets className="h-3.5 w-3.5" />}
               Sut ({accumulatedMilk})
@@ -306,10 +306,10 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
             <button
               onClick={() => handleAction("slaughter", onSlaughter)}
               disabled={!!busyAction}
-              className={`flex items-center justify-center gap-1 text-xs font-bold active:scale-95 transition-transform disabled:opacity-60 ${
+              className={`flex items-center justify-center gap-1 rounded-xl px-3 py-3 text-xs font-bold active:scale-95 transition-transform disabled:opacity-60 ${
                 !isEggType && !isMilkType
-                  ? "btn-farm-red flex-1 py-3"
-                  : "rounded-2xl px-3 py-3 text-destructive border-2 border-destructive/30 bg-destructive/10"
+                  ? "flex-1 rounded-2xl text-destructive-foreground bg-destructive"
+                  : "text-destructive border border-destructive/30 bg-destructive/5"
               }`}
             >
               {busyAction === "slaughter" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Scissors className="h-3.5 w-3.5" />}
