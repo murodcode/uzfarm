@@ -366,7 +366,7 @@ export function useRewardedAd() {
             capping: 0,
             interval: 0,
             timeout: 0,
-            everyPage: true,
+            everyPage: false,
           },
         });
 
