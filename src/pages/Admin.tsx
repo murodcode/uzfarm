@@ -1119,19 +1119,22 @@ export default function Admin() {
                     <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
                       <Bot className="h-4 w-4" /> 🤖 AI Avto Javob
                     </h3>
-                    <Switch
-                      checked={appSettings.ai_auto_reply?.enabled === true}
-                      onCheckedChange={async (checked) => {
-                        await saveToggleSetting(
-                          "ai_auto_reply",
-                          checked,
-                          "ai-toggle",
-                          "AI avto javob yoqildi",
-                          "AI avto javob o'chirildi"
-                        );
-                      }}
-                      disabled={processing === "ai-toggle"}
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => saveBooleanSetting("ai_auto_reply", true, "ai-toggle", "AI avto javob yoqildi", "AI avto javob o'chirildi")}
+                        disabled={processing === "ai-toggle" || appSettings.ai_auto_reply?.enabled === true}
+                        className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground disabled:opacity-50"
+                      >
+                        Yoqish
+                      </button>
+                      <button
+                        onClick={() => saveBooleanSetting("ai_auto_reply", false, "ai-toggle", "AI avto javob yoqildi", "AI avto javob o'chirildi")}
+                        disabled={processing === "ai-toggle" || appSettings.ai_auto_reply?.enabled !== true}
+                        className="rounded-lg bg-muted px-3 py-1.5 text-[10px] font-bold text-foreground disabled:opacity-50"
+                      >
+                        O'chirish
+                      </button>
+                    </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Yoqilganda foydalanuvchi xabarlariga AI avtomatik javob beradi</p>
                 </div>
