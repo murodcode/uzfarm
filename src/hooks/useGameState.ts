@@ -268,6 +268,7 @@ export function useGameState() {
     let bought = false;
     const animalId = crypto.randomUUID();
     const now = Date.now();
+    let newState: GameState | null = null;
 
     setState((prev) => {
       if (prev.coins < type.price) return prev;
@@ -288,14 +289,19 @@ export function useGameState() {
         grownAt: 0,
         feedCount: 0,
       };
-      return {
+      const updated = {
         ...prev,
         coins: prev.coins - type.price,
         animals: [...prev.animals, animal],
       };
+      newState = updated;
+      return updated;
     });
 
     if (bought && userId) {
+      // Immediately sync coins to DB
+      if (newState) syncProfileNow(newState);
+
       const { error: insertError } = await supabase.from("animals").insert({
         id: animalId,
         user_id: userId,
@@ -323,7 +329,7 @@ export function useGameState() {
     }
 
     return bought;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const feedAnimal = useCallback(async (animalId: string): Promise<boolean> => {
     const now = Date.now();
