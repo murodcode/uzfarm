@@ -7,8 +7,10 @@ import { expRequired } from "@/lib/levelSystem";
 import { ANIMAL_TYPES, FIELD_NAMES, FIELD_EMOJIS, FIELD_PRICES, getFieldMaxOwned, countAnimalsByTypeInField } from "@/lib/gameData";
 import { Lock, ChevronRight } from "lucide-react";
 
+import { toast } from "sonner";
+
 export default function Home() {
-  const { state, levelUpEvent, dismissLevelUp } = useGameContext();
+  const { state, levelUpEvent, dismissLevelUp, unlockField } = useGameContext();
   const navigate = useNavigate();
 
   const required = expRequired(state.level);
