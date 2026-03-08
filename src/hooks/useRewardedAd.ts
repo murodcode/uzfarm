@@ -20,6 +20,9 @@ declare global {
 }
 
 let adsgramController: AdController | null = null;
+let monetagInFlight: Promise<boolean> | null = null;
+let lastMonetagSuccessAt = 0;
+const MONETAG_COOLDOWN_MS = 15000;
 
 // Global flag to prevent DB reload during ad flow
 export let adFlowActive = false;
@@ -339,6 +342,13 @@ export function useRewardedAd() {
 
   const showMonetag = useCallback((): Promise<boolean> => {
     if (showingRef.current) return Promise.resolve(false);
+
+    if (Date.now() - lastMonetagSuccessAt < MONETAG_COOLDOWN_MS) {
+      return Promise.resolve(true);
+    }
+
+    if (monetagInFlight) return monetagInFlight;
+
     if (!monetagReadyRef.current || !window.show_10612725) {
       toast.error("Reklama hali yuklanmagan, 1-2 soniyada qayta urinib ko'ring");
       return Promise.resolve(false);
@@ -347,24 +357,26 @@ export function useRewardedAd() {
     showingRef.current = true;
     adFlowActive = true;
 
-    return new Promise((resolve) => {
+    monetagInFlight = new Promise((resolve) => {
       let settled = false;
 
       const finish = (ok: boolean) => {
         if (settled) return;
         settled = true;
+        if (ok) lastMonetagSuccessAt = Date.now();
         showingRef.current = false;
+        monetagInFlight = null;
         setTimeout(() => { adFlowActive = false; }, 300);
         resolve(ok);
       };
 
       try {
-        const result = window.show_10612725({
+        const result = window.show_10612725?.({
           type: "inApp",
           inAppSettings: {
             frequency: 1,
-            capping: 0,
-            interval: 0,
+            capping: 1,
+            interval: 60,
             timeout: 0,
             everyPage: false,
           },
@@ -391,6 +403,8 @@ export function useRewardedAd() {
         finish(false);
       }
     });
+
+    return monetagInFlight;
   }, []);
 
   const withAd = useCallback(
