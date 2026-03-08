@@ -15,7 +15,7 @@ export default function FarmDetail() {
   const farmNumber = parseInt(id || "1");
   const navigate = useNavigate();
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, unlockField } = useGameContext();
-  const { showAd, showFeedAd } = useRewardedAd();
+  const { showFeedAd } = useRewardedAd();
 
   const isUnlocked = farmNumber <= state.unlockedFields;
   const farmAnimals = state.animals.filter(a => a.field === farmNumber);
