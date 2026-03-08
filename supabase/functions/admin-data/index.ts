@@ -528,7 +528,7 @@ Deno.serve(async (req) => {
         return json({ error: "key kerak" }, 400);
       }
 
-      const normalizedValue = key === "withdrawal_control"
+      const normalizedValue = ["withdrawal_control", "ai_auto_reply"].includes(key)
         ? { enabled: value?.enabled === true }
         : value;
 

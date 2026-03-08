@@ -195,6 +195,33 @@ export default function Admin() {
     setLoading(false);
   };
 
+  const saveToggleSetting = async (
+    key: "withdrawal_control" | "ai_auto_reply",
+    checked: boolean,
+    processingKey: string,
+    successOn: string,
+    successOff: string,
+  ) => {
+    if (processing === processingKey) return;
+
+    const prevSettings = { ...appSettings };
+    const optimisticValue = { ...(appSettings[key] || {}), enabled: checked };
+    setAppSettings((prev) => ({ ...prev, [key]: optimisticValue }));
+    setProcessing(processingKey);
+
+    try {
+      await callAdmin({ action: "update_settings", key, value: optimisticValue });
+      const refreshed = await callAdmin({ action: "get_settings" });
+      setAppSettings(refreshed?.settings || {});
+      toast.success(checked ? successOn : successOff);
+    } catch (e: any) {
+      setAppSettings(prevSettings);
+      toast.error("Xatolik: " + e.message);
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const handleWithdrawal = async (id: string, action: "approved" | "rejected") => {
     if (processing) return;
     setProcessing("withdrawal");
@@ -1094,11 +1121,16 @@ export default function Admin() {
                     </h3>
                     <Switch
                       checked={appSettings.ai_auto_reply?.enabled === true}
-                      onCheckedChange={(checked) => {
-                        const updated = { ...appSettings.ai_auto_reply, enabled: checked };
-                        setAppSettings(prev => ({ ...prev, ai_auto_reply: updated }));
-                        callAdmin({ action: "update_settings", key: "ai_auto_reply", value: updated }).then(() => toast.success("Saqlandi"));
+                      onCheckedChange={async (checked) => {
+                        await saveToggleSetting(
+                          "ai_auto_reply",
+                          checked,
+                          "ai-toggle",
+                          "AI avto javob yoqildi",
+                          "AI avto javob o'chirildi"
+                        );
                       }}
+                      disabled={processing === "ai-toggle"}
                     />
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">Yoqilganda foydalanuvchi xabarlariga AI avtomatik javob beradi</p>
@@ -1129,31 +1161,15 @@ export default function Admin() {
                     <Switch
                       checked={appSettings.withdrawal_control?.enabled === true}
                       onCheckedChange={async (checked) => {
-                        if (processing === "withdrawal-toggle") return;
-
-                        const oldSettings = { ...appSettings };
-                        const optimistic = { ...appSettings.withdrawal_control, enabled: checked };
-                        setAppSettings(prev => ({ ...prev, withdrawal_control: optimistic }));
-                        setProcessing("withdrawal-toggle");
-
-                        try {
-                          const res = await callAdmin({ action: "update_settings", key: "withdrawal_control", value: optimistic });
-                          const persisted = res?.setting?.value;
-                          setAppSettings(prev => ({
-                            ...prev,
-                            withdrawal_control: {
-                              ...prev.withdrawal_control,
-                              enabled: persisted?.enabled === true,
-                            },
-                          }));
-                          toast.success(checked ? "Pul chiqarish yoqildi" : "Pul chiqarish o'chirildi");
-                        } catch (e: any) {
-                          setAppSettings(oldSettings);
-                          toast.error("Xatolik: " + e.message);
-                        } finally {
-                          setProcessing(null);
-                        }
+                        await saveToggleSetting(
+                          "withdrawal_control",
+                          checked,
+                          "withdrawal-toggle",
+                          "Pul chiqarish yoqildi",
+                          "Pul chiqarish o'chirildi"
+                        );
                       }}
+                      disabled={processing === "withdrawal-toggle"}
                     />
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1">
