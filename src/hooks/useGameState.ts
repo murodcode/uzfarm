@@ -396,6 +396,7 @@ export function useGameState() {
     const now = Date.now();
     let success = false;
     let eggsCollected = 0;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -414,14 +415,17 @@ export function useGameState() {
       success = true;
       const updated = [...prev.animals];
       updated[idx] = { ...animal, lastCollectedAt: now };
-      return {
+      const result = {
         ...prev,
         animals: updated,
         eggs: prev.eggs + eggsCollected,
       };
+      newState = result;
+      return result;
     });
 
     if (success && userId) {
+      if (newState) syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
@@ -429,7 +433,7 @@ export function useGameState() {
     }
 
     return eggsCollected;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const collectMilk = useCallback(async (animalId: string): Promise<number> => {
     const now = Date.now();
