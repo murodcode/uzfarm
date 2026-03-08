@@ -539,6 +539,9 @@ export default function Admin() {
             {/* === NOTIFICATIONS === */}
             {tab === "notifications" && <AdminNotifications />}
 
+            {/* === CONTEST === */}
+            {tab === "contest" && <AdminContestManager />}
+
             {/* === CHAT === */}
             {tab === "chat" && (
               <div className="space-y-3">
