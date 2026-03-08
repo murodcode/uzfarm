@@ -85,10 +85,20 @@ export default function Withdraw() {
 
   const handleWithdraw = async () => {
     if (!isValid || loading || !profile) return;
-    if (!withdrawalEnabled) {
+
+    const { data: liveControl } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "withdrawal_control")
+      .single();
+
+    const liveEnabled = (liveControl?.value as any)?.enabled === true;
+    if (!liveEnabled) {
+      setWithdrawalEnabled(false);
       toast.error("⚠️ Hozircha to'lovlar vaqtincha yopilgan. Iltimos, kuting.");
       return;
     }
+
     setLoading(true);
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
