@@ -41,7 +41,7 @@ export default function FieldView({
           {fieldNumber}x hayvon sig'imi
         </p>
         <p className="text-sm font-bold text-primary mb-4">
-          🪙 {price?.toLocaleString()} tanga
+          💵 {price?.toLocaleString()} pul
         </p>
         <button
           onClick={onUnlock}
