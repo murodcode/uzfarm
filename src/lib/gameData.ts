@@ -145,6 +145,39 @@ export function getMarketPrice(type: "egg" | "meat" | "milk"): number {
   return base + Math.floor(Math.random() * variance * 2 - variance);
 }
 
+// Field system
+export const FIELD_PRICES: Record<number, number> = {
+  2: 50000,
+  3: 150000,
+};
+
+export const FIELD_NAMES: Record<number, string> = {
+  1: "1-maydon",
+  2: "2-maydon",
+  3: "3-maydon",
+};
+
+export const FIELD_EMOJIS: Record<number, string> = {
+  1: "🌿",
+  2: "🌻",
+  3: "🌾",
+};
+
+/**
+ * Get max animals of a type allowed in a specific field.
+ * Field 1 = base maxOwned, Field 2 = 2x, Field 3 = 3x
+ */
+export function getFieldMaxOwned(type: AnimalType, field: number): number {
+  return type.maxOwned * field;
+}
+
+/**
+ * Count animals of a type in a specific field (alive only).
+ */
+export function countAnimalsByTypeInField(animals: OwnedAnimal[], typeId: string, field: number): number {
+  return animals.filter(a => a.typeId === typeId && a.field === field && !isAnimalDead(a)).length;
+}
+
 export function createDefaultGameState(): GameState {
   return {
     coins: STARTING_BALANCE,
@@ -156,6 +189,7 @@ export function createDefaultGameState(): GameState {
     level: 1,
     exp: 0,
     registeredAt: Date.now(),
+    unlockedFields: 1,
   };
 }
 
