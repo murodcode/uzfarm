@@ -60,7 +60,7 @@ export default function Withdraw() {
               if (v.coins_per_som) setCoinsPerSom(v.coins_per_som);
             }
             if (row.key === "withdrawal_control" && typeof v === "object") {
-              setWithdrawalEnabled(v.enabled !== false);
+              setWithdrawalEnabled(v.enabled === true);
             }
             if (row.key === "payment_day" && typeof v === "object") {
               setPaymentDayText(v.text || "");
