@@ -177,6 +177,9 @@ export default function Profile() {
           </button>
         </motion.div>
 
+        {/* Notifications */}
+        {!!session && <NotificationsList />}
+
         {/* Admin panel link */}
         {isAdmin && (
           <motion.div
