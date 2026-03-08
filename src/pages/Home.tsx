@@ -6,7 +6,7 @@ import { useGameContext } from "@/contexts/GameStateContext";
 import { toast } from "sonner";
 import { ShoppingBag } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useRewardedAd, useEntryAd } from "@/hooks/useRewardedAd";
+import { useRewardedAd } from "@/hooks/useRewardedAd";
 import { expRequired } from "@/lib/levelSystem";
 import { EXP_SOURCES } from "@/lib/levelSystem";
 import { ANIMAL_TYPES, getAnimalType } from "@/lib/gameData";
@@ -16,7 +16,6 @@ export default function Home() {
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
   const navigate = useNavigate();
   const { showAd, showFeedAd } = useRewardedAd();
-  useEntryAd();
 
   const handleFeed = async (id: string) => {
     const adOk = await showFeedAd();
