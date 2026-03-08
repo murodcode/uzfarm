@@ -17,6 +17,7 @@ import Admin from "./pages/Admin";
 import Leaderboard from "./pages/Leaderboard";
 import Referral from "./pages/Referral";
 import Chat from "./pages/Chat";
+import FarmDetail from "./pages/FarmDetail";
 import NotFound from "./pages/NotFound";
 import BottomNav from "./components/BottomNav";
 import LoadingScreen from "./components/LoadingScreen";
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/farm/:id" element={<FarmDetail />} />
           <Route path="/market" element={<Market />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/profile" element={<Profile />} />

@@ -117,7 +117,7 @@ export default function FieldView({
           className="farm-card flex flex-col items-center py-8 text-center"
         >
           <span className="text-4xl mb-2">{FIELD_EMOJIS[fieldNumber]}</span>
-          <h3 className="text-base font-black text-foreground mb-1">Maydon bo'sh</h3>
+          <h3 className="text-base font-black text-foreground mb-1">Ferma bo'sh</h3>
           <p className="text-sm text-muted-foreground mb-3">
             Do'kondan hayvon sotib oling!
           </p>
