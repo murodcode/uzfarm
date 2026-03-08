@@ -124,7 +124,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
       className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden relative"
     >
       {/* Action animation overlay */}
-      <AnimalActionAnimation action={activeAnimation} onComplete={() => setActiveAnimation(null)} />
+      <AnimalActionAnimation action={activeAnimation} animalTypeId={animal.typeId} onComplete={() => setActiveAnimation(null)} />
       {/* Big Animal Illustration */}
       <div
         className="relative flex items-center justify-center pt-5 pb-3"
