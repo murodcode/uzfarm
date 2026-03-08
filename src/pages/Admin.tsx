@@ -103,6 +103,13 @@ export default function Admin() {
   const [chatProfile, setChatProfile] = useState<any>(null);
   const [chatReplyText, setChatReplyText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  // General chat management
+  const [chatSubTab, setChatSubTab] = useState<"private" | "general">("private");
+  const [generalChatMsgs, setGeneralChatMsgs] = useState<any[]>([]);
+  const [chatBans, setChatBans] = useState<any[]>([]);
+  const [generalChatEnabled, setGeneralChatEnabled] = useState(true);
+  const [generalChatLockMsg, setGeneralChatLockMsg] = useState("");
+  const [banTgId, setBanTgId] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
