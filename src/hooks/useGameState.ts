@@ -505,7 +505,7 @@ export function useGameState() {
     }
   }, [userId, syncProfileNow]);
 
-  const sellProduct = useCallback((type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
+  const sellProduct = useCallback(async (type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
     let sold = false;
     let newState: GameState | null = null;
     setState((prev) => {
