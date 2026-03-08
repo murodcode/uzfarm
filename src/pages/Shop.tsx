@@ -10,7 +10,7 @@ export default function Shop() {
   const { showFeedAd } = useRewardedAd();
 
   const handleBuy = async (typeId: string) => {
-    const adOk = await showFeedAd();
+    const adOk = await showFeedAd("🛒 Sotib olish", "sotib olish");
     if (!adOk) return;
     const result = await buyAnimal(typeId);
     if (result) {

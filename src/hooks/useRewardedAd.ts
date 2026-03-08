@@ -322,12 +322,12 @@ export function useRewardedAd() {
     }
   }, []);
 
-  const showFeedAd = useCallback(async (): Promise<boolean> => {
+  const showFeedAd = useCallback(async (actionLabel?: string, actionName?: string): Promise<boolean> => {
     if (showingRef.current) return false;
     showingRef.current = true;
     adFlowActive = true;
     try {
-      const ok = await showFeedAdOverlay();
+      const ok = await showFeedAdOverlay(actionLabel, actionName);
       showingRef.current = false;
       setTimeout(() => { adFlowActive = false; }, 3000);
       return ok;

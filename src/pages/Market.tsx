@@ -48,7 +48,7 @@ export default function Market() {
       return;
     }
 
-    const adOk = await showFeedAd();
+    const adOk = await showFeedAd("💰 Sotish", "sotish");
     if (!adOk) return;
 
     sellProduct(type, qty, price);
