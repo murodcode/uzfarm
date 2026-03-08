@@ -11,7 +11,7 @@ import { logUserAction } from "@/lib/userLogger";
 
 export default function Market() {
   const { state, sellProduct } = useGameContext();
-  const { showAd } = useRewardedAd();
+  const { showMonetag } = useRewardedAd();
   const [eggPrice, setEggPrice] = useState(50);
   const [meatPrice, setMeatPrice] = useState(300);
   const [milkPrice, setMilkPrice] = useState(150);
@@ -48,8 +48,7 @@ export default function Market() {
       return;
     }
 
-    const adOk = await showAd();
-    if (!adOk) return;
+    await showMonetag();
 
     sellProduct(type, qty, price);
     const total = qty * price;
