@@ -13,6 +13,7 @@ import { incrementDailyTask } from "@/lib/dailyTasks";
 import { EXP_SOURCES, LEVEL_UP_COIN_REWARD, processLevelUp } from "@/lib/levelSystem";
 import { toast } from "sonner";
 import { logUserAction } from "@/lib/userLogger";
+import { adFlowActive } from "@/hooks/useRewardedAd";
 
 const STORAGE_KEY = "farm_empire_state";
 
@@ -151,10 +152,13 @@ export function useGameState() {
     return () => subscription.unsubscribe();
   }, [filterDeadAnimals]);
 
-  // Refresh from DB when user returns to the app
+  // Refresh from DB when user returns to the app (skip during ad flow)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible" && userId && initializedFromDb.current) {
+        // Skip reload if ad flow is active to prevent overwriting local state
+        if (adFlowActive) return;
+
         initializedFromDb.current = false;
         const reload = async () => {
           const [profileRes, animalsRes] = await Promise.all([
@@ -214,6 +218,23 @@ export function useGameState() {
     return () => clearInterval(interval);
   }, [userId]);
 
+  // Immediately sync profile to DB (for critical actions)
+  const syncProfileNow = useCallback(async (newState: GameState) => {
+    if (!userId || !initializedFromDb.current) return;
+    await supabase
+      .from("profiles")
+      .update({
+        coins: newState.coins,
+        cash: newState.cash,
+        eggs: newState.eggs,
+        meat: newState.meat,
+        milk: newState.milk,
+        level: newState.level,
+        exp: newState.exp,
+      })
+      .eq("id", userId);
+  }, [userId]);
+
   // Save to localStorage and debounce-sync profile to Supabase
   useEffect(() => {
     saveState(state);
@@ -247,6 +268,7 @@ export function useGameState() {
     let bought = false;
     const animalId = crypto.randomUUID();
     const now = Date.now();
+    let newState: GameState | null = null;
 
     setState((prev) => {
       if (prev.coins < type.price) return prev;
@@ -267,14 +289,19 @@ export function useGameState() {
         grownAt: 0,
         feedCount: 0,
       };
-      return {
+      const updated = {
         ...prev,
         coins: prev.coins - type.price,
         animals: [...prev.animals, animal],
       };
+      newState = updated;
+      return updated;
     });
 
     if (bought && userId) {
+      // Immediately sync coins to DB
+      if (newState) syncProfileNow(newState);
+
       const { error: insertError } = await supabase.from("animals").insert({
         id: animalId,
         user_id: userId,
@@ -302,11 +329,12 @@ export function useGameState() {
     }
 
     return bought;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const feedAnimal = useCallback(async (animalId: string): Promise<boolean> => {
     const now = Date.now();
     let feedResult: { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean } | null = null;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -335,14 +363,19 @@ export function useGameState() {
         feedCount: newFeedCount,
         grownAt: justGrown ? now : animal.grownAt,
       };
-      return {
+      const result = {
         ...prev,
         coins: prev.coins - type.feedCost,
         animals: updated,
       };
+      newState = result;
+      return result;
     });
 
     if (feedResult && userId) {
+      // Immediately sync coins to DB
+      if (newState) syncProfileNow(newState);
+
       const fr = feedResult as { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean };
       const updateData: any = {
         growth_percent: fr.newGrowth,
@@ -357,12 +390,13 @@ export function useGameState() {
       return true;
     }
     return false;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const collectEggs = useCallback(async (animalId: string): Promise<number> => {
     const now = Date.now();
     let success = false;
     let eggsCollected = 0;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -381,14 +415,17 @@ export function useGameState() {
       success = true;
       const updated = [...prev.animals];
       updated[idx] = { ...animal, lastCollectedAt: now };
-      return {
+      const result = {
         ...prev,
         animals: updated,
         eggs: prev.eggs + eggsCollected,
       };
+      newState = result;
+      return result;
     });
 
     if (success && userId) {
+      if (newState) syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
@@ -396,12 +433,13 @@ export function useGameState() {
     }
 
     return eggsCollected;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const collectMilk = useCallback(async (animalId: string): Promise<number> => {
     const now = Date.now();
     let milkCollected = 0;
     let didCollect = false;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -420,24 +458,28 @@ export function useGameState() {
       didCollect = true;
       const updated = [...prev.animals];
       updated[idx] = { ...animal, lastCollectedAt: now };
-      return {
+      const result = {
         ...prev,
         animals: updated,
         milk: prev.milk + milkCollected,
       };
+      newState = result;
+      return result;
     });
 
     if (didCollect && userId) {
+      if (newState) syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
     }
 
     return milkCollected;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const slaughterAnimal = useCallback(async (animalId: string) => {
     let success = false;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -447,20 +489,24 @@ export function useGameState() {
       if (!type || animal.growthPercent < 100) return prev;
 
       success = true;
-      return {
+      const result = {
         ...prev,
         animals: prev.animals.filter((a) => a.id !== animalId),
         meat: prev.meat + type.meatYield,
       };
+      newState = result;
+      return result;
     });
 
     if (success && userId) {
+      if (newState) syncProfileNow(newState);
       await supabase.from("animals").delete().eq("id", animalId).eq("user_id", userId);
     }
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const sellProduct = useCallback((type: "egg" | "meat" | "milk", quantity: number, pricePerUnit: number) => {
     let sold = false;
+    let newState: GameState | null = null;
     setState((prev) => {
       const available = type === "egg" ? prev.eggs : type === "meat" ? prev.meat : prev.milk;
       if (quantity > available || quantity <= 0) return prev;
@@ -469,17 +515,20 @@ export function useGameState() {
       const coinShare = Math.floor(total * SELL_SPLIT.coinPercent / 100);
       const cashShare = total - coinShare;
       const fieldKey = type === "egg" ? "eggs" : type === "meat" ? "meat" : "milk";
-      return {
+      const result = {
         ...prev,
         [fieldKey]: available - quantity,
         coins: prev.coins + coinShare,
         cash: prev.cash + cashShare,
       };
+      newState = result;
+      return result;
     });
     if (sold && userId) {
+      if (newState) syncProfileNow(newState);
       incrementDailyTask(userId, "sell_product");
     }
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const exchangeCurrency = useCallback((from: "coins" | "cash", amount: number) => {
     setState((prev) => {

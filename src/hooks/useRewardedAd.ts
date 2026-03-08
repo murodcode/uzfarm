@@ -21,6 +21,9 @@ declare global {
 
 let adsgramController: AdController | null = null;
 
+// Global flag to prevent DB reload during ad flow
+export let adFlowActive = false;
+
 function getAdsgramController(): AdController | null {
   if (adsgramController) return adsgramController;
   if (window.Adsgram) {
@@ -185,12 +188,16 @@ export function useRewardedAd() {
   const showAd = useCallback(async (): Promise<boolean> => {
     if (showingRef.current) return false;
     showingRef.current = true;
+    adFlowActive = true;
     try {
       const ok = await showAdOverlay();
       showingRef.current = false;
+      // Keep adFlowActive true for a short period to let the action complete & sync
+      setTimeout(() => { adFlowActive = false; }, 3000);
       return ok;
     } catch {
       showingRef.current = false;
+      adFlowActive = false;
       return false;
     }
   }, []);
