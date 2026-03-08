@@ -480,6 +480,7 @@ export default function Admin() {
     { key: "referral_rank", label: "Ref.reyting", icon: Trophy },
     { key: "tasks", label: "Vazifalar", icon: CheckCircle },
     { key: "messaging", label: "Xabarlar", icon: MessageCircle },
+    { key: "contest", label: "Konkurs", icon: Trophy },
     { key: "admins", label: "Adminlar", icon: Shield },
     { key: "settings", label: "Sozlamalar", icon: Settings },
   ];
