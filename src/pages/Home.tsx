@@ -19,8 +19,6 @@ export default function Home() {
   useEntryAd();
 
   const handleFeed = async (id: string) => {
-    const adOk = await showAd();
-    if (!adOk) return;
     const success = await feedAnimal(id);
     if (success) {
       gainExp(EXP_SOURCES.feed_animal);
