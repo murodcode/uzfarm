@@ -111,6 +111,8 @@ export default function Withdraw() {
       return;
     }
 
+    setLoading(true);
+
     // Live referral check
     const { data: liveRef } = await supabase
       .from("app_settings")
