@@ -439,6 +439,7 @@ export function useGameState() {
     const now = Date.now();
     let milkCollected = 0;
     let didCollect = false;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -457,21 +458,24 @@ export function useGameState() {
       didCollect = true;
       const updated = [...prev.animals];
       updated[idx] = { ...animal, lastCollectedAt: now };
-      return {
+      const result = {
         ...prev,
         animals: updated,
         milk: prev.milk + milkCollected,
       };
+      newState = result;
+      return result;
     });
 
     if (didCollect && userId) {
+      if (newState) syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
     }
 
     return milkCollected;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const slaughterAnimal = useCallback(async (animalId: string) => {
     let success = false;
