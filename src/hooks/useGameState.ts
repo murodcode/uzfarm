@@ -218,6 +218,23 @@ export function useGameState() {
     return () => clearInterval(interval);
   }, [userId]);
 
+  // Immediately sync profile to DB (for critical actions)
+  const syncProfileNow = useCallback(async (newState: GameState) => {
+    if (!userId || !initializedFromDb.current) return;
+    await supabase
+      .from("profiles")
+      .update({
+        coins: newState.coins,
+        cash: newState.cash,
+        eggs: newState.eggs,
+        meat: newState.meat,
+        milk: newState.milk,
+        level: newState.level,
+        exp: newState.exp,
+      })
+      .eq("id", userId);
+  }, [userId]);
+
   // Save to localStorage and debounce-sync profile to Supabase
   useEffect(() => {
     saveState(state);
