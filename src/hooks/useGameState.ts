@@ -218,10 +218,10 @@ export function useGameState() {
     return () => clearInterval(interval);
   }, [userId]);
 
-  // Immediately sync profile to DB (for critical actions)
+  // Immediately sync profile to DB (for critical actions - no guard on initializedFromDb)
   const syncProfileNow = useCallback(async (newState: GameState) => {
-    if (!userId || !initializedFromDb.current) return;
-    await supabase
+    if (!userId) return;
+    const { error } = await supabase
       .from("profiles")
       .update({
         coins: newState.coins,
@@ -233,6 +233,7 @@ export function useGameState() {
         exp: newState.exp,
       })
       .eq("id", userId);
+    if (error) console.error("Immediate sync error:", error);
   }, [userId]);
 
   // Save to localStorage and debounce-sync profile to Supabase
