@@ -426,7 +426,7 @@ export function useGameState() {
     });
 
     if (success && userId) {
-      if (newState) syncProfileNow(newState);
+      if (newState) await syncProfileNow(newState);
       await supabase.from("animals").update({
         last_collected_at: new Date(now).toISOString(),
       }).eq("id", animalId).eq("user_id", userId);
