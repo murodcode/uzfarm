@@ -334,6 +334,7 @@ export function useGameState() {
   const feedAnimal = useCallback(async (animalId: string): Promise<boolean> => {
     const now = Date.now();
     let feedResult: { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean } | null = null;
+    let newState: GameState | null = null;
 
     setState((prev) => {
       const idx = prev.animals.findIndex((a) => a.id === animalId);
@@ -362,14 +363,19 @@ export function useGameState() {
         feedCount: newFeedCount,
         grownAt: justGrown ? now : animal.grownAt,
       };
-      return {
+      const result = {
         ...prev,
         coins: prev.coins - type.feedCost,
         animals: updated,
       };
+      newState = result;
+      return result;
     });
 
     if (feedResult && userId) {
+      // Immediately sync coins to DB
+      if (newState) syncProfileNow(newState);
+
       const fr = feedResult as { success: boolean; newGrowth: number; feedCost: number; newFeedCount: number; justGrown: boolean };
       const updateData: any = {
         growth_percent: fr.newGrowth,
@@ -384,7 +390,7 @@ export function useGameState() {
       return true;
     }
     return false;
-  }, [userId]);
+  }, [userId, syncProfileNow]);
 
   const collectEggs = useCallback(async (animalId: string): Promise<number> => {
     const now = Date.now();
