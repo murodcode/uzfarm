@@ -36,7 +36,7 @@ export default function FarmDetail() {
   };
 
   const handleCollect = async (id: string) => {
-    const adOk = await showAd();
+    const adOk = await showFeedAd();
     if (!adOk) return;
     const eggs = await collectEggs(id);
     if (eggs > 0) {
