@@ -263,6 +263,45 @@ Deno.serve(async (req) => {
       } else if (data === "admin_user_count") {
         const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true });
         await sendMessage(chatId, `👥 Jami foydalanuvchilar: <b>${count || 0}</b>`);
+      } else if (data === "admin_subscription") {
+        // Show current subscription settings
+        const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+        const sub = subSetting?.value as any || {};
+        const enabled = sub.enabled === true;
+        const channelId = sub.channel_id || "—";
+        const channelUrl = sub.channel_url || "—";
+
+        await sendMessage(chatId,
+          `🔗 <b>Majburiy azolik sozlamalari</b>\n\n` +
+          `📌 Holat: <b>${enabled ? "✅ Yoqilgan" : "❌ O'chirilgan"}</b>\n` +
+          `📢 Kanal ID: <code>${channelId}</code>\n` +
+          `🔗 Kanal URL: ${channelUrl}\n`,
+          {
+            inline_keyboard: [
+              [{ text: enabled ? "❌ O'chirish" : "✅ Yoqish", callback_data: enabled ? "sub_disable" : "sub_enable" }],
+              [{ text: "📝 Kanal ID o'zgartirish", callback_data: "sub_set_channel" }],
+              [{ text: "🔗 Kanal URL o'zgartirish", callback_data: "sub_set_url" }],
+              [{ text: "🔙 Admin panel", callback_data: "back_admin" }],
+            ],
+          }
+        );
+      } else if (data === "sub_enable" || data === "sub_disable") {
+        const { data: subSetting } = await supabase.from("app_settings").select("value").eq("key", "mandatory_subscription").single();
+        const sub = subSetting?.value as any || {};
+        sub.enabled = data === "sub_enable";
+        await supabase.from("app_settings").upsert(
+          { key: "mandatory_subscription", value: sub, updated_at: new Date().toISOString() },
+          { onConflict: "key" }
+        );
+        await sendMessage(chatId, data === "sub_enable" ? "✅ Majburiy azolik yoqildi!" : "❌ Majburiy azolik o'chirildi!");
+      } else if (data === "sub_set_channel") {
+        await setAdminState(supabase, { action: "sub_set_channel" });
+        await sendMessage(chatId, "📝 Kanal ID ni kiriting (masalan: <code>-1001234567890</code> yoki <code>@kanal_nomi</code>).\n\nBekor qilish: /cancel");
+      } else if (data === "sub_set_url") {
+        await setAdminState(supabase, { action: "sub_set_url" });
+        await sendMessage(chatId, "🔗 Kanal havolasini kiriting (masalan: <code>https://t.me/kanal_nomi</code>).\n\nBekor qilish: /cancel");
+      } else if (data === "back_admin") {
+        await handleAdminPanel(chatId);
       } else if (data.startsWith("approve_wd_")) {
         const wdId = data.replace("approve_wd_", "");
         await supabase.from("withdrawal_requests").update({ status: "approved", processed_at: new Date().toISOString() }).eq("id", wdId);
