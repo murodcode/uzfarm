@@ -287,6 +287,23 @@ function showFeedAdOverlay(): Promise<boolean> {
 
 export function useRewardedAd() {
   const showingRef = useRef(false);
+  const monetagReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (window.show_10612725) {
+      monetagReadyRef.current = true;
+      return;
+    }
+
+    const watcher = window.setInterval(() => {
+      if (window.show_10612725) {
+        monetagReadyRef.current = true;
+        window.clearInterval(watcher);
+      }
+    }, 200);
+
+    return () => window.clearInterval(watcher);
+  }, []);
 
   const showAd = useCallback(async (): Promise<boolean> => {
     if (showingRef.current) return false;
@@ -322,65 +339,57 @@ export function useRewardedAd() {
 
   const showMonetag = useCallback((): Promise<boolean> => {
     if (showingRef.current) return Promise.resolve(false);
+    if (!monetagReadyRef.current || !window.show_10612725) {
+      toast.error("Reklama hali yuklanmagan, 1-2 soniyada qayta urinib ko'ring");
+      return Promise.resolve(false);
+    }
+
     showingRef.current = true;
     adFlowActive = true;
 
     return new Promise((resolve) => {
-      const tryShow = (attempts: number) => {
-        if (window.show_10612725) {
-          let settled = false;
+      let settled = false;
 
-          const finish = (ok: boolean) => {
-            if (settled) return;
-            settled = true;
-            showingRef.current = false;
-            setTimeout(() => { adFlowActive = false; }, 300);
-            resolve(ok);
-          };
-
-          try {
-            const result = window.show_10612725({
-              type: "inApp",
-              inAppSettings: {
-                frequency: 2,
-                capping: 0.1,
-                interval: 30,
-                timeout: 0,
-                everyPage: false,
-              },
-            });
-
-            const safetyTimer = setTimeout(() => {
-              toast.error("Reklama ochilmadi, qayta urinib ko'ring");
-              finish(false);
-            }, 12000);
-
-            Promise.resolve(result)
-              .then(() => {
-                clearTimeout(safetyTimer);
-                recordAdView();
-                finish(true);
-              })
-              .catch(() => {
-                clearTimeout(safetyTimer);
-                toast.error("Reklamani ko'rmasdan davom etib bo'lmaydi");
-                finish(false);
-              });
-          } catch {
-            toast.error("Reklama ishga tushmadi");
-            finish(false);
-          }
-        } else if (attempts < 10) {
-          setTimeout(() => tryShow(attempts + 1), 500);
-        } else {
-          showingRef.current = false;
-          adFlowActive = false;
-          toast.error("Reklama SDK topilmadi");
-          resolve(false);
-        }
+      const finish = (ok: boolean) => {
+        if (settled) return;
+        settled = true;
+        showingRef.current = false;
+        setTimeout(() => { adFlowActive = false; }, 300);
+        resolve(ok);
       };
 
-      tryShow(0);
+      try {
+        const result = window.show_10612725({
+          type: "inApp",
+          inAppSettings: {
+            frequency: 1,
+            capping: 0,
+            interval: 0,
+            timeout: 0,
+            everyPage: true,
+          },
+        });
+
+        const safetyTimer = setTimeout(() => {
+          toast.error("Reklama ochilmadi, qayta urinib ko'ring");
+          finish(false);
+        }, 8000);
+
+        Promise.resolve(result)
+          .then(() => {
+            clearTimeout(safetyTimer);
+            recordAdView();
+            finish(true);
+          })
+          .catch(() => {
+            clearTimeout(safetyTimer);
+            toast.error("Reklamani ko'rmasdan davom etib bo'lmaydi");
+            finish(false);
+          });
+      } catch {
+        toast.error("Reklama ishga tushmadi");
+        finish(false);
+      }
     });
   }, []);
 
