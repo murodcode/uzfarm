@@ -1,79 +1,101 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 
+// Action images per animal type
+import feedCow from "@/assets/anim-feed-cow.png";
+import feedSheep from "@/assets/anim-feed-sheep.png";
+import feedGoat from "@/assets/anim-feed-goat.png";
+import feedChicken from "@/assets/anim-feed-chicken.png";
+import feedTurkey from "@/assets/anim-feed-turkey.png";
+import milkCow from "@/assets/anim-milk-cow.png";
+import collectEgg from "@/assets/anim-collect-egg.png";
+import slaughterImg from "@/assets/anim-slaughter.png";
+
+const FEED_IMAGES: Record<string, string> = {
+  cow: feedCow,
+  sheep: feedSheep,
+  goat: feedGoat,
+  chicken: feedChicken,
+  turkey: feedTurkey,
+};
+
 interface AnimalActionAnimationProps {
   action: "feed" | "collect" | "milk" | "slaughter" | null;
+  animalTypeId: string;
   onComplete: () => void;
 }
 
-const ACTION_CONFIG: Record<string, { emojis: string[]; label: string; bg: string }> = {
-  feed: {
-    emojis: ["🌾", "🥕", "🌽", "🍎", "😋"],
-    label: "Ovqatlanmoqda...",
-    bg: "from-yellow-500/20 to-green-500/20",
-  },
-  collect: {
-    emojis: ["🥚", "🥚", "🥚", "🧺", "✨"],
-    label: "Tuxum yig'ilmoqda...",
-    bg: "from-amber-500/20 to-orange-500/20",
-  },
-  milk: {
-    emojis: ["🥛", "🫗", "💧", "🪣", "✨"],
-    label: "Sut sog'ilmoqda...",
-    bg: "from-blue-500/20 to-cyan-500/20",
-  },
-  slaughter: {
-    emojis: ["🔪", "🥩", "🍖", "💨"],
-    label: "So'yilmoqda...",
-    bg: "from-red-500/20 to-orange-500/20",
-  },
-};
+function getActionImage(action: string, typeId: string): string {
+  if (action === "feed") return FEED_IMAGES[typeId] || feedCow;
+  if (action === "milk") return milkCow;
+  if (action === "collect") return collectEgg;
+  if (action === "slaughter") return slaughterImg;
+  return feedCow;
+}
 
-export default function AnimalActionAnimation({ action, onComplete }: AnimalActionAnimationProps) {
+function getActionLabel(action: string): string {
+  if (action === "feed") return "Ovqatlanmoqda...";
+  if (action === "milk") return "Sut sog'ilmoqda...";
+  if (action === "collect") return "Tuxum yig'ilmoqda...";
+  if (action === "slaughter") return "So'yilmoqda...";
+  return "";
+}
+
+export default function AnimalActionAnimation({ action, animalTypeId, onComplete }: AnimalActionAnimationProps) {
   useEffect(() => {
     if (action) {
-      const timer = setTimeout(onComplete, 1800);
+      const timer = setTimeout(onComplete, 2200);
       return () => clearTimeout(timer);
     }
   }, [action, onComplete]);
 
-  const config = action ? ACTION_CONFIG[action] : null;
-
   return (
     <AnimatePresence>
-      {action && config && (
+      {action && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          className={`absolute inset-0 z-20 flex flex-col items-center justify-center bg-gradient-to-b ${config.bg} backdrop-blur-sm rounded-2xl overflow-hidden`}
+          transition={{ duration: 0.25 }}
+          className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-card/90 backdrop-blur-sm rounded-2xl overflow-hidden"
         >
-          {/* Floating emojis */}
-          <div className="relative w-full h-24 flex items-center justify-center">
-            {config.emojis.map((emoji, i) => (
+          {/* Animated image */}
+          <motion.img
+            src={getActionImage(action, animalTypeId)}
+            alt={action}
+            className="w-32 h-32 object-contain drop-shadow-lg"
+            initial={{ scale: 0.3, opacity: 0, y: 20 }}
+            animate={{
+              scale: [0.3, 1.15, 1],
+              opacity: 1,
+              y: [20, -5, 0],
+            }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+          />
+
+          {/* Sparkle particles */}
+          <div className="absolute inset-0 pointer-events-none">
+            {["✨", "⭐", "💫", "✨"].map((spark, i) => (
               <motion.span
                 key={i}
-                className="absolute text-3xl select-none"
-                initial={{
-                  opacity: 0,
-                  scale: 0,
-                  x: (i - 2) * 25,
-                  y: 20,
+                className="absolute text-xl select-none"
+                style={{
+                  left: `${20 + i * 20}%`,
+                  top: "30%",
                 }}
+                initial={{ opacity: 0, scale: 0, y: 0 }}
                 animate={{
-                  opacity: [0, 1, 1, 0],
-                  scale: [0.3, 1.2, 1, 0.5],
-                  y: [20, -10, -30, -50],
-                  rotate: [0, (i % 2 === 0 ? 15 : -15), 0],
+                  opacity: [0, 1, 0],
+                  scale: [0, 1, 0.5],
+                  y: [0, -30, -50],
                 }}
                 transition={{
-                  duration: 1.4,
-                  delay: i * 0.15,
+                  duration: 1.2,
+                  delay: 0.4 + i * 0.2,
                   ease: "easeOut",
                 }}
               >
-                {emoji}
+                {spark}
               </motion.span>
             ))}
           </div>
@@ -83,19 +105,19 @@ export default function AnimalActionAnimation({ action, onComplete }: AnimalActi
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="text-sm font-black text-foreground mt-2"
+            className="text-sm font-black text-foreground mt-3"
           >
-            {config.label}
+            {getActionLabel(action)}
           </motion.p>
 
           {/* Progress dots */}
-          <div className="flex gap-1.5 mt-3">
+          <div className="flex gap-1.5 mt-2">
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
-                className="h-2 w-2 rounded-full bg-foreground/40"
-                animate={{ scale: [1, 1.5, 1], opacity: [0.4, 1, 0.4] }}
-                transition={{ duration: 0.8, delay: i * 0.2, repeat: Infinity }}
+                className="h-1.5 w-1.5 rounded-full bg-primary"
+                animate={{ scale: [1, 1.6, 1], opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 0.7, delay: i * 0.2, repeat: Infinity }}
               />
             ))}
           </div>
