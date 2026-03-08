@@ -1517,10 +1517,14 @@ export default function Admin() {
                       <input
                         type="checkbox"
                         checked={appSettings.withdrawal_referral?.enabled === true}
-                        onChange={(e) => {
-                          const updated = { ...appSettings.withdrawal_referral, enabled: e.target.checked };
-                          setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
-                          callAdmin({ action: "update_settings", key: "withdrawal_referral", value: updated }).then(() => toast.success("Saqlandi"));
+                        onChange={async (e) => {
+                          const current = appSettings.withdrawal_referral || { enabled: false, required_count: 1, consume_referrals: false };
+                          const newValue = { ...current, enabled: e.target.checked };
+                          const { error } = await supabase.from("app_settings").upsert({ key: "withdrawal_referral", value: newValue, updated_at: new Date().toISOString() }, { onConflict: "key" });
+                          if (error) { toast.error("Xatolik: " + error.message); return; }
+                          const { data } = await supabase.from("app_settings").select("value").eq("key", "withdrawal_referral").single();
+                          setAppSettings(prev => ({ ...prev, withdrawal_referral: data?.value || newValue }));
+                          toast.success(newValue.enabled ? "✅ Yoqildi" : "❌ O'chirildi");
                         }}
                         className="rounded"
                       />
@@ -1532,10 +1536,18 @@ export default function Admin() {
                         type="number"
                         value={appSettings.withdrawal_referral?.required_count ?? 1}
                         onChange={(e) => {
-                          const updated = { ...appSettings.withdrawal_referral, required_count: parseInt(e.target.value) || 0 };
+                          const current = appSettings.withdrawal_referral || { enabled: false, required_count: 1, consume_referrals: false };
+                          const updated = { ...current, required_count: parseInt(e.target.value) || 0 };
                           setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
                         }}
-                        onBlur={() => callAdmin({ action: "update_settings", key: "withdrawal_referral", value: appSettings.withdrawal_referral }).then(() => toast.success("Saqlandi"))}
+                        onBlur={async () => {
+                          const current = appSettings.withdrawal_referral || { enabled: false, required_count: 1, consume_referrals: false };
+                          const { error } = await supabase.from("app_settings").upsert({ key: "withdrawal_referral", value: current, updated_at: new Date().toISOString() }, { onConflict: "key" });
+                          if (error) { toast.error("Xatolik: " + error.message); return; }
+                          const { data } = await supabase.from("app_settings").select("value").eq("key", "withdrawal_referral").single();
+                          setAppSettings(prev => ({ ...prev, withdrawal_referral: data?.value || current }));
+                          toast.success("Saqlandi");
+                        }}
                         className="text-xs mt-0.5"
                       />
                     </div>
@@ -1546,10 +1558,14 @@ export default function Admin() {
                           type="radio"
                           name="ref_consume"
                           checked={appSettings.withdrawal_referral?.consume_referrals !== true}
-                          onChange={() => {
-                            const updated = { ...appSettings.withdrawal_referral, consume_referrals: false };
-                            setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
-                            callAdmin({ action: "update_settings", key: "withdrawal_referral", value: updated }).then(() => toast.success("Saqlandi"));
+                          onChange={async () => {
+                            const current = appSettings.withdrawal_referral || { enabled: false, required_count: 1, consume_referrals: false };
+                            const newValue = { ...current, consume_referrals: false };
+                            const { error } = await supabase.from("app_settings").upsert({ key: "withdrawal_referral", value: newValue, updated_at: new Date().toISOString() }, { onConflict: "key" });
+                            if (error) { toast.error("Xatolik: " + error.message); return; }
+                            const { data } = await supabase.from("app_settings").select("value").eq("key", "withdrawal_referral").single();
+                            setAppSettings(prev => ({ ...prev, withdrawal_referral: data?.value || newValue }));
+                            toast.success("Saqlandi");
                           }}
                         />
                         Faqat tekshiriladi (kamaymaydi)
@@ -1559,10 +1575,14 @@ export default function Admin() {
                           type="radio"
                           name="ref_consume"
                           checked={appSettings.withdrawal_referral?.consume_referrals === true}
-                          onChange={() => {
-                            const updated = { ...appSettings.withdrawal_referral, consume_referrals: true };
-                            setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
-                            callAdmin({ action: "update_settings", key: "withdrawal_referral", value: updated }).then(() => toast.success("Saqlandi"));
+                          onChange={async () => {
+                            const current = appSettings.withdrawal_referral || { enabled: false, required_count: 1, consume_referrals: false };
+                            const newValue = { ...current, consume_referrals: true };
+                            const { error } = await supabase.from("app_settings").upsert({ key: "withdrawal_referral", value: newValue, updated_at: new Date().toISOString() }, { onConflict: "key" });
+                            if (error) { toast.error("Xatolik: " + error.message); return; }
+                            const { data } = await supabase.from("app_settings").select("value").eq("key", "withdrawal_referral").single();
+                            setAppSettings(prev => ({ ...prev, withdrawal_referral: data?.value || newValue }));
+                            toast.success("Saqlandi");
                           }}
                         />
                         Ishlatiladi (kamayadi)

@@ -111,6 +111,24 @@ export default function Withdraw() {
       return;
     }
 
+    // Live referral check
+    const { data: liveRef } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "withdrawal_referral")
+      .single();
+
+    const liveRefVal = liveRef?.value as any;
+    const liveRefEnabled = liveRefVal?.enabled === true;
+    const liveRefRequired = liveRefVal?.required_count || 0;
+
+    if (liveRefEnabled && referralCount < liveRefRequired) {
+      setRefEnabled(true);
+      setRefRequired(liveRefRequired);
+      toast.error(`❌ Pul chiqarish uchun sizga yana ${liveRefRequired - referralCount} ta referal kerak`);
+      return;
+    }
+
     setLoading(true);
 
     const { data: insertData, error } = await supabase.from("withdrawal_requests").insert({
