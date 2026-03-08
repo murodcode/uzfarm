@@ -208,6 +208,28 @@ export default function Withdraw() {
           </div>
         )}
 
+        {/* Referral requirement banner */}
+        {refEnabled && (
+          <div className={`farm-card ${refSufficient ? 'bg-primary/5 border-primary/20' : 'bg-destructive/10 border-destructive/20'}`}>
+            <div className="text-center space-y-1">
+              <p className="text-xs font-bold text-foreground">
+                👤 Sizning referallaringiz: <span className="text-primary">{referralCount} ta</span>
+                {' · '}💸 Pul chiqarish uchun kerak: <span className={refSufficient ? 'text-primary' : 'text-destructive'}>{refRequired} ta</span>
+              </p>
+              {!refSufficient && (
+                <p className="text-[11px] text-destructive font-semibold">
+                  ❌ Pul chiqarish uchun sizga yana {refRequired - referralCount} ta referal kerak
+                </p>
+              )}
+              {refConsume && refSufficient && (
+                <p className="text-[10px] text-muted-foreground">
+                  ⚠️ Har payout uchun {refRequired} ta referal ishlatiladi
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Info banner */}
         <div className="farm-card bg-primary/5 border-primary/20">
           <p className="text-xs font-semibold text-foreground text-center">

@@ -1509,6 +1509,70 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {/* Withdrawal Referral Requirement */}
+                <div className="farm-card">
+                  <h3 className="text-sm font-bold text-foreground mb-3">🔗 Pul chiqarish uchun referal talab</h3>
+                  <div className="space-y-2.5">
+                    <label className="flex items-center gap-2 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={appSettings.withdrawal_referral?.enabled === true}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.withdrawal_referral, enabled: e.target.checked };
+                          setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
+                          callAdmin({ action: "update_settings", key: "withdrawal_referral", value: updated }).then(() => toast.success("Saqlandi"));
+                        }}
+                        className="rounded"
+                      />
+                      Referal talabni yoqish
+                    </label>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground font-bold">Har payout uchun kerakli referal soni</label>
+                      <Input
+                        type="number"
+                        value={appSettings.withdrawal_referral?.required_count ?? 1}
+                        onChange={(e) => {
+                          const updated = { ...appSettings.withdrawal_referral, required_count: parseInt(e.target.value) || 0 };
+                          setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
+                        }}
+                        onBlur={() => callAdmin({ action: "update_settings", key: "withdrawal_referral", value: appSettings.withdrawal_referral }).then(() => toast.success("Saqlandi"))}
+                        className="text-xs mt-0.5"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] text-muted-foreground font-bold">Referal kamayish rejimi</label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input
+                          type="radio"
+                          name="ref_consume"
+                          checked={appSettings.withdrawal_referral?.consume_referrals !== true}
+                          onChange={() => {
+                            const updated = { ...appSettings.withdrawal_referral, consume_referrals: false };
+                            setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
+                            callAdmin({ action: "update_settings", key: "withdrawal_referral", value: updated }).then(() => toast.success("Saqlandi"));
+                          }}
+                        />
+                        Faqat tekshiriladi (kamaymaydi)
+                      </label>
+                      <label className="flex items-center gap-2 text-xs">
+                        <input
+                          type="radio"
+                          name="ref_consume"
+                          checked={appSettings.withdrawal_referral?.consume_referrals === true}
+                          onChange={() => {
+                            const updated = { ...appSettings.withdrawal_referral, consume_referrals: true };
+                            setAppSettings(prev => ({ ...prev, withdrawal_referral: updated }));
+                            callAdmin({ action: "update_settings", key: "withdrawal_referral", value: updated }).then(() => toast.success("Saqlandi"));
+                          }}
+                        />
+                        Ishlatiladi (kamayadi)
+                      </label>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      {appSettings.withdrawal_referral?.enabled ? "✅ Yoqilgan" : "❌ O'chirilgan"} — {appSettings.withdrawal_referral?.consume_referrals ? "Har payoutda referal kamayadi" : "Referal faqat tekshiriladi"}
+                    </p>
+                  </div>
+
                 {/* Mandatory channel */}
                 <div className="farm-card">
                   <h3 className="text-sm font-bold text-foreground mb-3">📢 Majburiy kanal</h3>
