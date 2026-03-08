@@ -155,7 +155,7 @@ function showAdOverlay(): Promise<boolean> {
                 resolve(true);
               } else {
                 const rem = Math.ceil((MIN_TIME_ON_AD_SITE_MS - spent) / 1000);
-                statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 5 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${rem} sekund qoldi.</span>`;
+                statusText.innerHTML = `<span style="color:#ff4444;font-weight:bold;">❌ Reklama saytida kamida 7 sekund turing!</span><br><span style="color:#ffffff;font-size:12px;">Yana ${rem} sekund qoldi.</span>`;
                 btn.textContent = "🔄 Qayta ochish";
                 btn.style.display = "block";
               }
