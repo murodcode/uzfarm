@@ -107,6 +107,30 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_bans: {
+        Row: {
+          banned_by: string
+          created_at: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_by: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_by?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           created_at: string
@@ -218,6 +242,36 @@ export type Database = {
           reward_coins?: number
           task_type?: string
           url?: string | null
+        }
+        Relationships: []
+      }
+      general_chat_messages: {
+        Row: {
+          created_at: string
+          first_name: string | null
+          id: string
+          message: string
+          photo_url: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          message: string
+          photo_url?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          first_name?: string | null
+          id?: string
+          message?: string
+          photo_url?: string | null
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
