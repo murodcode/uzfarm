@@ -152,15 +152,15 @@ export const FIELD_PRICES: Record<number, number> = {
 };
 
 export const FIELD_NAMES: Record<number, string> = {
-  1: "1-maydon",
-  2: "2-maydon",
-  3: "3-maydon",
+  1: "1-ferma",
+  2: "2-ferma",
+  3: "3-ferma",
 };
 
 export const FIELD_EMOJIS: Record<number, string> = {
-  1: "🌿",
-  2: "🌻",
-  3: "🌾",
+  1: "🏡",
+  2: "🏘️",
+  3: "🏰",
 };
 
 /**

@@ -1,84 +1,18 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import FarmBackground from "@/components/FarmBackground";
 import LevelUpEffect from "@/components/LevelUpEffect";
-import FieldView from "@/components/FieldView";
 import { useGameContext } from "@/contexts/GameStateContext";
-import { toast } from "sonner";
-import { useRewardedAd } from "@/hooks/useRewardedAd";
-import { expRequired, EXP_SOURCES } from "@/lib/levelSystem";
-import { getAnimalType, FIELD_NAMES, FIELD_EMOJIS } from "@/lib/gameData";
-import { logUserAction } from "@/lib/userLogger";
+import { useNavigate } from "react-router-dom";
+import { expRequired } from "@/lib/levelSystem";
+import { ANIMAL_TYPES, FIELD_NAMES, FIELD_EMOJIS, FIELD_PRICES, getFieldMaxOwned, countAnimalsByTypeInField } from "@/lib/gameData";
+import { Lock, ChevronRight } from "lucide-react";
 
 export default function Home() {
-  const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp, unlockField } = useGameContext();
-  const { showAd, showFeedAd } = useRewardedAd();
-  const [activeField, setActiveField] = useState(1);
-
-  const handleFeed = async (id: string) => {
-    const adOk = await showFeedAd();
-    if (!adOk) return;
-    const success = await feedAnimal(id);
-    if (success) {
-      gainExp(EXP_SOURCES.feed_animal);
-      const animal = state.animals.find(a => a.id === id);
-      const type = animal ? getAnimalType(animal.typeId) : null;
-      logUserAction("feed_animal", `${type?.name || animal?.typeId} boqildi`);
-      toast.success("Hayvon boqildi! 🌾");
-    } else {
-      toast.error("Kutish vaqti tugamagan yoki mablag' yetarli emas");
-    }
-  };
-
-  const handleCollect = async (id: string) => {
-    const adOk = await showAd();
-    if (!adOk) return;
-    const eggs = await collectEggs(id);
-    if (eggs > 0) {
-      gainExp(EXP_SOURCES.collect_eggs);
-      logUserAction("collect_eggs", `${eggs} ta tuxum yig'ildi`);
-      toast.success(`${eggs} ta tuxum yig'ildi! 🥚`);
-    } else {
-      toast.info("Hali tuxum yig'ilmagan");
-    }
-  };
-
-  const handleCollectMilk = async (id: string) => {
-    const adOk = await showAd();
-    if (!adOk) return;
-    const milk = await collectMilk(id);
-    if (milk > 0) {
-      logUserAction("collect_milk", `${milk} litr sut yig'ildi`);
-      toast.success(`${milk} litr sut yig'ildi! 🥛`);
-    } else {
-      toast.info("Hali sut yig'ilmagan");
-    }
-  };
-
-  const handleSlaughter = async (id: string) => {
-    const adOk = await showAd();
-    if (!adOk) return;
-    const animal = state.animals.find(a => a.id === id);
-    const type = animal ? getAnimalType(animal.typeId) : null;
-    slaughterAnimal(id);
-    logUserAction("slaughter", `${type?.name || "hayvon"} so'yildi`);
-    toast.success("Go'sht inventarga qo'shildi! 🥩");
-  };
-
-  const handleUnlockField = async (fieldNumber: number) => {
-    const success = await unlockField(fieldNumber);
-    if (success) {
-      toast.success(`${FIELD_NAMES[fieldNumber]} ochildi! 🎉`);
-      setActiveField(fieldNumber);
-    } else {
-      toast.error("Mablag' yetarli emas");
-    }
-  };
+  const { state, levelUpEvent, dismissLevelUp } = useGameContext();
+  const navigate = useNavigate();
 
   const required = expRequired(state.level);
   const levelProgress = Math.min(100, Math.round((state.exp / required) * 100));
-
-  const fieldAnimals = state.animals.filter(a => a.field === activeField);
 
   return (
     <>
@@ -86,7 +20,7 @@ export default function Home() {
       <LevelUpEffect show={!!levelUpEvent} level={levelUpEvent ?? state.level} onDone={dismissLevelUp} />
 
       <div className="relative z-10 min-h-screen safe-bottom">
-        {/* Header area */}
+        {/* Header */}
         <div className="relative px-4 pt-6 pb-2">
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.9 }}
@@ -94,12 +28,8 @@ export default function Home() {
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
             className={`wood-sign px-5 py-4 mt-2 mb-2 text-center relative ${levelUpEvent ? 'level-glow' : ''}`}
           >
-            <span className="absolute -top-5 right-6 text-2xl animate-bounce" style={{ animationDuration: '2s' }}>
-              🐤
-            </span>
-            <h1 className="text-xl font-black text-primary-foreground drop-shadow-md">
-              🌾 Mening Fermam
-            </h1>
+            <span className="absolute -top-5 right-6 text-2xl animate-bounce" style={{ animationDuration: '2s' }}>🐤</span>
+            <h1 className="text-xl font-black text-primary-foreground drop-shadow-md">🌾 Mening Fermam</h1>
             <div className="mt-2.5">
               <div className="flex items-center justify-between text-[10px] font-bold text-primary-foreground/80 mb-1">
                 <span>⭐ Daraja {state.level}</span>
@@ -120,21 +50,16 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Fence decoration */}
+        {/* Fence */}
         <div className="px-4 mb-2">
           <div className="flex items-center justify-center gap-1 text-xs opacity-40 select-none">
-            {'🪵'.repeat(12).split('').map((e, i) => <span key={i}>{i % 3 === 0 ? '🪵' : '|'}</span>)}
+            {'🪵'.repeat(12).split('').map((_, i) => <span key={i}>{i % 3 === 0 ? '🪵' : '|'}</span>)}
           </div>
         </div>
 
-        {/* Resource cards */}
+        {/* Resources */}
         <div className="px-4 mb-3">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="flex gap-2"
-          >
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex gap-2">
             <div className="resource-card flex-1 flex items-center gap-2">
               <span className="text-xl">🥚</span>
               <div>
@@ -161,12 +86,7 @@ export default function Home() {
 
         {/* Coins & Cash */}
         <div className="px-4 mb-3">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex gap-2"
-          >
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex gap-2">
             <div className="resource-card flex-1 flex items-center gap-2">
               <span className="text-xl">🪙</span>
               <div>
@@ -184,53 +104,95 @@ export default function Home() {
           </motion.div>
         </div>
 
-        {/* Wooden divider */}
+        {/* Divider */}
         <div className="px-4">
           <div className="wooden-divider" />
         </div>
 
-        {/* Field tabs */}
-        <div className="px-4 mt-3 mb-3">
-          <div className="flex gap-2">
-            {[1, 2, 3].map(f => {
-              const isActive = activeField === f;
-              const isLocked = f > state.unlockedFields;
-              const animalCount = state.animals.filter(a => a.field === f).length;
-              return (
-                <button
-                  key={f}
-                  onClick={() => setActiveField(f)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${
-                    isActive
-                      ? "bg-primary text-primary-foreground shadow-md"
-                      : isLocked
-                        ? "bg-muted/60 text-muted-foreground border border-border"
-                        : "bg-card text-foreground border border-border"
-                  }`}
-                >
-                  <span>{isLocked ? "🔒" : FIELD_EMOJIS[f]}</span>
-                  <span>{FIELD_NAMES[f]}</span>
-                  {!isLocked && <span className="text-[10px] opacity-70">({animalCount})</span>}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* Farm cards */}
+        <div className="px-4 mt-3 space-y-3 pb-4">
+          <h2 className="text-sm font-black text-foreground flex items-center gap-2">
+            🏠 Fermalarim
+          </h2>
 
-        {/* Active field content */}
-        <div className="px-4 space-y-4 pb-4">
-          <FieldView
-            fieldNumber={activeField}
-            animals={fieldAnimals}
-            allAnimals={state.animals}
-            isUnlocked={activeField <= state.unlockedFields}
-            cash={state.cash}
-            onUnlock={() => handleUnlockField(activeField)}
-            onFeed={handleFeed}
-            onCollect={handleCollect}
-            onCollectMilk={handleCollectMilk}
-            onSlaughter={handleSlaughter}
-          />
+          {[1, 2, 3].map((f, i) => {
+            const isUnlocked = f <= state.unlockedFields;
+            const animalCount = state.animals.filter(a => a.field === f).length;
+            const price = FIELD_PRICES[f];
+
+            // Calculate total capacity for this farm
+            const totalCapacity = ANIMAL_TYPES.reduce((sum, type) => sum + getFieldMaxOwned(type, f), 0);
+
+            return (
+              <motion.div
+                key={f}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25 + i * 0.08 }}
+              >
+                {isUnlocked ? (
+                  /* Unlocked farm card */
+                  <button
+                    onClick={() => navigate(`/farm/${f}`)}
+                    className="w-full farm-card flex items-center gap-4 p-4 text-left active:scale-[0.98] transition-transform"
+                  >
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-3xl shrink-0">
+                      {FIELD_EMOJIS[f]}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-black text-foreground">{FIELD_NAMES[f]}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs font-bold text-primary">{animalCount} ta hayvon</span>
+                        <span className="text-[10px] text-muted-foreground">/ {totalCapacity} sig'im</span>
+                      </div>
+                      {/* Mini animal icons */}
+                      <div className="flex flex-wrap gap-1 mt-1.5">
+                        {ANIMAL_TYPES.map(type => {
+                          const count = countAnimalsByTypeInField(state.animals, type.id, f);
+                          if (count === 0) return null;
+                          return (
+                            <span key={type.id} className="text-[10px] font-bold bg-muted rounded-full px-1.5 py-0.5 text-muted-foreground">
+                              {type.emoji} {count}
+                            </span>
+                          );
+                        })}
+                        {animalCount === 0 && (
+                          <span className="text-[10px] text-muted-foreground">Bo'sh — hayvon qo'shing</span>
+                        )}
+                      </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+                  </button>
+                ) : (
+                  /* Locked farm card */
+                  <div className="farm-card p-4 opacity-80">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-2xl shrink-0">
+                        🔒
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-black text-foreground">{FIELD_NAMES[f]}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {f}x hayvon sig'imi • Jami {totalCapacity} ta hayvon
+                        </p>
+                        <p className="text-xs font-bold text-primary mt-1">
+                          💵 {price?.toLocaleString()} pul
+                        </p>
+                      </div>
+                    </div>
+                    {/* Capacity breakdown */}
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {ANIMAL_TYPES.map(type => (
+                        <span key={type.id} className="text-[10px] font-semibold bg-muted rounded-full px-2 py-0.5 text-muted-foreground">
+                          {type.emoji} {type.name}: {getFieldMaxOwned(type, f)} ta
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </>
