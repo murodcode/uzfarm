@@ -273,7 +273,7 @@ export default function Chat() {
         <div className="flex gap-2">
           <button
             onClick={() => setTab("admin")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${
+            className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all relative ${
               tab === "admin"
                 ? "bg-primary text-primary-foreground"
                 : "bg-muted text-muted-foreground"
@@ -281,6 +281,11 @@ export default function Chat() {
           >
             <Shield className="h-3.5 w-3.5" />
             Admin bilan bog'lanish
+            {unreadAdmin > 0 && tab !== "admin" && (
+              <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full h-4 min-w-4 flex items-center justify-center px-1">
+                {unreadAdmin}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setTab("general")}
