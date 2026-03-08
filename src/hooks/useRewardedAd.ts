@@ -121,7 +121,7 @@ function showAdOverlay(): Promise<boolean> {
       // Disable button, show waiting message
       btn.style.display = "none";
       statusText.style.display = "block";
-      statusText.textContent = "⏳ Reklama saytida 5 sekund turing...";
+      statusText.textContent = "⏳ Reklama saytida 7 sekund turing...";
 
       // Listen for when user comes back (visibility change or focus)
       const checkReturn = () => {
