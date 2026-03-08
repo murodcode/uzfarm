@@ -801,29 +801,98 @@ Deno.serve(async (req) => {
       return json({ messages: msgs || [], profile: profile || null });
     }
 
-    // === SEND CHAT REPLY FROM ADMIN ===
+    // === SEND CHAT REPLY FROM ADMIN (only in-app, no bot) ===
     if (action === "send_chat_reply") {
       const { target_user_id, text: replyText } = body;
       if (!target_user_id || !replyText) return json({ error: "target_user_id va text kerak" }, 400);
 
-      // Save to chat_messages
+      // Save to chat_messages only (no Telegram bot notification)
       await adminClient.from("chat_messages").insert({
         user_id: target_user_id,
         message: replyText,
         sender: "admin",
       });
 
-      // Also send via Telegram bot
-      const { data: targetProfile } = await adminClient
-        .from("profiles")
-        .select("telegram_id")
-        .eq("id", target_user_id)
-        .single();
+      return json({ success: true });
+    }
 
-      if (targetProfile?.telegram_id) {
-        await sendTgMessage(targetProfile.telegram_id, `💬 <b>Admin javobi:</b>\n\n${replyText}`);
+    // === GET GENERAL CHAT DATA ===
+    if (action === "get_general_chat_data") {
+      const { data: msgs } = await adminClient
+        .from("general_chat_messages")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      const { data: bans } = await adminClient
+        .from("chat_bans")
+        .select("*");
+
+      // Enrich bans with profile info
+      const banUserIds = (bans || []).map((b: any) => b.user_id);
+      let enrichedBans = bans || [];
+      if (banUserIds.length > 0) {
+        const { data: profiles } = await adminClient
+          .from("profiles")
+          .select("id, first_name, username, telegram_id")
+          .in("id", banUserIds);
+        const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+        enrichedBans = (bans || []).map((b: any) => ({
+          ...b,
+          ...(profileMap.get(b.user_id) || {}),
+        }));
       }
 
+      const { data: chatSetting } = await adminClient
+        .from("app_settings")
+        .select("value")
+        .eq("key", "general_chat_control")
+        .maybeSingle();
+
+      const chatVal = chatSetting?.value as any;
+      return json({
+        messages: msgs || [],
+        bans: enrichedBans,
+        chat_enabled: chatVal?.enabled !== false,
+        lock_message: chatVal?.lock_message || "",
+      });
+    }
+
+    // === DELETE GENERAL CHAT MESSAGE ===
+    if (action === "delete_general_msg") {
+      const { message_id } = body;
+      if (!message_id) return json({ error: "message_id kerak" }, 400);
+      await adminClient.from("general_chat_messages").delete().eq("id", message_id);
+      return json({ success: true });
+    }
+
+    // === BAN CHAT USER ===
+    if (action === "ban_chat_user") {
+      const { telegram_id } = body;
+      if (!telegram_id) return json({ error: "telegram_id kerak" }, 400);
+
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("id")
+        .eq("telegram_id", telegram_id)
+        .single();
+
+      if (!profile) return json({ error: "Foydalanuvchi topilmadi" }, 404);
+
+      const { error: banErr } = await adminClient.from("chat_bans").upsert({
+        user_id: profile.id,
+        banned_by: userId,
+      }, { onConflict: "user_id" });
+
+      if (banErr) return json({ error: banErr.message }, 500);
+      return json({ success: true });
+    }
+
+    // === UNBAN CHAT USER ===
+    if (action === "unban_chat_user") {
+      const { target_user_id } = body;
+      if (!target_user_id) return json({ error: "target_user_id kerak" }, 400);
+      await adminClient.from("chat_bans").delete().eq("user_id", target_user_id);
       return json({ success: true });
     }
 

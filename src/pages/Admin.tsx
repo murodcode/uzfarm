@@ -103,6 +103,13 @@ export default function Admin() {
   const [chatProfile, setChatProfile] = useState<any>(null);
   const [chatReplyText, setChatReplyText] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  // General chat management
+  const [chatSubTab, setChatSubTab] = useState<"private" | "general">("private");
+  const [generalChatMsgs, setGeneralChatMsgs] = useState<any[]>([]);
+  const [chatBans, setChatBans] = useState<any[]>([]);
+  const [generalChatEnabled, setGeneralChatEnabled] = useState(true);
+  const [generalChatLockMsg, setGeneralChatLockMsg] = useState("");
+  const [banTgId, setBanTgId] = useState("");
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -182,10 +189,18 @@ export default function Admin() {
         const data = await callAdmin({ action: "get_admins" });
         setAdminsList(data?.admins || []);
       } else if (tab === "chat") {
-        const data = await callAdmin({ action: "get_chat_conversations" });
-        setChatConversations(data?.conversations || []);
-        setChatSelectedUser(null);
-        setChatMessages([]);
+        if (chatSubTab === "private") {
+          const data = await callAdmin({ action: "get_chat_conversations" });
+          setChatConversations(data?.conversations || []);
+          setChatSelectedUser(null);
+          setChatMessages([]);
+        } else {
+          const data = await callAdmin({ action: "get_general_chat_data" });
+          setGeneralChatMsgs(data?.messages || []);
+          setChatBans(data?.bans || []);
+          setGeneralChatEnabled(data?.chat_enabled !== false);
+          setGeneralChatLockMsg(data?.lock_message || "");
+        }
       }
     } catch (e: any) {
       console.error("Fetch error:", e);
@@ -520,8 +535,26 @@ export default function Admin() {
             {/* === CHAT === */}
             {tab === "chat" && (
               <div className="space-y-3">
+                {/* Sub-tabs */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => { setChatSubTab("private"); fetchData(); }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold ${chatSubTab === "private" ? "bg-primary text-primary-foreground" : "farm-card text-foreground"}`}
+                  >
+                    💬 Shaxsiy chatlar
+                  </button>
+                  <button
+                    onClick={() => { setChatSubTab("general"); fetchData(); }}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold ${chatSubTab === "general" ? "bg-primary text-primary-foreground" : "farm-card text-foreground"}`}
+                  >
+                    👥 Umumiy chat
+                  </button>
+                </div>
+
+                {/* === Private Chat Sub-tab === */}
+                {chatSubTab === "private" && (
+                  <>
                 {chatSelectedUser ? (
-                  // Chat detail view
                   <div className="space-y-3">
                     <button
                       onClick={() => { setChatSelectedUser(null); setChatMessages([]); setChatProfile(null); fetchData(); }}
@@ -562,7 +595,6 @@ export default function Admin() {
                       </div>
                     )}
 
-                    {/* Reply input */}
                     <div className="flex gap-2">
                       <textarea
                         placeholder="Javob yozing..."
@@ -580,7 +612,6 @@ export default function Admin() {
                     </div>
                   </div>
                 ) : (
-                  // Conversations list
                   <>
                     {chatConversations.length === 0 ? (
                       <p className="text-center text-sm text-muted-foreground py-8">Xabarlar yo'q</p>
@@ -615,6 +646,144 @@ export default function Admin() {
                       ))
                     )}
                   </>
+                )}
+                  </>
+                )}
+
+                {/* === General Chat Sub-tab === */}
+                {chatSubTab === "general" && (
+                  <div className="space-y-3">
+                    {/* Chat lock control */}
+                    <div className="farm-card space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-foreground">🔒 Umumiy chatni boshqarish</h3>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={async () => {
+                              await directToggleSetting("general_chat_control", true);
+                              setGeneralChatEnabled(true);
+                            }}
+                            disabled={generalChatEnabled}
+                            className="rounded-lg bg-primary px-3 py-1.5 text-[10px] font-bold text-primary-foreground disabled:opacity-50"
+                          >
+                            Ochish
+                          </button>
+                          <button
+                            onClick={async () => {
+                              // Save with lock message
+                              const value = { enabled: false, lock_message: generalChatLockMsg || "Chat vaqtincha yopilgan" };
+                              await supabase.from("app_settings").upsert({ key: "general_chat_control", value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+                              setGeneralChatEnabled(false);
+                              toast.success("Chat yopildi");
+                            }}
+                            disabled={!generalChatEnabled}
+                            className="rounded-lg bg-destructive px-3 py-1.5 text-[10px] font-bold text-destructive-foreground disabled:opacity-50"
+                          >
+                            Yopish
+                          </button>
+                        </div>
+                      </div>
+                      <Input
+                        placeholder="Chat yopilganda ko'rsatiladigan xabar..."
+                        value={generalChatLockMsg}
+                        onChange={(e) => setGeneralChatLockMsg(e.target.value)}
+                        className="text-xs"
+                      />
+                      <p className="text-[10px] text-muted-foreground">
+                        {generalChatEnabled ? "✅ Chat ochiq" : "❌ Chat yopiq"}
+                      </p>
+                    </div>
+
+                    {/* Ban user */}
+                    <div className="farm-card space-y-2">
+                      <h3 className="text-sm font-bold text-foreground">🚫 Foydalanuvchini chatdan taqiqlash</h3>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Telegram ID"
+                          value={banTgId}
+                          onChange={(e) => setBanTgId(e.target.value)}
+                          className="text-xs"
+                          type="number"
+                        />
+                        <button
+                          onClick={async () => {
+                            if (!banTgId) return;
+                            try {
+                              await callAdmin({ action: "ban_chat_user", telegram_id: parseInt(banTgId) });
+                              toast.success("Foydalanuvchi taqiqlandi");
+                              setBanTgId("");
+                              fetchData();
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                          className="rounded-xl bg-destructive px-4 py-2 text-xs font-bold text-destructive-foreground shrink-0"
+                        >
+                          Taqiqlash
+                        </button>
+                      </div>
+
+                      {/* Banned users list */}
+                      {chatBans.length > 0 && (
+                        <div className="space-y-1.5 mt-2">
+                          <p className="text-[10px] text-muted-foreground font-bold">Taqiqlangan foydalanuvchilar:</p>
+                          {chatBans.map((ban: any) => (
+                            <div key={ban.id} className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
+                              <p className="text-xs font-bold text-foreground">
+                                {ban.first_name || "Noma'lum"} {ban.username ? `(@${ban.username})` : ""} · TG: {ban.telegram_id || "—"}
+                              </p>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await callAdmin({ action: "unban_chat_user", target_user_id: ban.user_id });
+                                    toast.success("Taqiq olib tashlandi");
+                                    fetchData();
+                                  } catch (e: any) { toast.error(e.message); }
+                                }}
+                                className="text-[10px] font-bold text-primary"
+                              >
+                                Ruxsat
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* General chat messages - with delete button */}
+                    <div className="farm-card">
+                      <h3 className="text-sm font-bold text-foreground mb-2">📝 Xabarlar ({generalChatMsgs.length})</h3>
+                    </div>
+                    {generalChatMsgs.length === 0 ? (
+                      <p className="text-center text-sm text-muted-foreground py-4">Xabarlar yo'q</p>
+                    ) : (
+                      <div className="space-y-1.5 max-h-[50vh] overflow-y-auto">
+                        {generalChatMsgs.map((msg: any) => (
+                          <div key={msg.id} className="farm-card py-2">
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-bold text-primary">{msg.first_name || "Noma'lum"} {msg.username ? `@${msg.username}` : ""}</p>
+                                <p className="text-xs text-foreground mt-0.5">{msg.message}</p>
+                                <p className="text-[9px] text-muted-foreground mt-0.5">
+                                  {new Date(msg.created_at).toLocaleString("uz-UZ", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                                </p>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await callAdmin({ action: "delete_general_msg", message_id: msg.id });
+                                    setGeneralChatMsgs(prev => prev.filter(m => m.id !== msg.id));
+                                    toast.success("O'chirildi");
+                                  } catch (e: any) { toast.error(e.message); }
+                                }}
+                                className="text-destructive p-1 shrink-0"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             )}
