@@ -6,12 +6,14 @@ interface ShopCardProps {
   animal: AnimalType;
   balance: number;
   currentCount: number;
+  maxCount?: number;
   onBuy: () => void;
 }
 
-export default function ShopCard({ animal, balance, currentCount, onBuy }: ShopCardProps) {
+export default function ShopCard({ animal, balance, currentCount, maxCount, onBuy }: ShopCardProps) {
+  const max = maxCount ?? animal.maxOwned;
   const canAfford = balance >= animal.price;
-  const atMax = currentCount >= animal.maxOwned;
+  const atMax = currentCount >= max;
   const canBuy = canAfford && !atMax;
 
   return (
@@ -33,7 +35,7 @@ export default function ShopCard({ animal, balance, currentCount, onBuy }: ShopC
             {animal.productType === "egg" ? "🥚 Tuxum" : animal.productType === "milk" ? "🥛 Sut" : "🥩 Go'sht"}
           </span>
           <p className={`text-[10px] font-bold mt-1 ${atMax ? 'text-destructive' : 'text-muted-foreground'}`}>
-            {currentCount}/{animal.maxOwned} ta
+            {currentCount}/{max} ta
           </p>
         </div>
       </div>
@@ -75,7 +77,7 @@ export default function ShopCard({ animal, balance, currentCount, onBuy }: ShopC
         {atMax ? (
           <>
             <AlertTriangle className="h-4 w-4" />
-            Maksimal soni ({animal.maxOwned})
+            Maksimal soni ({max})
           </>
         ) : canAfford ? (
           <>
