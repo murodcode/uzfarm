@@ -26,6 +26,7 @@ export default function AnimalCard({ animal, onFeed, onCollect, onCollectMilk, o
   const type = getAnimalType(animal.typeId);
   const [now, setNow] = useState(Date.now());
   const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [activeAnimation, setActiveAnimation] = useState<"feed" | "collect" | "milk" | "slaughter" | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
