@@ -15,10 +15,12 @@ import { logUserAction } from "@/lib/userLogger";
 export default function Home() {
   const { state, feedAnimal, collectEggs, collectMilk, slaughterAnimal, gainExp, levelUpEvent, dismissLevelUp } = useGameContext();
   const navigate = useNavigate();
-  const { showAd } = useRewardedAd();
+  const { showAd, showFeedAd } = useRewardedAd();
   useEntryAd();
 
   const handleFeed = async (id: string) => {
+    const adOk = await showFeedAd();
+    if (!adOk) return;
     const success = await feedAnimal(id);
     if (success) {
       gainExp(EXP_SOURCES.feed_animal);

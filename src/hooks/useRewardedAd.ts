@@ -329,7 +329,7 @@ export function useRewardedAd() {
     [showAd]
   );
 
-  return { showAd, withAd };
+  return { showAd, showFeedAd, withAd };
 }
 
 /* ── Adsgram entry ad (shown once on app load) ── */
