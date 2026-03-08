@@ -18,7 +18,7 @@ interface FieldViewProps {
 }
 
 export default function FieldView({
-  fieldNumber, animals, allAnimals, isUnlocked, coins, onUnlock,
+  fieldNumber, animals, allAnimals, isUnlocked, cash, onUnlock,
   onFeed, onCollect, onCollectMilk, onSlaughter,
 }: FieldViewProps) {
   const navigate = useNavigate();
