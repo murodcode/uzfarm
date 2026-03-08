@@ -135,6 +135,7 @@ export function useGameState() {
             milk: (profileRes.data as any).milk ?? 0,
             level: profileRes.data.level,
             exp: profileRes.data.exp,
+            unlockedFields: (profileRes.data as any).unlocked_fields ?? 1,
             animals: aliveAnimals,
           }));
         }
