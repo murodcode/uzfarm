@@ -202,7 +202,7 @@ function openFeedAdLink() {
   }
 }
 
-function showFeedAdOverlay(): Promise<boolean> {
+function showFeedAdOverlay(actionLabel = "🌾 Boqish", actionName = "boqish"): Promise<boolean> {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.style.cssText =
@@ -214,7 +214,7 @@ function showFeedAdOverlay(): Promise<boolean> {
 
     const subtitle = document.createElement("div");
     subtitle.style.cssText = "color:#ff4444;font-size:16px;font-weight:800;margin-bottom:24px;line-height:1.4;";
-    subtitle.textContent = "❌ Agar 7 sekunddan kam qaytib kelsangiz boqish amalga oshirilmaydi!";
+    subtitle.textContent = `❌ Agar 7 sekunddan kam qaytib kelsangiz ${actionName} amalga oshirilmaydi!`;
 
     const adBtn = document.createElement("button");
     adBtn.style.cssText =
@@ -227,7 +227,7 @@ function showFeedAdOverlay(): Promise<boolean> {
     const feedBtn = document.createElement("button");
     feedBtn.style.cssText =
       "background:#f59e0b;color:#fff;font-size:18px;font-weight:800;border:none;border-radius:14px;padding:14px 40px;cursor:pointer;display:none;margin-top:16px;";
-    feedBtn.textContent = "🌾 Boqish";
+    feedBtn.textContent = actionLabel;
 
     overlay.appendChild(title);
     overlay.appendChild(subtitle);
@@ -249,7 +249,6 @@ function showFeedAdOverlay(): Promise<boolean> {
         setTimeout(() => {
           const timeSpent = Date.now() - adOpenTime;
           if (timeSpent >= FEED_AD_TIME_MS) {
-            // Success
             cleanupListeners();
             recordAdView();
             title.style.color = "#22c55e";
@@ -275,7 +274,6 @@ function showFeedAdOverlay(): Promise<boolean> {
       document.addEventListener("visibilitychange", onReturn);
       window.addEventListener("focus", onReturn);
 
-      // For retry clicks, rebind
       adBtn.onclick = () => tryAd(true);
     };
 
